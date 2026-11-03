@@ -1,6 +1,8 @@
 name = "christmasidea"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
+workers_dev = false
+preview_urls = false
 
 # The website (site/ folder) is served by this same Worker.
 # Every request runs the Worker first so www can be redirected and security headers added.
