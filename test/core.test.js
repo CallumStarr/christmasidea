@@ -139,7 +139,7 @@ test("cache hit skips budget and Claude", async () => {
   await handleRequest(req(body), env, { fetch: fakeFetch(captured), budget, cache });
   const second = await handleRequest(req(body), env, { fetch: fakeFetch(captured), budget, cache });
   assert.equal((await second.json()).cached, true);
-  assert.ok(cacheKeys.every((key) => key.includes("/ideas/v5/")), "new prompt uses a fresh cache namespace");
+  assert.ok(cacheKeys.every((key) => key.includes("/ideas/v6/")), "new prompt uses a fresh cache namespace");
   assert.equal(consumed, 1);
   assert.equal(captured.length, 1);
 });
@@ -206,81 +206,31 @@ test("OPTIONS preflight from allowed origin", async () => {
   assert.equal(res.status, 204);
 });
 
-/* ---------------- photos ---------------- */
-const pexelsPhoto = (id) => ({ photos: [{ id, alt: "A cup of coffee", photographer: "Jane Doe",
-  photographer_url: "https://www.pexels.com/@jane", url: `https://www.pexels.com/photo/${id}/`,
-  src: { large: `https://images.pexels.com/photos/${id}/large.jpeg`, medium: `https://images.pexels.com/photos/${id}/medium.jpeg` } }] });
-
-function routedFetch(captured, { pexels = (u) => pexelsPhoto(1) } = {}) {
-  return async (url, init) => {
-    captured.push(String(url));
-    if (String(url).startsWith("https://api.pexels.com/")) {
-      const r = pexels(String(url));
-      if (r instanceof Response) return r;
-      return new Response(JSON.stringify(r), { status: 200 });
-    }
-    return new Response(JSON.stringify({ content: [{ type: "tool_use", name: "gift_ideas", input: {
-      recipient_summary: "They enjoy coffee and slow mornings.",
-      ideas: [
-        { title: "Pour-over coffee kit", why: "x", search_query: "pour over coffee set", photo_query: "pour over coffee", category: "Kitchen" },
-        { title: "Coffee sampler", why: "y", search_query: "coffee gift set", photo_query: "Pour over COFFEE", category: "Food & treats" },
-      ] } }] }), { status: 200 });
-  };
-}
-const photoEnv = { ...env, PEXELS_API_KEY: "px-test" };
-
-test("ideas come back with Pexels photos, duplicate photo queries fetched once", async () => {
+test("recommendations remain available without Pexels or Amazon credentials", async () => {
   const captured = [];
-  let asked = 0;
-  const res = await handleRequest(req({ interests: "coffee" }), photoEnv, {
-    fetch: routedFetch(captured), budget: okBudget, photoBudget: { take: async (_ip, n) => { asked += n; return n; } } });
+  const res = await handleRequest(req({ interests: "coffee" }), env, { fetch: fakeFetch(captured), budget: okBudget });
   const data = await res.json();
-  assert.equal(data.ideas[0].image.src, "https://images.pexels.com/photos/1/large.jpeg");
-  assert.equal(data.ideas[1].image.by, "Jane Doe");
-  assert.equal(captured.filter((u) => u.includes("pexels")).length, 1);
-  assert.equal(asked, 1);
-});
-
-test("photo budget of zero means no Pexels calls and no images", async () => {
-  const captured = [];
-  const res = await handleRequest(req({ interests: "coffee" }), photoEnv, {
-    fetch: routedFetch(captured), budget: okBudget, photoBudget: { take: async () => 0 } });
-  const data = await res.json();
-  assert.equal(captured.filter((u) => u.includes("pexels")).length, 0);
-  assert.ok(data.ideas.every((i) => !i.image));
-});
-
-test("photos with non-Pexels URLs are rejected", async () => {
-  const bad = { photos: [{ alt: "x", photographer: "x", photographer_url: "https://evil.example", url: "https://www.pexels.com/photo/1/",
-    src: { large: "javascript:alert(1)", medium: "https://images.pexels.com/x.jpg" } }] };
-  const res = await handleRequest(req({ interests: "coffee" }), photoEnv, {
-    fetch: routedFetch([], { pexels: () => bad }), budget: okBudget, photoBudget: { take: async (_i, n) => n } });
-  const data = await res.json();
-  assert.ok(data.ideas.every((i) => !i.image));
-});
-
-test("Pexels 429 is handled quietly", async () => {
-  const res = await handleRequest(req({ interests: "coffee" }), photoEnv, {
-    fetch: routedFetch([], { pexels: () => new Response("slow down", { status: 429 }) }), budget: okBudget, photoBudget: { take: async (_i, n) => n } });
   assert.equal(res.status, 200);
-  assert.ok((await res.json()).ideas.length > 0);
+  assert.equal(data.product_discovery_enabled, false);
+  assert.ok(data.ideas.length > 0);
+  assert.ok(data.ideas.every((idea) => !idea.image && !idea.product));
+  assert.ok(captured.every((call) => !String(call.url).includes("pexels")));
 });
 
-test("/api/photos serves the built-in list and caches results", async () => {
-  const store = new Map();
-  const cache = { match: async (r) => (store.has(r.url) ? new Response(store.get(r.url)) : undefined),
-                  put: async (r, res) => { store.set(r.url, await res.text()); } };
+test("/api/products stays inert without an enabled, credentialed provider", async () => {
   const captured = [];
-  const deps = { fetch: routedFetch(captured), budget: okBudget, photoBudget: { take: async (_i, n) => n }, cache };
-  const r1 = await handleRequest(req({ queries: ["Insulated flask", "Head torch"] }, { path: "/api/photos" }), photoEnv, deps);
-  const d1 = await r1.json();
-  assert.ok(d1.photos["insulated flask"].src.startsWith("https://images.pexels.com/"));
-  await handleRequest(req({ queries: ["Insulated flask"] }, { path: "/api/photos" }), photoEnv, deps);
-  assert.equal(captured.filter((u) => u.includes("pexels")).length, 2, "second request served from cache");
+  const res = await handleRequest(req({ ideas: [{ title: "Hand coffee grinder", query: "hand coffee grinder" }], }, { path: "/api/products" }), env, {
+    fetch: async (...args) => { captured.push(args); throw new Error("unexpected provider call"); },
+  });
+  const data = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(data.enabled, false);
+  assert.deepEqual(data.products, [null]);
+  assert.equal(captured.length, 0);
 });
 
-test("/api/photos rejects other origins", async () => {
-  const res = await handleRequest(req({ queries: ["x"] }, { path: "/api/photos", origin: "https://evil.example" }), photoEnv, { fetch: routedFetch([]), budget: okBudget });
+test("/api/products rejects unapproved origins", async () => {
+  const res = await handleRequest(req({ ideas: [] }, { path: "/api/products", origin: "https://evil.example" }), env, { fetch: fakeFetch([]), budget: okBudget });
   assert.equal(res.status, 403);
 });
 

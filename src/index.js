@@ -1,8 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { handleRequest, canonicalRedirect } from "./core.js";
 
-// One global counter object enforces the daily AI budget, per-visitor limits and
-// the hourly photo budget. Durable Objects handle one request at a time, so
+// One global counter object enforces daily AI and product lookup limits. Durable Objects handle one request at a time, so
 // check-and-increment is race free.
 export class BudgetCounter extends DurableObject {
   constructor(ctx, env) {
@@ -25,13 +24,18 @@ export class BudgetCounter extends DurableObject {
     );
   }
 
-  // Buckets: "D2026-11-02" (day), "M2026-11-02T21:53" (minute), "H2026-11-02T21" (hour).
+  // Buckets: "D2026-11-02" (day), "M2026-11-02T21:53" (minute), "H2026-11-02T21" (hour), "S2026-11-02T21:53:00" (second).
   buckets() {
     const iso = new Date().toISOString();
-    const b = { day: `D${iso.slice(0, 10)}`, minute: `M${iso.slice(0, 16)}`, hour: `H${iso.slice(0, 13)}` };
+    const b = {
+      day: `D${iso.slice(0, 10)}`,
+      minute: `M${iso.slice(0, 16)}`,
+      hour: `H${iso.slice(0, 13)}`,
+      second: `S${iso.slice(0, 19)}`,
+    };
     this.sql.exec(
-      "DELETE FROM usage WHERE (bucket LIKE 'D%' AND bucket < ?) OR (bucket LIKE 'M%' AND bucket < ?) OR (bucket LIKE 'H%' AND bucket < ?)",
-      b.day, b.minute, b.hour
+      "DELETE FROM usage WHERE (bucket LIKE 'D%' AND bucket < ?) OR (bucket LIKE 'M%' AND bucket < ?) OR (bucket LIKE 'H%' AND bucket < ?) OR (bucket LIKE 'S%' AND bucket < ?)",
+      b.day, b.minute, b.hour, b.second
     );
     return b;
   }
@@ -52,17 +56,24 @@ export class BudgetCounter extends DurableObject {
     return { ok: true };
   }
 
-  // Returns how many of `n` Pexels lookups may go ahead right now.
-  async takePhotos(ipHash, n) {
+  // Reserves bounded per-second, hourly, daily and per-minute capacity for product searches.
+  async takeProducts(ipHash, n) {
     const b = this.buckets();
-    const hourLimit = Number(this.env.PHOTO_HOURLY_LIMIT) || 180;
-    const ipMinuteLimit = Number(this.env.PHOTO_PER_VISITOR_MINUTE_LIMIT) || 30;
-    const leftGlobal = hourLimit - this.count(b.hour, "photo:__global__");
-    const leftVisitor = ipMinuteLimit - this.count(b.minute, `photo:${ipHash}`);
-    const allowed = Math.max(0, Math.min(n, leftGlobal, leftVisitor));
+    const hourLimit = Number(this.env.PRODUCT_SEARCH_HOURLY_LIMIT) || 120;
+    const secondLimit = Number(this.env.PRODUCT_SEARCH_PER_SECOND_LIMIT) || 1;
+    const ipDayLimit = Number(this.env.PRODUCT_SEARCH_PER_VISITOR_DAILY_LIMIT) || 32;
+    const ipMinuteLimit = Number(this.env.PRODUCT_SEARCH_PER_VISITOR_MINUTE_LIMIT) || 16;
+    const requestCount = Math.max(0, Math.min(16, Math.floor(Number(n) || 0)));
+    const leftGlobal = hourLimit - this.count(b.hour, "product:__global__");
+    const leftSecond = secondLimit - this.count(b.second, "product:__global__");
+    const leftDay = ipDayLimit - this.count(b.day, `product:${ipHash}`);
+    const leftVisitor = ipMinuteLimit - this.count(b.minute, `product:${ipHash}`);
+    const allowed = Math.max(0, Math.min(requestCount, leftGlobal, leftSecond, leftDay, leftVisitor));
     if (allowed > 0) {
-      this.add(b.hour, "photo:__global__", allowed);
-      this.add(b.minute, `photo:${ipHash}`, allowed);
+      this.add(b.hour, "product:__global__", allowed);
+      this.add(b.second, "product:__global__", allowed);
+      this.add(b.day, `product:${ipHash}`, allowed);
+      this.add(b.minute, `product:${ipHash}`, allowed);
     }
     return allowed;
   }
@@ -79,7 +90,7 @@ const SECURITY_HEADERS = {
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https://images.pexels.com",
+    "img-src 'self' data: https://m.media-amazon.com https://images-eu.ssl-images-amazon.com",
     "font-src 'self'",
     "connect-src 'self' https://cloudflareinsights.com",
     "frame-src https://challenges.cloudflare.com",
@@ -108,7 +119,7 @@ export default {
       const res = await handleRequest(request, env, {
         fetch: (...args) => fetch(...args),
         budget: { consume: (ipHash) => stub.consume(ipHash) },
-        photoBudget: { take: (ipHash, n) => stub.takePhotos(ipHash, n) },
+        productBudget: { take: (ipHash, n) => stub.takeProducts(ipHash, n) },
         cache: typeof caches !== "undefined" ? caches.default : null,
         waitUntil: (p) => ctx.waitUntil(p),
       });

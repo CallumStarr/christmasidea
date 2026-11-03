@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Christmas Gift Ideas for Anyone on Your List | ChristmasIdea</title>
+<title>Christmas Gift Ideas for Anyone on Your List | Santa's Helper</title>
 <meta name="description" content="Stuck on what to buy? Describe who you're shopping for and get Christmas gift ideas that actually suit them, ready to find on Amazon UK.">
 <link rel="canonical" href="https://christmasidea.co.uk/">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Santa's Helper">
 <meta property="og:url" content="https://christmasidea.co.uk/">
-<meta property="og:title" content="Christmas gift ideas for anyone on your list">
+<meta property="og:title" content="Christmas gift ideas for anyone on your list | Santa's Helper">
 <meta property="og:description" content="Describe who you're buying for and get gift ideas that actually suit them.">
 <meta property="og:image" content="https://christmasidea.co.uk/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#8b1631">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://images.pexels.com">
 <link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
 <script>
@@ -65,7 +65,7 @@ img{max-width:100%;display:block}
 .bow{position:absolute;right:calc(17% - 77px);bottom:28px;width:200px;height:170px;pointer-events:none;filter:drop-shadow(0 10px 18px rgba(40,0,10,.35))}
 #snow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .nav{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:800 21px/1 var(--display);font-variation-settings:"SOFT" 100;letter-spacing:-.01em}
+.brand{display:flex;align-items:center;gap:10px;white-space:nowrap;text-decoration:none;font:800 21px/1 var(--display);font-variation-settings:"SOFT" 100;letter-spacing:-.01em}
 .countdown .short{display:none}
 @media (max-width:760px){.countdown .short{display:inline}}
 .countdown{background:var(--berry-deep);border:1px solid rgba(242,181,68,.6);box-shadow:0 6px 16px -8px rgba(0,0,0,.5);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;white-space:nowrap}
@@ -135,14 +135,17 @@ textarea{min-height:96px;resize:vertical}
   box-shadow:0 1px 0 var(--line),0 18px 40px -26px rgba(90,12,31,.5)}
 .card.reveal{animation:unwrap .55s cubic-bezier(.2,.8,.2,1.15) both;animation-delay:calc(var(--i) * 70ms)}
 @keyframes unwrap{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
-.media{position:relative;aspect-ratio:4/3;background:var(--gold-pale);overflow:hidden}
-.media img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;transition:opacity .4s}
+.media{position:relative;aspect-ratio:4/3;background:#f6f1eb;overflow:hidden}
+.media img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:contain;padding:12px;transition:opacity .4s}
 .media img.loading{opacity:0}
 .media .ph{position:absolute;inset:0;display:grid;place-items:center}
 .media .ph svg{width:44%;height:auto}
 .cat{position:absolute;z-index:2;left:12px;top:12px;background:rgba(255,255,255,.94);color:var(--berry-ink);font-size:13px;font-weight:700;padding:6px 11px;border-radius:999px}
-.credit{position:absolute;z-index:2;right:8px;bottom:8px;background:rgba(20,8,12,.62);color:#fff;font-size:11.5px;padding:4px 8px;border-radius:8px;text-decoration:none;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.credit:hover{background:rgba(20,8,12,.85)}
+.image-note{position:absolute;z-index:2;right:8px;bottom:8px;background:rgba(255,255,255,.92);color:var(--muted);font-size:11.5px;padding:4px 8px;border-radius:8px;max-width:calc(100% - 16px)}
+.product-image-link{position:absolute;inset:0;z-index:1;display:block}
+.product-badge{position:absolute;z-index:2;left:12px;bottom:12px;background:rgba(15,61,46,.94);color:#fff;font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px}
+.product-price{font-size:15px;font-weight:700;color:var(--pine);margin:-8px 0 14px}
+.concept-label{font-size:12px;color:var(--muted);margin:0 0 5px}
 .card-body{padding:18px 18px 16px;display:flex;flex-direction:column;flex:1}
 .card h3{font:800 22px/1.15 var(--display);font-variation-settings:"SOFT" 100;margin:0 0 8px;letter-spacing:-.01em}
 .card p.why{margin:0 0 18px;font-size:15.5px;line-height:1.5;color:#4a3a3f;flex:1}
@@ -192,11 +195,17 @@ footer .brand{margin-bottom:18px;color:#fff6ea}
   .btn-gold{width:100%}
   .countdown{font-size:13px;padding:6px 11px}
 }
+@media (max-width:360px){
+  .brand{font-size:18px;gap:7px}
+  .brand svg{width:26px;height:26px}
+  .countdown{font-size:12px;padding:5px 9px}
+  .nav{gap:8px}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-<noscript><p style="padding:1rem;text-align:center;background:#fff3cd">ChristmasIdea needs JavaScript to find gift ideas. Please enable it and reload.</p></noscript>
+<noscript><p style="padding:1rem;text-align:center;background:#fff3cd">Santa's Helper needs JavaScript to find gift ideas. Please enable it and reload.</p></noscript>
 
 <header class="hero">
   <canvas id="snow" aria-hidden="true"></canvas>
@@ -220,7 +229,7 @@ footer .brand{margin-bottom:18px;color:#fff6ea}
     <nav class="nav" aria-label="Site">
       <a class="brand" href="/">
         <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="3" y="12" width="24" height="15" rx="3" fill="#fff6ea"/><rect x="2" y="8" width="26" height="6" rx="2" fill="#ffe3e4"/><rect x="13" y="8" width="4" height="19" fill="#f2b544"/><path d="M15 8c-2-5-8-5-7.5-1.5S13 8 15 8zm0 0c2-5 8-5 7.5-1.5S17 8 15 8z" fill="none" stroke="#f2b544" stroke-width="2"/></svg>
-        ChristmasIdea
+        Santa's Helper
       </a>
       <span class="countdown" id="countdown" hidden></span>
     </nav>
@@ -335,7 +344,7 @@ footer .brand{margin-bottom:18px;color:#fff6ea}
       <p class="recipient-insight-label">What we picked up</p>
       <p id="recipient-summary" class="recipient-summary"></p>
     </div>
-    <p class="disclosure"><strong>Ad.</strong> We earn a commission if you buy through these affiliate links, at no extra cost to you. <strong>As an Amazon Associate I earn from qualifying purchases.</strong> Photos are illustrative, not the exact products, so check product details, price and reviews on Amazon.</p>
+    <p class="disclosure"><strong>Ad.</strong> We earn a commission if you buy through these affiliate links, at no extra cost to you. <strong>As an Amazon Associate I earn from qualifying purchases.</strong> When a verified product is found, its photo and shopping link are for that same listing. Decorative placeholders are not product photos; check listing details, prices and reviews before buying.</p>
     <ul class="cards" id="cards"></ul>
     <div class="more">
       <button type="button" class="btn btn-outline" id="more">Show me different ideas</button>
@@ -362,9 +371,9 @@ footer .brand{margin-bottom:18px;color:#fff6ea}
 
 <footer>
   <div class="wrap">
-    <div class="brand">ChristmasIdea</div>
+    <div class="brand">Santa's Helper</div>
     <p>As an Amazon Associate I earn from qualifying purchases.</p>
-    <p>Gift ideas are suggestions generated automatically and may not suit everyone. Photos are illustrative stock images, not the exact products. Always check product details, age guidance and reviews on Amazon before you buy.</p>
+    <p>Gift ideas are suggestions generated automatically and may not suit everyone. Decorative placeholders are not product photos. Always check product details, age guidance and current prices on Amazon before you buy.</p>
     <p><a href="/gifts/">Gift guides</a> · <a href="/about">About and contact</a> · <a href="/privacy">Privacy</a></p>
   </div>
 </footer>
@@ -490,7 +499,7 @@ const tsReset = () => { try { if (tsWidget !== null) window.turnstile.reset(tsWi
 const apiOn = () => CFG.USE_API && location.protocol.startsWith("http");
 
 async function fetchIdeas(input){
-  if (!apiOn()) return { ideas: [], source: "none", notice: "Gift suggestions require the live ChristmasIdea service. Please open this page from the website." };
+  if (!apiOn()) return { ideas: [], source: "none", productDiscoveryEnabled: false, notice: "Gift suggestions require the live Santa's Helper service. Please open this page from the website." };
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 35000);
   try {
@@ -501,10 +510,13 @@ async function fetchIdeas(input){
     let data = {};
     try { data = await res.json(); } catch {}
     if (Array.isArray(data.ideas) && data.fallback) return {
-      ideas: data.ideas, source: "catalogue", notice: data.ideas.length ? data.error : (data.note || data.error)
+      ideas: data.ideas, source: "catalogue", productDiscoveryEnabled: data.product_discovery_enabled === true,
+      notice: data.ideas.length ? data.error : (data.note || data.error)
     };
     if (res.ok && Array.isArray(data.ideas) && data.ideas.length) return {
-      ideas: data.ideas, source: data.source || "ai", recipientSummary: typeof data.recipient_summary === "string" ? data.recipient_summary : ""
+      ideas: data.ideas, source: data.source || "ai",
+      recipientSummary: typeof data.recipient_summary === "string" ? data.recipient_summary : "",
+      productDiscoveryEnabled: data.product_discovery_enabled === true
     };
     if (res.ok) return { ideas: [], source: "none", notice: data.note || "We couldn't find enough suitable ideas. Try adding detail or adjusting the budget." };
     throw Object.assign(new Error(data.error || "Something went wrong. Try again."), { user: true });
@@ -514,20 +526,43 @@ async function fetchIdeas(input){
   } finally { clearTimeout(timer); tsReset(); }
 }
 
-const norm = (q) => String(q || "").toLowerCase().replace(/[^\p{L}\p{N} '&-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 40);
-
-async function fillPhotos(ideas){
-  const need = ideas.filter((i) => !i.image && i.photo);
-  if (!need.length || !apiOn()) return;
+function validAmazonProduct(product){
+  if (!product || product.provider !== "amazon" || !/^[A-Z0-9]{10}$/.test(product.asin || "")) return false;
+  if (product.productId !== product.asin || product.affiliateUrl !== product.productUrl) return false;
   try {
-    const res = await fetch("/api/photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ queries: need.map((i) => i.photo) }) });
+    const url = new URL(product.affiliateUrl);
+    const id = url.pathname.match(/^\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:\/|$)/i)?.[1];
+    return url.protocol === "https:" && ["amazon.co.uk","www.amazon.co.uk"].includes(url.hostname)
+      && id?.toUpperCase() === product.asin && url.searchParams.get("tag") === CFG.AMAZON_TAG;
+  } catch { return false; }
+}
+
+function validProductImage(url){
+  try {
+    const image = new URL(url);
+    return image.protocol === "https:" && ["m.media-amazon.com","images-eu.ssl-images-amazon.com"].includes(image.hostname);
+  } catch { return false; }
+}
+
+async function fillProducts(ideas){
+  if (!ideas.length || !apiOn()) return;
+  try {
+    const res = await fetch("/api/products", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ideas: ideas.map((idea) => ({
+        title: idea.title, query: idea.query, concept: idea.concept || idea.title, productSpec: idea.productSpec || {}
+      })) })
+    });
     if (!res.ok) return;
-    const { photos = {} } = await res.json();
-    for (const idea of need){
-      const p = photos[norm(idea.photo)];
-      if (p) { idea.image = p; const card = cardsByTitle.get(idea.title); if (card) setMedia(card, idea); }
+    const { products = [] } = await res.json();
+    for (const [index, product] of products.entries()){
+      if (!validAmazonProduct(product)) continue;
+      const card = cardsByTitle.get(ideas[index]?.title);
+      if (card) setVerifiedProduct(card, ideas[index], product);
     }
-  } catch {}
+  } catch {
+    console.warn("Product enrichment unavailable; showing gift placeholders.");
+  }
 }
 
 /* ---------- rendering ---------- */
@@ -536,27 +571,46 @@ const PAPERS = ["#8b1631","#17543f","#c88a17","#5a0c1f","#2b5d8a"];
 const GIFT_SVG = (paper) => `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="14" y="40" width="72" height="50" rx="5" fill="${paper}"/><rect x="10" y="28" width="80" height="16" rx="4" fill="${paper}" opacity=".85"/><rect x="45" y="28" width="10" height="62" fill="#f2b544"/><path d="M50 28c-6-14-24-15-22-5s16 5 22 5zm0 0c6-14 24-15 22-5s-16 5-22 5z" fill="none" stroke="#f2b544" stroke-width="5" stroke-linejoin="round"/></svg>`;
 const cardsByTitle = new Map();
 const isSaved = (t) => shortlist.some((x) => x.title === t);
-const ALLOWED_IMG = /^https:\/\/images\.pexels\.com\//, ALLOWED_PAGE = /^https:\/\/www\.pexels\.com\//;
 
-function setMedia(card, idea){
+function setVerifiedProduct(card, idea, product){
   const media = card.querySelector(".media");
-  const img = idea.image;
-  if (!img || !ALLOWED_IMG.test(img.src || "")) return;
-  const credit = document.createElement("a"); credit.className = "credit";
-  credit.href = ALLOWED_PAGE.test(img.url || "") ? img.url : "https://www.pexels.com";
-  credit.target = "_blank"; credit.rel = "noopener";
-  credit.textContent = `Illustrative photo: ${img.by || "Pexels"} / Pexels`;
+  const heading = card.querySelector("h3");
+  const shop = card.querySelector(".shop");
+  const disclosure = card.querySelector(".aff");
+  const note = media.querySelector(".image-note");
+  const badge = document.createElement("span"); badge.className = "product-badge"; badge.textContent = "Verified Amazon product";
+  media.append(badge);
+  heading.textContent = product.title;
+  const concept = document.createElement("p"); concept.className = "concept-label";
+  concept.textContent = `Gift idea: ${idea.title}`;
+  heading.before(concept);
+  shop.href = product.affiliateUrl;
+  shop.textContent = "View product on Amazon";
+  shop.setAttribute("aria-label", `View ${product.title} on Amazon (affiliate link, opens in new tab)`);
+  disclosure.textContent = "Ad · Verified Amazon product";
 
-  const el = document.createElement("img");
-  el.className = "loading"; el.alt = img.alt || idea.title; el.loading = "lazy"; el.decoding = "async";
-  el.src = img.srcSmall && ALLOWED_IMG.test(img.srcSmall) ? img.srcSmall : img.src;
-  if (img.srcSmall && ALLOWED_IMG.test(img.srcSmall)) el.srcset = `${img.srcSmall} 350w, ${img.src} 940w`;
-  el.sizes = "(max-width:760px) 100vw, 360px";
-  el.addEventListener("load", () => el.classList.remove("loading"));
-  el.addEventListener("error", () => { el.remove(); credit.remove(); });
-  media.prepend(el);
-  media.append(credit);
+  const retrieved = Date.parse(product.retrievedAt), expires = Date.parse(product.expiresAt);
+  if (product.price?.currency === "GBP" && Number.isFinite(Number(product.price.amount))
+      && Number.isFinite(retrieved) && Number.isFinite(expires) && retrieved <= Date.now() && expires > Date.now()) {
+    const price = document.createElement("p"); price.className = "product-price";
+    price.textContent = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(product.price.amount);
+    card.querySelector(".why").after(price);
+  }
 
+  if (!validProductImage(product.imageUrl)){
+    note.textContent = "Product photo unavailable";
+    return;
+  }
+  const link = document.createElement("a"); link.className = "product-image-link";
+  link.href = product.affiliateUrl; link.target = "_blank"; link.rel = "sponsored noopener";
+  link.setAttribute("aria-label", `View ${product.title} on Amazon (affiliate link, opens in new tab)`);
+  const image = document.createElement("img"); image.className = "loading";
+  image.alt = product.title; image.loading = "lazy"; image.decoding = "async";
+  image.src = product.imageUrl; image.sizes = "(max-width:760px) 100vw, 360px";
+  image.addEventListener("load", () => image.classList.remove("loading"));
+  image.addEventListener("error", () => { link.remove(); note.textContent = "Product photo unavailable"; });
+  link.append(image); media.prepend(link);
+  note.textContent = "Verified product image";
 }
 
 function renderCards(ideas){
@@ -566,7 +620,8 @@ function renderCards(ideas){
     const media = document.createElement("div"); media.className = "media";
     const ph = document.createElement("div"); ph.className = "ph"; ph.innerHTML = GIFT_SVG(PAPERS[idx % PAPERS.length]);
     const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = idea.category || "Gift idea";
-    media.append(ph, cat);
+    const imageNote = document.createElement("span"); imageNote.className = "image-note"; imageNote.textContent = "Illustrative placeholder";
+    media.append(ph, cat, imageNote);
     const body = document.createElement("div"); body.className = "card-body";
     const h = document.createElement("h3"); h.textContent = idea.title;
     const why = document.createElement("p"); why.className = "why"; why.textContent = idea.why;
@@ -584,7 +639,6 @@ function renderCards(ideas){
     li.append(media, body);
     ul.append(li);
     cardsByTitle.set(idea.title, li);
-    setMedia(li, idea);
   });
 }
 
@@ -663,7 +717,7 @@ async function run(input){
     if (out.notice) setStatus(out.notice, false);
     const title = $("#results-title"); title.focus({ preventScroll: true });
     title.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-    fillPhotos(out.ideas);
+    if (out.productDiscoveryEnabled) fillProducts(out.ideas);
   } catch (err){
     setStatus(err.message, true);
   } finally {

@@ -51,4 +51,28 @@ test("Worker sets CSP and HSTS headers and locks framing", async () => {
   assert.match(src, /Content-Security-Policy/);
   assert.match(src, /frame-ancestors 'none'/);
   assert.match(src, /object-src 'none'/);
+  assert.match(src, /https:\/\/m\.media-amazon\.com/);
+  assert.doesNotMatch(src, /images\.pexels\.com/);
+});
+
+test("product cards link the verified image and shopping button to the same Amazon listing", async () => {
+  const html = await read("index.html");
+  assert.match(html, /\/api\/products/);
+  assert.match(html, /link\.href = product\.affiliateUrl/);
+  assert.match(html, /shop\.href = product\.affiliateUrl/);
+  assert.match(html, /heading\.textContent = product\.title/);
+  assert.match(html, /product\.price\?\.currency === "GBP"/);
+  assert.match(html, /object-fit:contain/);
+  assert.match(html, /loading = "lazy"/);
+  assert.match(html, /decoding = "async"/);
+  assert.match(html, /Illustrative placeholder/);
+  assert.match(html, /Product photo unavailable/);
+  assert.doesNotMatch(html, /api\/photos|pexels\.com|images\.pexels\.com/i);
+});
+
+test("site privacy text describes optional Amazon product search without Pexels processing", async () => {
+  const privacy = await read("privacy.html");
+  assert.match(privacy, /Optional product discovery/);
+  assert.match(privacy, /one hour/);
+  assert.doesNotMatch(privacy, /Pexels/i);
 });

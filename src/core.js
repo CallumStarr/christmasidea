@@ -6,6 +6,7 @@ import { GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage } from "./pr
 import { VALIDATOR_VERSION, curateIdeas, sanitiseIdeas } from "./validate.js";
 import { cleanText } from "./text.js";
 import { catalogueFallback } from "./catalogue.js";
+import { productDiscoveryAvailable, searchProductsForIdeas } from "./product-search.js";
 
 export { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS };
 export { GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
@@ -207,100 +208,6 @@ export async function callClaudeDetailed(input, env, fetchImpl) {
   return { output: block.input, stopReason, truncated: stopReason === "max_tokens", usage: data.usage || {} };
 }
 
-/* ------------------------- Photos (Pexels) -------------------------
-   Amazon product photos may only be shown via Amazon's Creators API, which needs
-   an established Associates account, so we use free Pexels stock photos instead.
-   Results are cached for a week, and a Durable Object keeps us under Pexels'
-   hourly limit (default 200/hour), so we never hit it. */
-
-const PHOTO_TTL = 7 * 24 * 3600;
-const PEXELS_IMG = /^https:\/\/images\.pexels\.com\//;
-const PEXELS_PAGE = /^https:\/\/www\.pexels\.com\//;
-const QUERY_ALLOWED = /[^\p{L}\p{N} '&-]/gu;
-
-export function normalisePhotoQuery(q) {
-  return cleanText(String(q || "").toLowerCase().replace(QUERY_ALLOWED, " "), 40);
-}
-
-function photoCacheKey(q) {
-  return new Request(`https://cache.gift-helper.internal/photo/v1/${encodeURIComponent(q)}`);
-}
-
-export function pickPhoto(data, q) {
-  const p = data && Array.isArray(data.photos) ? data.photos[0] : null;
-  if (!p || !p.src) return null;
-  const photo = {
-    src: p.src.large,
-    srcSmall: p.src.medium,
-    alt: cleanText(p.alt || q, 120),
-    by: cleanText(p.photographer || "Pexels photographer", 60),
-    byUrl: p.photographer_url,
-    url: p.url,
-  };
-  if (!PEXELS_IMG.test(photo.src || "") || !PEXELS_IMG.test(photo.srcSmall || "")) return null;
-  if (!PEXELS_PAGE.test(photo.url || "")) return null;
-  if (!PEXELS_PAGE.test(photo.byUrl || "")) photo.byUrl = photo.url;
-  return photo;
-}
-
-async function cachedPhoto(q, deps) {
-  if (!deps.cache) return undefined;
-  try {
-    const hit = await deps.cache.match(photoCacheKey(q));
-    if (!hit) return undefined;
-    const data = await hit.json();
-    return data.photo || null; // null = we looked before and found nothing
-  } catch {
-    return undefined;
-  }
-}
-
-async function fetchPhoto(q, env, deps) {
-  try {
-    const u = new URL("https://api.pexels.com/v1/search");
-    u.searchParams.set("query", q);
-    u.searchParams.set("per_page", "1");
-    u.searchParams.set("orientation", "landscape");
-    const res = await deps.fetch(u.toString(), {
-      headers: { Authorization: env.PEXELS_API_KEY },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return undefined; // don't cache failures or rate limits
-    const photo = pickPhoto(await res.json(), q);
-    if (deps.cache) {
-      const p = deps.cache
-        .put(photoCacheKey(q), new Response(JSON.stringify({ photo }), {
-          headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${PHOTO_TTL}` },
-        }))
-        .catch(() => {});
-      if (deps.waitUntil) deps.waitUntil(p);
-    }
-    return photo;
-  } catch {
-    return undefined;
-  }
-}
-
-/** Returns a map of normalised query -> photo object or null. */
-export async function photosFor(queries, ipHash, env, deps) {
-  const out = {};
-  if (!env.PEXELS_API_KEY || !deps.photoBudget) return out;
-  const unique = [...new Set(queries.map(normalisePhotoQuery).filter((q) => q.length >= 2))].slice(0, 10);
-  const misses = [];
-  for (const q of unique) {
-    const c = await cachedPhoto(q, deps);
-    if (c === undefined) misses.push(q);
-    else out[q] = c;
-  }
-  if (misses.length) {
-    const allowed = await deps.photoBudget.take(ipHash, misses.length);
-    const batch = misses.slice(0, Math.max(0, allowed));
-    const found = await Promise.all(batch.map((q) => fetchPhoto(q, env, deps)));
-    batch.forEach((q, i) => { if (found[i] !== undefined) out[q] = found[i]; });
-  }
-  return out;
-}
-
 async function visitorHash(request, env) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   const day = new Date().toISOString().slice(0, 10);
@@ -311,7 +218,7 @@ async function visitorHash(request, env) {
  * deps = {
  *   fetch: fetch implementation,
  *   budget: { consume(ipHash) -> Promise<{ok:boolean, reason?:string}> },
- *   photoBudget: { take(ipHash, n) -> Promise<number> }  (how many Pexels calls are allowed now)
+ *   productBudget: { take(ipHash, n) -> Promise<number> }  (how many product API calls are allowed)
  *   cache: optional Cache (caches.default),
  *   waitUntil: optional fn
  * }
@@ -324,14 +231,6 @@ async function readJson(request, max) {
   } catch {
     return { error: "Send the form as JSON.", status: 400 };
   }
-}
-
-async function withPhotos(ideas, ipHash, env, deps) {
-  const photos = await photosFor(ideas.map((i) => i.photo || i.title), ipHash, env, deps);
-  return ideas.map((i) => {
-    const photo = photos[normalisePhotoQuery(i.photo || i.title)];
-    return photo ? { ...i, image: photo } : i;
-  });
 }
 
 // Counts of rejected/repaired/warned checks only. Never includes shopper text or model output.
@@ -348,7 +247,7 @@ function logCuration(diagnostics, stopReason) {
   }));
 }
 
-function fallbackResponse(input, message, status, origin) {
+function fallbackResponse(input, message, status, origin, env) {
   const result = catalogueFallback(input);
   logCuration(result.diagnostics, "catalogue_fallback");
   return json({
@@ -357,6 +256,7 @@ function fallbackResponse(input, message, status, origin) {
     source: "catalogue",
     ideas: result.ideas,
     shortfall: result.diagnostics.shortfall,
+    product_discovery_enabled: productDiscoveryAvailable(env),
     note: result.ideas.length ? "" : "We don't have enough verified catalogue ideas for this recipient and budget. Try adding detail or adjusting the budget.",
   }, status, origin);
 }
@@ -369,19 +269,19 @@ export async function handleRequest(request, env, deps) {
     return new Response(null, { status: origin ? 204 : 403, headers: corsHeaders(origin) });
   }
   if (url.pathname === "/api/health") return json({ ok: true }, 200, origin);
-  if (url.pathname !== "/api/ideas" && url.pathname !== "/api/photos") return json({ error: "Not found" }, 404, origin);
+  if (url.pathname !== "/api/ideas" && url.pathname !== "/api/products") return json({ error: "Not found" }, 404, origin);
   if (request.method !== "POST") return json({ error: "Use POST." }, 405, origin);
   if (!origin) return json({ error: "This site isn't allowed to use the API." }, 403, null);
 
   const { ip, hash: ipHash } = await visitorHash(request, env);
 
-  /* ---- photos for AI and catalogue ideas ---- */
-  if (url.pathname === "/api/photos") {
-    const r = await readJson(request, 4000);
+  /* ---- optional, verified product enrichment ---- */
+  if (url.pathname === "/api/products") {
+    const r = await readJson(request, 12000);
     if (r.error) return json({ error: r.error }, r.status, origin);
-    const queries = Array.isArray(r.body && r.body.queries) ? r.body.queries.slice(0, 10).map(String) : [];
-    const photos = await photosFor(queries, ipHash, env, deps);
-    return json({ photos }, 200, origin);
+    if (!Array.isArray(r.body?.ideas)) return json({ error: "Send product ideas as a list." }, 400, origin);
+    const result = await searchProductsForIdeas(r.body.ideas, env, deps, ipHash);
+    return json(result, 200, origin);
   }
 
   /* ---- AI ideas and recipient-aware catalogue fallback ---- */
@@ -391,7 +291,7 @@ export async function handleRequest(request, env, deps) {
   if (!parsed.ok) return json({ error: parsed.error }, 400, origin);
   const input = parsed.value;
   if (!env.ANTHROPIC_API_KEY) {
-    return fallbackResponse(input, "AI recommendations are temporarily unavailable. Here are catalogue suggestions checked against your answers.", 503, origin);
+    return fallbackResponse(input, "AI recommendations are temporarily unavailable. Here are catalogue suggestions checked against your answers.", 503, origin, env);
   }
 
   const human = await verifyTurnstile(parsed.token, ip, env, deps.fetch);
@@ -400,14 +300,13 @@ export async function handleRequest(request, env, deps) {
   // Identical requests are served from cache and cost nothing. The key covers everything that
   // changes the answer: prompt, validator rules, model and the visitor's input.
   const cacheKeyHash = await sha256Hex(JSON.stringify([PROMPT_VERSION, VALIDATOR_VERSION, env.MODEL || "", generationFingerprint(env), input]));
-  const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v5/${cacheKeyHash}`);
+  const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v6/${cacheKeyHash}`);
   if (deps.cache) {
     try {
       const hit = await deps.cache.match(cacheKey);
       if (hit) {
         const data = await hit.json();
-        const ideas = await withPhotos(data.ideas || [], ipHash, env, deps);
-        return json({ ...data, ideas, cached: true }, 200, origin);
+        return json({ ...data, product_discovery_enabled: productDiscoveryAvailable(env), cached: true }, 200, origin);
       }
     } catch {}
   }
@@ -417,7 +316,7 @@ export async function handleRequest(request, env, deps) {
     if (allowance.reason === "burst") {
       return json({ error: "That's a lot of requests in a row. Give it a minute and try again.", fallback: false, reason: allowance.reason }, 429, origin);
     }
-    return fallbackResponse(input, "Our AI helper has reached today's limit. Here are catalogue suggestions checked against your answers.", 429, origin);
+    return fallbackResponse(input, "Our AI helper has reached today's limit. Here are catalogue suggestions checked against your answers.", 429, origin, env);
   }
 
   let result;
@@ -429,10 +328,10 @@ export async function handleRequest(request, env, deps) {
     logCuration(result.diagnostics, call.stopReason);
   } catch (err) {
     console.error("Claude call failed", err && err.status, err && err.detail, String(err));
-    return fallbackResponse(input, "Our AI helper is busy right now. Here are catalogue suggestions checked against your answers.", 502, origin);
+    return fallbackResponse(input, "Our AI helper is busy right now. Here are catalogue suggestions checked against your answers.", 502, origin, env);
   }
   if (truncated && !result.ideas.length) {
-    return fallbackResponse(input, "Our AI response was incomplete. Here are catalogue suggestions checked against your answers.", 502, origin);
+    return fallbackResponse(input, "Our AI response was incomplete. Here are catalogue suggestions checked against your answers.", 502, origin, env);
   }
 
   const payload = {
@@ -440,6 +339,7 @@ export async function handleRequest(request, env, deps) {
     note: result.note,
     recipient_summary: result.recipientSummary,
     source: "ai",
+    product_discovery_enabled: productDiscoveryAvailable(env),
     prompt_version: PROMPT_VERSION,
     shortfall: result.diagnostics.shortfall,
   };
@@ -454,8 +354,7 @@ export async function handleRequest(request, env, deps) {
       .catch(() => {});
     if (deps.waitUntil) deps.waitUntil(p);
   }
-  const ideas = await withPhotos(payload.ideas, ipHash, env, deps);
-  return json({ ...payload, ideas }, 200, origin);
+  return json(payload, 200, origin);
 }
 
 /** Returns a 301 to the canonical host for www or other aliases, otherwise null. */

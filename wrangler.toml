@@ -35,10 +35,16 @@ DAILY_AI_LIMIT = "500"
 # Per-visitor caps (visitor = hashed IP, rotated daily; raw IPs are never stored).
 PER_VISITOR_DAILY_LIMIT = "15"
 PER_VISITOR_MINUTE_LIMIT = "4"
-# Pexels allows 200 photo searches an hour by default; stay safely under it.
-# If Pexels raises your limit, raise this to match.
-PHOTO_HOURLY_LIMIT = "180"
-PHOTO_PER_VISITOR_MINUTE_LIMIT = "30"
+# Product discovery remains disabled until Amazon Creators API access, credentials and policy approval are in place.
+PRODUCT_DISCOVERY_ENABLED = "false"
+AMAZON_PARTNER_TAG = "mcstarrstud0c-21"
+PRODUCT_API_TIMEOUT_MS = "8000"
+PRODUCT_SEARCH_HOURLY_LIMIT = "120"
+PRODUCT_SEARCH_PER_SECOND_LIMIT = "1"
+PRODUCT_SEARCH_PER_VISITOR_DAILY_LIMIT = "32"
+PRODUCT_SEARCH_PER_VISITOR_MINUTE_LIMIT = "16"
+PRODUCT_MATCH_HIGH_THRESHOLD = "0.78"
+PRODUCT_MATCH_MEDIUM_THRESHOLD = "0.55"
 
 [[durable_objects.bindings]]
 name = "BUDGET"
