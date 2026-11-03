@@ -17,7 +17,7 @@ If the AI is unavailable or its daily cap is reached, the Worker selects from `s
 ## Before you publish (checklist)
 
 1. Rotate the Anthropic key and keep keys out of the project folder (set `ANTHROPIC_API_KEY` as an environment variable or Wrangler secret only).
-2. Replace the notices in `site/about.html` and `site/privacy.html` with your real name, geographic address and contact email. Register with the ICO if required.
+2. Legal pages are filled in (name, address, email). Check you are happy for your home address to be public; a virtual office or PO-style business address is an alternative, but it must still be a geographic address where you can be reached. Register with the ICO if required.
 3. `npm test` and `npx wrangler deploy --dry-run` must pass.
 4. Re-run the five-case smoke test and review the actual recommendations (see the benchmark section), then the full 30-case run.
 5. Set a monthly spend limit in the Anthropic console. `DAILY_AI_LIMIT` is 500 for launch (at about $0.0015 a call that is roughly $0.75 a day, or about $25 a month in the worst case); raise it once traffic and quality justify it. Over the cap, visitors get the recipient-aware fallback.
