@@ -1,4 +1,4 @@
-# ChristmasIdea — completed blind evaluation
+# Santa's Helper — completed blind evaluation
 
 **Evaluation method:** all 60 recommendation sets were scored before model identities were resolved. The review CSV retained Model A/Model B labels. After scoring, identities were derived using the benchmark runner’s documented deterministic per-case `stableBlindLabel` function; the blind key itself was not opened.
 
