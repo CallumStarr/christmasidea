@@ -12,7 +12,7 @@ const okBudget = { consume: async () => ({ ok: true }) };
 
 const input = (description) => normaliseInput({ mode: "describe", description }).value;
 const idea = (title, query, why, extra = {}) => ({
-  title, concept: title, why, search_query: query, photo_query: query, category: "Hobbies & crafts",
+  title, concept: title, why, search_query: query, category: "Hobbies & crafts",
   angle: "practical", estimated_max_price_gbp: 20, ...extra,
 });
 const wrap = (ideas, summary = "A keen gardener.") => ({ recipient_summary: summary, ideas });
@@ -42,7 +42,7 @@ test("API: ten valid candidates give eight frontend-compatible ideas plus additi
   assert.equal(res.status, 200);
   assert.equal(data.ideas.length, 8);
   assert.equal(data.source, "ai");
-  assert.equal(data.prompt_version, "gift-curator-v3.1");
+  assert.equal(data.prompt_version, "gift-curator-v3.3");
   assert.equal(data.shortfall, false);
   assert.equal(typeof data.recipient_summary, "string");
   for (const i of data.ideas) {

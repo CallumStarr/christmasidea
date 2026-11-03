@@ -4,11 +4,11 @@
 
 import { AGE_BANDS, ANGLES, BUDGETS, BUDGET_SCOPES, CATEGORIES, LABELS } from "./constants.js";
 
-export const PROMPT_VERSION = "gift-curator-v3.1";
+export const PROMPT_VERSION = "gift-curator-v3.3";
 export const CANDIDATE_COUNT = 10; // best 8 are shown; the rest are replacements for any idea that fails validation
 export const SHOWN_COUNT = 8;
 
-const ROLE = `You are ChristmasIdea's expert gift curator. You help people in the United Kingdom find thoughtful, relevant gifts that they can search for on Amazon UK.
+const ROLE = `You are Santa's Helper's expert gift curator. You help people in the United Kingdom find thoughtful, relevant gifts that they can search for at a UK retailer.
 
 You produce gift CONCEPTS (a type of product to search for), not verified listings. You never claim that a product, price or availability has been checked.`;
 
@@ -51,9 +51,10 @@ const VARIETY = `STEP 5 - ORIGINALITY AND VARIETY
 - Relevance always beats novelty. An odd idea that does not suit this person is a bad idea. Start with the stated interests, then widen to related ones.
 - Order by overall strength: best matches first, more adventurous ones later.`;
 
-const SEARCH = `STEP 6 - AMAZON SEARCH QUERY (search_query)
-- 2 to 6 plain lowercase words naming the product type and its key characteristic (material, size class, skill level, age group, use). It must match the title and description.
-- Describe the concept, not a brand or model. No marketing words (best, perfect, luxury, premium), no "gift", "present", "for him/her", occasion words, prices or punctuation.
+const SEARCH = `STEP 6 - PRODUCT SEARCH QUERY (search_query)
+- 2 to 6 plain lowercase words naming the actual product type and its key characteristic (material, size class, skill level, age group, use). It must match the title and description, not merely the recipient's hobby.
+- Put only explicitly requested must-have size, model, edition or variant details in product_spec.required_variants. Do not infer them from age or interests.
+- Describe the concept, not a brand or model unless the shopper explicitly requested that brand. No marketing words (best, perfect, luxury, premium), no "gift", "present", "for him/her", occasion words, prices or punctuation.
 - Reflect budget through the product tier (for example "beginner" or "starter") rather than with numbers.
 - Make every query clearly different from the others.`;
 
@@ -64,7 +65,11 @@ const OUTPUT = `OUTPUT RULES
 - why: one or two warm, specific sentences, max 35 words, about why this suits this person. Refer only to supported facts. Phrase anything uncertain as a possibility ("could suit", "if they ...") rather than a fact. No safety or certification claims and no age ratings.
 - based_on: the stated fact or interest this idea is built on, or "versatile".
 - angle: one of ${ANGLES.join(", ")}.
-- photo_query: 1 to 3 simple words for an illustrative stock photo. No brands.
+- product_spec.required_features: only features the shopper explicitly requires. Return an empty list if there are none.
+- product_spec.preferred_features: up to 3 concrete features that materially distinguish this concept and can be checked in a retailer's product details. Do not invent personal preferences.
+- product_spec.preferred_colour: a colour only if the shopper explicitly requested it; otherwise empty string.
+- product_spec.brand_preference: a brand only if the shopper explicitly requested it; otherwise empty string.
+- product_spec.personalisation_required: true only when the shopper explicitly requires personalisation or engraving.
 - category: the closest from the schema.
 - note: optional short message to the shopper. Use it for a useful caution (for example "check the age guidance on the listing") or if you could return no suitable ideas. If there is nothing safe or useful to recommend, return an empty ideas list and explain briefly.`;
 
@@ -113,11 +118,23 @@ export const GIFT_TOOL = {
             based_on: { type: "string", description: "The stated fact or interest this idea is built on, or 'versatile'." },
             angle: { type: "string", enum: ANGLES },
             estimated_max_price_gbp: { type: "integer", description: "Private estimate of the upper end of normal UK prices for this exact version, in whole pounds. Never shown to the shopper." },
-            search_query: { type: "string", description: "2 to 6 lowercase words for an Amazon UK search. Product type and key characteristic, no brand, price or marketing words." },
-            photo_query: { type: "string", description: "1 to 3 word stock photo search, no brands." },
+            search_query: { type: "string", description: "2 to 6 lowercase words describing the actual product type and key characteristic, not just the recipient's hobby." },
+            product_spec: {
+              type: "object",
+              description: "Optional matching criteria grounded in the shopper's request.",
+              properties: {
+                required_features: { type: "array", items: { type: "string" }, description: "Only explicitly requested must-have product features; empty if none." },
+                required_variants: { type: "array", items: { type: "string" }, description: "Only explicitly requested size, model, edition or variant requirements; empty if none." },
+                preferred_features: { type: "array", items: { type: "string" }, description: "Up to three relevant searchable product features." },
+                preferred_colour: { type: "string", description: "Explicitly requested colour, or empty string." },
+                brand_preference: { type: "string", description: "Explicitly requested brand, or empty string." },
+                personalisation_required: { type: "boolean", description: "True only if the shopper explicitly requires personalisation." },
+              },
+              required: ["required_features", "required_variants", "preferred_features", "preferred_colour", "brand_preference", "personalisation_required"],
+            },
             category: { type: "string", enum: CATEGORIES },
           },
-          required: ["title", "concept", "why", "based_on", "angle", "estimated_max_price_gbp", "search_query", "photo_query", "category"],
+          required: ["title", "concept", "why", "based_on", "angle", "estimated_max_price_gbp", "search_query", "product_spec", "category"],
         },
       },
       note: { type: "string", description: "Optional short note to the shopper." },

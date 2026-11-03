@@ -12,7 +12,7 @@ import {
 } from "./rules.js";
 import { cleanText, contentStems, jaccard, sentences, stem, stemSet, words } from "./text.js";
 
-export const VALIDATOR_VERSION = "validator-v2";
+export const VALIDATOR_VERSION = "validator-v4";
 export const MAX_IDEAS = 8;
 
 const QUERY_ALLOWED = /[^\p{L}\p{N} '&-]/gu;
@@ -21,6 +21,26 @@ const UPGRADE_WORDS = /\b(upgrade|replacement|refill|spare|top-?up)\b/i;
 const NEGATED_SERVICE = /\b(?:subscriptions?|memberships?)\s+(?:alternative|free)\b|\b(?:no|non|without|instead of|alternative to)[- ](?:a |an )?(?:subscriptions?|memberships?)\b/gi;
 const GENERIC_LABEL = new Set(["gift", "set", "kit", "pack", "box", "mini", "travel", "small", "pair", "collection", "tin", "bundle"].map(stem));
 const THRESHOLDS = { duplicateConcept: 0.6, duplicateQuery: 0.75, maxPerCategory: 4, maxPerAngle: 3, maxPerProductType: 2 };
+
+function productSpecOf(candidate, context = null) {
+  const raw = candidate.productSpec || {};
+  const list = (value) => Array.isArray(value)
+    ? value.slice(0, 4).map((item) => cleanText(item, 80)).filter(Boolean)
+    : [];
+  const budgetMax = context?.budget.max ?? null;
+  const limits = [candidate.estMax, budgetMax].filter((value) => Number.isFinite(value) && value > 0);
+  return {
+    requiredFeatures: list(raw.required_features ?? raw.requiredFeatures),
+    requiredVariants: list(raw.required_variants ?? raw.requiredVariants),
+    preferredFeatures: list(raw.preferred_features ?? raw.preferredFeatures),
+    preferredColour: cleanText(raw.preferred_colour ?? raw.preferredColour, 40),
+    brandPreference: cleanText(raw.brand_preference ?? raw.brandPreference, 60),
+    personalisationRequired: raw.personalisation_required === true || raw.personalisationRequired === true,
+    recipientAgeBand: context?.ageBand || "unknown",
+    maxPriceGbp: limits.length ? Math.min(...limits) : null,
+    budgetMaxGbp: budgetMax,
+  };
+}
 
 /* ---------- structural normalisation (shared with the legacy sanitiser) ---------- */
 
@@ -44,9 +64,9 @@ export function normaliseCandidates(raw) {
       title,
       why,
       rawQuery,
-      photo: cleanText(String(item.photo_query || "").replace(QUERY_ALLOWED, " "), 40) || title,
       category: CATEGORIES.find((c) => c.toLowerCase() === String(item.category || "").trim().toLowerCase()) || "Home",
       concept: cleanText(item.concept, 60),
+      productSpec: item.product_spec && typeof item.product_spec === "object" ? item.product_spec : {},
       angle: ANGLES.find((a) => a.toLowerCase() === String(item.angle || "").trim().toLowerCase()) || "",
       basedOn: cleanText(item.based_on, 100),
       estMax: Number.isFinite(est) && est > 0 ? est : null,
@@ -73,7 +93,14 @@ export function sanitiseIdeas(raw, exclude = []) {
     if (seen.has(key) || seenQueries.has(queryKey)) continue;
     seen.add(key);
     seenQueries.add(queryKey);
-    ideas.push({ title: c.title, why: c.why, query: c.rawQuery, photo: c.photo, category: c.category });
+    ideas.push({
+      title: c.title,
+      why: c.why,
+      query: c.rawQuery,
+      concept: c.concept || c.title,
+      category: c.category,
+      productSpec: productSpecOf(c),
+    });
     if (ideas.length >= MAX_IDEAS) break;
   }
   return { ideas, note: noteOf(raw), recipientSummary: summaryOf(raw) };
@@ -393,7 +420,14 @@ export function curateIdeas(raw, input, opts = {}) {
   }
   chosen.sort((a, b) => a.index - b.index);
 
-  const ideas = chosen.map((i) => ({ title: i.title, why: i.why, query: i.query, photo: i.photo, category: i.category }));
+  const ideas = chosen.map((i) => ({
+    title: i.title,
+    why: i.why,
+    query: i.query,
+    concept: i.concept || i.title,
+    category: i.category,
+    productSpec: productSpecOf(i, ctx),
+  }));
   let note = noteOf(raw);
   if (note && (INJECTION_ECHO.test(note) || /https?:|www\./i.test(note) || (ctx && /£\s?\d/.test(note) && ![...note.matchAll(/£\s?(\d+)/g)].every((m) => ctx.text.includes(m[1]))))) {
     note = "";

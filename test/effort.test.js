@@ -19,7 +19,7 @@ const req = (body) => new Request("https://api.example.com/api/ideas", {
   body: JSON.stringify(body),
 });
 const idea = (t, q, why = "Useful and relevant.") => ({
-  title: t, concept: t, why, search_query: q, photo_query: q, category: "Home", angle: "practical", estimated_max_price_gbp: 20,
+  title: t, concept: t, why, search_query: q, category: "Home", angle: "practical", estimated_max_price_gbp: 20,
 });
 const rejectionCodes = (result) => result.diagnostics.rejected.flatMap((entry) => entry.codes);
 

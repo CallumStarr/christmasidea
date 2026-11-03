@@ -26,9 +26,9 @@ export const MODELS = {
   sonnet: { id: "claude-sonnet-5-5", label: "Claude Sonnet 5.5", input: 2.00, output: 10.00, forceTool: false },
 };
 
-// Protocol 3: Haiku is benchmarked with exactly the production request (forced strict tool, shared
+// Protocol 4: Haiku is benchmarked with exactly the production request (forced strict tool, shared
 // thinking/effort/limit). Sonnet 5.5 cannot force a tool, so it alone uses tool_choice=auto.
-export const BENCHMARK_PROTOCOL_VERSION = 3;
+export const BENCHMARK_PROTOCOL_VERSION = 4;
 
 export const BENCHMARK_GIFT_TOOL = STRICT_GIFT_TOOL;
 
@@ -108,12 +108,10 @@ export function assessOutput(raw, caseInput) {
     const title = String(item.title || "").trim();
     const why = String(item.why || "").trim();
     const query = String(item.search_query || "").trim().toLowerCase();
-    const photo = String(item.photo_query || "").trim();
     if (!title || !why || !query) flags.push(`idea_${index + 1}_missing_required_text`);
     if (title.length > 60) flags.push(`idea_${index + 1}_title_over_60_chars`);
     if (wordCount(why) > 35) flags.push(`idea_${index + 1}_why_over_35_words`);
     if (wordCount(query) < 2 || wordCount(query) > 6) flags.push(`idea_${index + 1}_search_query_not_2_to_6_words`);
-    if (wordCount(photo) < 1 || wordCount(photo) > 3) flags.push(`idea_${index + 1}_photo_query_not_1_to_3_words`);
     if (titles.has(title.toLowerCase())) flags.push("duplicate_title");
     if (queries.has(query)) flags.push("duplicate_search_query");
     titles.add(title.toLowerCase());
@@ -159,7 +157,7 @@ export function renderReviewCsv(results, cases, key) {
       ? c.input.description
       : [c.input.relation, c.input.age, c.input.budget, c.input.occasion, c.input.interests, c.input.about].filter(Boolean).join(" | ");
     const focus = (c.evaluation_focus || []).join("; ");
-    const ideas = (result.output?.ideas || []).map((idea, i) => `${i + 1}. ${idea.title} — ${idea.why} [Amazon search: ${idea.search_query || idea.query || ""}]`).join("\n");
+    const ideas = (result.output?.ideas || []).map((idea, i) => `${i + 1}. ${idea.title} — ${idea.why} [Product search: ${idea.search_query || idea.query || ""}]`).join("\n");
     const warnings = [...(result.auto_flags || [])];
     const generated = Array.isArray(result.raw_output?.ideas) ? result.raw_output.ideas.length : null;
     if (generated !== null && generated !== 10) {
@@ -269,7 +267,7 @@ async function callWithRetry(model, message) {
 }
 
 function printHelp() {
-  console.log(`ChristmasIdea benchmark (prompt ${PROMPT_VERSION}, default model: Haiku 5.5 only)\n\nDry run (no API calls):\n  npm run benchmark\n\nLive run (one call per case per model):\n  $env:ANTHROPIC_API_KEY="..."; npm run benchmark -- --live --confirm-cost --models=haiku\n\nSmall live smoke test:\n  npm run benchmark -- --live --confirm-cost --models=haiku --limit=5\n\nOptions:\n  --models=haiku,sonnet  Select models (default: haiku)\n  --case=case-01          Run a specific case (repeatable)\n  --limit=5               Run the first N cases\n  --resume=<results.json> Continue an interrupted run\n  --output=<directory>   Choose a run output directory\n  --live                  Actually call Anthropic\n  --confirm-cost          Required alongside --live\n\nResponses cut off at the token limit are recorded with status "truncated", never as ordinary successes.\nThe live run writes benchmark-results.json, review-template.csv and blind-key.json.\nFor the blind v2-vs-v3 comparison use: npm run benchmark:compare -- --help\nNo model is changed in the production Worker.`);
+  console.log(`Santa's Helper benchmark (prompt ${PROMPT_VERSION}, default model: Haiku 5.5 only)\n\nDry run (no API calls):\n  npm run benchmark\n\nLive run (one call per case per model):\n  $env:ANTHROPIC_API_KEY="..."; npm run benchmark -- --live --confirm-cost --models=haiku\n\nSmall live smoke test:\n  npm run benchmark -- --live --confirm-cost --models=haiku --limit=5\n\nOptions:\n  --models=haiku,sonnet  Select models (default: haiku)\n  --case=case-01          Run a specific case (repeatable)\n  --limit=5               Run the first N cases\n  --resume=<results.json> Continue an interrupted run\n  --output=<directory>   Choose a run output directory\n  --live                  Actually call Anthropic\n  --confirm-cost          Required alongside --live\n\nResponses cut off at the token limit are recorded with status "truncated", never as ordinary successes.\nThe live run writes benchmark-results.json, review-template.csv and blind-key.json.\nFor the blind v2-vs-v3 comparison use: npm run benchmark:compare -- --help\nNo model is changed in the production Worker.`);
 }
 
 async function main() {
@@ -289,7 +287,7 @@ async function main() {
 
   const selectedModels = args.models.map((key) => ({ key, ...MODELS[key] }));
   const planned = cases.length * selectedModels.length;
-  console.log(`\nChristmasIdea benchmark · prompt ${PROMPT_VERSION} · protocol ${BENCHMARK_PROTOCOL_VERSION}`);
+  console.log(`\nSanta's Helper benchmark · prompt ${PROMPT_VERSION} · protocol ${BENCHMARK_PROTOCOL_VERSION}`);
   console.log(`Cases: ${cases.length} / ${allCases.length} | Models: ${selectedModels.map((m) => m.label).join(", ")} | Planned calls: ${planned}`);
   for (const model of selectedModels) console.log(`  ${model.label}: $${model.input.toFixed(2)} input / $${model.output.toFixed(2)} output per million tokens`);
 

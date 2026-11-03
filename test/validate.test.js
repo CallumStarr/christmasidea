@@ -4,7 +4,7 @@ import { normaliseInput, curateIdeas, PROMPT_VERSION, VALIDATOR_VERSION } from "
 
 const input = (description) => normaliseInput({ mode: "describe", description }).value;
 const idea = (title, query, why, extra = {}) => ({
-  title, concept: title, why, search_query: query, photo_query: query, category: "Hobbies & crafts",
+  title, concept: title, why, search_query: query, category: "Hobbies & crafts",
   angle: "practical", estimated_max_price_gbp: 20, ...extra,
 });
 const wrap = (ideas, summary = "A keen gardener.") => ({ recipient_summary: summary, ideas });
@@ -13,8 +13,27 @@ const codes = (r) => r.diagnostics.issues.map((i) => `${i.action}:${i.code}`);
 const GARDEN = input("My aunt is 60 and loves gardening and tea. Budget £25.");
 
 test("prompt version and validator version are exposed for cache/benchmark keys", () => {
-  assert.equal(PROMPT_VERSION, "gift-curator-v3.1");
+  assert.equal(PROMPT_VERSION, "gift-curator-v3.3");
   assert.ok(VALIDATOR_VERSION);
+});
+
+test("product discovery receives explicit variants and server-derived recipient age", () => {
+  const raw = wrap([
+    idea("Pruning shears", "pruning shears", "A useful tool for her gardening.", {
+      product_spec: {
+        required_features: [],
+        required_variants: ["8 inch"],
+        preferred_features: [],
+        preferred_colour: "",
+        brand_preference: "",
+        personalisation_required: false,
+      },
+    }),
+  ]);
+  const result = curateIdeas(raw, GARDEN);
+  assert.equal(result.ideas.length, 1);
+  assert.deepEqual(result.ideas[0].productSpec.requiredVariants, ["8 inch"]);
+  assert.equal(result.ideas[0].productSpec.recipientAgeBand, "adult");
 });
 
 test("ideal ideas pass through and are capped at eight", () => {

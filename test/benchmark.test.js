@@ -30,9 +30,9 @@ test("automatic assessment flags duplicated and malformed outputs", () => {
   const output = {
     recipient_summary: "A keen coffee fan with an interest in baking.",
     ideas: [
-      { title: "Coffee tasting set", why: "A varied sampler for someone exploring coffee." , search_query: "coffee tasting set", photo_query: "coffee set", category: "Food & treats" },
-      { title: "Coffee discovery box", why: "Another way to sample different coffee." , search_query: "coffee tasting set", photo_query: "coffee beans", category: "Food & treats" },
-      { title: "A very long explanation", why: Array(40).fill("word").join(" "), search_query: "a", photo_query: "coffee beans", category: "Invalid" },
+      { title: "Coffee tasting set", why: "A varied sampler for someone exploring coffee.", search_query: "coffee tasting set", category: "Food & treats" },
+      { title: "Coffee discovery box", why: "Another way to sample different coffee.", search_query: "coffee tasting set", category: "Food & treats" },
+      { title: "A very long explanation", why: Array(40).fill("word").join(" "), search_query: "a", category: "Invalid" },
     ],
   };
   const flags = assessOutput(output, { mode: "describe", description: "Coffee and baking" });
@@ -49,7 +49,6 @@ test("automatic assessment flags any candidate count other than ten, including a
       title: `Space gift ${index}`,
       why: `A thoughtful space gift number ${index}.`,
       search_query: `space gift item ${index}`,
-      photo_query: "space gift",
       category: "Books",
     })),
   };
@@ -73,7 +72,7 @@ test("review CSV reads the visitor-facing query field instead of writing undefin
     [{ id: "case-07", name: "Space recipient", input: { mode: "describe", description: "Likes space" }, evaluation_focus: [] }],
     { "case-07": { haiku: "A" } },
   );
-  assert.match(csv, /Amazon search: solar system model/);
+  assert.match(csv, /Product search: solar system model/);
   assert.match(csv, /candidate_count_not_10_generated_8/);
   assert.doesNotMatch(csv, /undefined/);
 });
@@ -82,7 +81,7 @@ test("review CSV reads the visitor-facing query field instead of writing undefin
 
 test("Sonnet (which cannot force a tool) uses auto tool choice with the same strict schema", () => {
   const request = buildBenchmarkRequest({ id: "claude-sonnet-5-5", forceTool: false }, "test recipient");
-  assert.equal(BENCHMARK_PROTOCOL_VERSION, 3);
+  assert.equal(BENCHMARK_PROTOCOL_VERSION, 4);
   assert.deepEqual(request.tool_choice, { type: "auto" });
   assert.equal(request.tools[0].strict, true);
   assert.equal(request.tools[0].name, "gift_ideas");
