@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 
@@ -34,6 +34,15 @@ test("404 page exists and is noindex; social image and touch icon are present", 
   assert.ok((await readFile(site("og-image.png"))).length > 5000);
   assert.ok((await readFile(site("apple-touch-icon.png"))).length > 100);
   assert.match(await read("index.html"), /og:image/);
+});
+
+test("site files are valid UTF-8 without mojibake or a byte-order mark", async () => {
+  const names = ["index.html", "about.html", "privacy.html", "404.html", "gifts/index.html", "gifts/gifts-for-mum.html"];
+  for (const name of names) {
+    const bytes = await readFile(site(name));
+    assert.notDeepEqual([...bytes.subarray(0, 3)], [0xef, 0xbb, 0xbf], `${name} has a BOM`);
+    assert.doesNotMatch(bytes.toString("utf8"), /\u00c2|\u00e2\u20ac|\u00c3/, `${name} has mojibake`);
+  }
 });
 
 test("Worker sets CSP and HSTS headers and locks framing", async () => {

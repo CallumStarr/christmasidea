@@ -1,4 +1,4 @@
-﻿// Generates the static gift-guide pages, 404 page, stylesheet and sitemap into site/.
+// Generates the static gift-guide pages, 404 page, stylesheet and sitemap into site/.
 // Run with: npm run build:pages
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -191,8 +191,8 @@ const GUIDES = [
   },
   {
     slug: "secret-santa-gifts-under-10",
-    h1: "Secret Santa gift ideas under Â£10",
-    desc: "Safe, universal Secret Santa gifts that suit almost anyone in the office or friend group, chosen to stay inside a Â£10 limit.",
+    h1: "Secret Santa gift ideas under £10",
+    desc: "Safe, universal Secret Santa gifts that suit almost anyone in the office or friend group, chosen to stay inside a £10 limit.",
     intro: "Secret Santa works best when the gift is useful, light-hearted and unlikely to offend. Prices change, so check the listing against your limit before you buy.",
     tips: [
       "Avoid anything very personal, such as clothing or fragrance.",
@@ -246,7 +246,7 @@ footer{margin-top:3rem;font-size:.9rem;color:#5b6b64}
 @media(max-width:600px){.more{columns:1}h1{font-size:1.8rem}}`;
 
 const FOOTER = `<footer><p>Ad: we earn a commission from qualifying Amazon purchases made through links on this page. Prices and availability change, so check the listing before you buy.</p>
-<p><a href="/about">About</a> Â· <a href="/privacy">Privacy</a> Â· <a href="/">ChristmasIdea</a></p></footer>`;
+<p><a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/">ChristmasIdea</a></p></footer>`;
 
 function head(title, desc, path, extra = "") {
   const url = `${ORIGIN}${path}`;
@@ -286,7 +286,7 @@ function guidePage(g) {
   };
   const related = GUIDES.filter((x) => x.slug !== g.slug).slice(0, 6);
   return head(title, g.desc, path, `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
-`<nav class="crumb"><a href="/">ChristmasIdea</a> â€º <a href="/gifts/">Gift guides</a></nav>
+`<nav class="crumb"><a href="/">ChristmasIdea</a> › <a href="/gifts/">Gift guides</a></nav>
 <h1>${esc(g.h1)}</h1>
 <p class="disclosure">Ad: we earn a commission from qualifying Amazon purchases. Links search Amazon UK; we do not list prices.</p>
 <p>${esc(g.intro)}</p>
@@ -309,7 +309,7 @@ function indexPage() {
 `<nav class="crumb"><a href="/">ChristmasIdea</a></nav>
 <h1>Gift guides</h1>
 <p>Practical guides for common gift problems. For ideas matched to one specific person, use the <a href="/">gift finder</a>.</p>
-<ul>${GUIDES.map((g) => `<li><a href="/gifts/${g.slug}">${esc(g.h1)}</a> â€“ ${esc(g.desc)}</li>`).join("")}</ul>
+<ul>${GUIDES.map((g) => `<li><a href="/gifts/${g.slug}">${esc(g.h1)}</a> – ${esc(g.desc)}</li>`).join("")}</ul>
 ${FOOTER}
 </main>
 </body>
