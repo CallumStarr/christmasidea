@@ -9,7 +9,7 @@ const CRITERIA = [
   ["variety_1_to_5", 0.15, "Variety"],
   ["originality_1_to_5", 0.10, "Originality"],
   ["constraints_and_age_safety_1_to_5", 0.15, "Constraints / age safety"],
-  ["amazon_search_usefulness_1_to_5", 0.10, "Amazon search usefulness"],
+  ["amazon_search_usefulness_1_to_5", 0.10, "Product search usefulness"],
   ["summary_accuracy_1_to_5", 0.10, "Recipient summary accuracy"],
 ];
 
@@ -129,7 +129,7 @@ async function main() {
   };
   await fs.writeFile(path.join(directory, "score-summary.json"), JSON.stringify(report, null, 2));
 
-  console.log("\nChristmasIdea benchmark score (subjective review; not statistically significant)\n");
+  console.log("\nSanta's Helper benchmark score (subjective review; not statistically significant)\n");
   for (const key of variantKeys) {
     console.log(`${summaries[key].label}: ${summaries[key].weighted_average.toFixed(3)} / 5 across ${summaries[key].reviewed_rows} reviews`);
     for (const [name, value] of Object.entries(summaries[key].criteria)) console.log(`  ${name}: ${value.toFixed(2)} / 5`);

@@ -246,7 +246,7 @@ footer{margin-top:3rem;font-size:.9rem;color:#5b6b64}
 @media(max-width:600px){.more{columns:1}h1{font-size:1.8rem}}`;
 
 const FOOTER = `<footer><p>Ad: we earn a commission from qualifying Amazon purchases made through links on this page. Prices and availability change, so check the listing before you buy.</p>
-<p><a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/">ChristmasIdea</a></p></footer>`;
+<p><a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/">Santa's Helper</a></p></footer>`;
 
 function head(title, desc, path, extra = "") {
   const url = `${ORIGIN}${path}`;
@@ -259,6 +259,7 @@ function head(title, desc, path, extra = "") {
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${url}">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Santa's Helper">
 <meta property="og:url" content="${url}">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
@@ -276,7 +277,7 @@ ${extra}</head>
 
 function guidePage(g) {
   const path = `/gifts/${g.slug}`;
-  const title = `${g.h1} | ChristmasIdea`;
+  const title = `${g.h1} | Santa's Helper`;
   const ld = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -286,7 +287,7 @@ function guidePage(g) {
   };
   const related = GUIDES.filter((x) => x.slug !== g.slug).slice(0, 6);
   return head(title, g.desc, path, `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
-`<nav class="crumb"><a href="/">ChristmasIdea</a> › <a href="/gifts/">Gift guides</a></nav>
+`<nav class="crumb"><a href="/">Santa's Helper</a> › <a href="/gifts/">Gift guides</a></nav>
 <h1>${esc(g.h1)}</h1>
 <p class="disclosure">Ad: we earn a commission from qualifying Amazon purchases. Links search Amazon UK; we do not list prices.</p>
 <p>${esc(g.intro)}</p>
@@ -305,8 +306,8 @@ ${FOOTER}
 }
 
 function indexPage() {
-  return head("Gift guides | ChristmasIdea", "Original gift guides for children, new babies, hobbyists, mum, dad and Secret Santa.", "/gifts/") +
-`<nav class="crumb"><a href="/">ChristmasIdea</a></nav>
+  return head("Gift guides | Santa's Helper", "Original gift guides for children, new babies, hobbyists, mum, dad and Secret Santa.", "/gifts/") +
+`<nav class="crumb"><a href="/">Santa's Helper</a></nav>
 <h1>Gift guides</h1>
 <p>Practical guides for common gift problems. For ideas matched to one specific person, use the <a href="/">gift finder</a>.</p>
 <ul>${GUIDES.map((g) => `<li><a href="/gifts/${g.slug}">${esc(g.h1)}</a> – ${esc(g.desc)}</li>`).join("")}</ul>
@@ -318,7 +319,7 @@ ${FOOTER}
 }
 
 function notFoundPage() {
-  return head("Page not found | ChristmasIdea", "That page could not be found.", "/404.html").replace(
+  return head("Page not found | Santa's Helper", "That page could not be found.", "/404.html").replace(
     '<link rel="canonical" href="https://christmasidea.co.uk/404.html">\n', "<meta name=\"robots\" content=\"noindex\">\n") +
 `<h1>We could not find that page</h1>
 <p>It may have moved. Try the <a href="/">gift finder</a> or browse the <a href="/gifts/">gift guides</a>.</p>

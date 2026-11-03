@@ -1,18 +1,18 @@
-# ChristmasIdea - christmasidea.co.uk
+# Santa's Helper - christmasidea.co.uk
 
 One Cloudflare Worker that serves the website and its small API:
 
 - `site/` - the website (one page, self-hosted fonts, favicon).
-- `src/` - the Worker: AI gift ideas from Claude using a structured gift-curation prompt, recipient summaries, photos from Pexels, limits that cap your costs, and a redirect from www to the main domain.
+- `src/` - the Worker: AI gift ideas from Claude, optional verified-product discovery through retailer providers, product matching, limits that cap usage, and a redirect from www to the main domain.
 - `wrangler.toml` - settings, already pointed at christmasidea.co.uk and www.christmasidea.co.uk.
 
-If the AI is unavailable or its daily cap is reached, the Worker selects from `src/catalogue.js` and runs the candidates through the same recipient-aware validator as AI ideas. It uses stated age, explicit exclusions, owned items and budget bands, and returns fewer than eight when that is all that survives. The catalogue has only coarse price bands (not verified product prices), so a strict budget below £10 may have no verified fallback idea. If photos are unavailable, the site shows its gift-box graphic instead.
+If the AI is unavailable or its daily cap is reached, the Worker selects from `src/catalogue.js` and runs the candidates through the same recipient-aware validator as AI ideas. It uses stated age, explicit exclusions, owned items and budget bands, and returns fewer than eight when that is all that survives. The catalogue has only coarse price bands (not verified product prices), so a strict budget below £10 may have no verified fallback idea. Product discovery is optional; when unavailable or disabled, the site shows its locally rendered gift-box placeholder and keeps the Amazon search link.
 
 ## Pages and launch assets
 
 - `site/gifts/` - ten original gift guides plus an index, `site/404.html`, `site/guide.css` and `site/sitemap.xml` are **generated** by `npm run build:pages` (`scripts/build-site-pages.mjs`). Edit the guide content in that script, re-run it and commit the output. The affiliate tag is read from `AMAZON_TAG` in `site/index.html`.
 - `site/robots.txt`, `og-image.png`, `apple-touch-icon.png`, `about.html`, `privacy.html`.
-- `src/index.js` sets security headers (CSP, HSTS, framing and referrer policy). The CSP allows inline scripts and styles because the pages use them, plus Pexels images and Cloudflare Turnstile and Web Analytics. Tighten it if you move scripts into hashed files.
+- `src/index.js` sets security headers (CSP, HSTS, framing and referrer policy). The CSP allows inline scripts and styles because the pages use them, plus approved Amazon image hosts and Cloudflare Turnstile and Web Analytics. Tighten it if you move scripts into hashed files.
 
 ## Before you publish (checklist)
 
@@ -36,16 +36,14 @@ npx wrangler login
 
 This opens your browser to approve access to your Cloudflare account (the one where you bought the domain).
 
-**2. Get your two API keys**
+**2. Get your Claude API key**
 
 - Claude: [platform.claude.com](https://platform.claude.com) > API keys > create a key. Add some credit, and set a monthly spend limit on the Billing page (US$10 is plenty to start).
-- Pexels (free): create an account at [pexels.com/api](https://www.pexels.com/api/) and request an API key.
 
 **3. Store the keys as secrets** (paste each one when asked; they never go in the code)
 
 ```bash
 npx wrangler secret put ANTHROPIC_API_KEY
-npx wrangler secret put PEXELS_API_KEY
 npx wrangler secret put IP_SALT
 ```
 
@@ -68,27 +66,37 @@ To change something later, edit the files and run `npx wrangler deploy` again.
 ## Amazon Associates
 
 - Tracking ID `mcstarrstud0c-21` is set in `site/index.html` (settings block at the top).
-- Amazon reviews an application after at least 3 qualifying purchases within the first 180 days. Personal orders do not qualify. Amazon also expects robust original public content; its own guidance gives at least 10 posts as a rule of thumb.
+- Add `https://christmasidea.co.uk` to the websites listed in your Associates account and follow the current Associates application requirements. Do not rely on a fixed qualifying-sales number for Creators API access: Amazon's current documentation says the account must be finally accepted and have referred qualified sales, but does not publish one universal threshold there.
 - Do not buy through your own links or ask, request, or encourage friends, relatives, employees, contractors, or business contacts to buy through them. Build qualifying traffic from genuine, independent visitors.
-- Make sure `https://christmasidea.co.uk` is listed as one of your websites in your Associates account, since Amazon reviews the sites in your application.
-- The current policies require prior written approval before using Amazon Product Advertising Content on a site designed for mobile use. Check the current licence and obtain any necessary approval before adding Amazon product images, pricing, availability, or other API content to this responsive site.
 
-## Why the photos come from Pexels, not Amazon
+The Amazon Creators API feature is disabled by default. Amazon's official UK documentation requires final Associates acceptance and qualified sales before Creators API registration; access for this specific account cannot be checked from this repository. The responsive site must also be reviewed against the current Associates policy, including whether Amazon requires approval for this site's intended product-content use. Obtain any required approval before enabling the feature.
 
-Amazon's Associates licence only allows its product images to be shown when they're fetched from its own product API (the Creators API), and it prohibits caching those images. That API is only open to fully accepted Associates who have already referred sales. Until then, each card shows a free Pexels stock photo labelled "Illustrative photo", credited to the photographer as Pexels requires, plus a "Photos provided by Pexels" link in the footer.
+To enable it after approval and credential issuance:
 
-Once your account is fully accepted and has recent sales, you can apply for the Creators API and swap in real product photos.
+1. In Amazon Associates Central, register a Creators API application and obtain the Credential ID, Secret and EU credential version (UK is listed under EU version 3.2). The UK token endpoint is `https://api.amazon.co.uk/auth/o2/token`; the OAuth request uses `client_credentials` and scope `creatorsapi::default`, and API calls go to `https://creatorsapi.amazon`. Current request documentation specifies a bearer `Authorization` header, `Content-Type: application/json`, and `x-marketplace`; it does not require AWS Signature Version 4.
+2. Set the credentials as Worker secrets (never put them in `wrangler.toml`):
+
+   ```powershell
+   npx wrangler secret put AMAZON_CREATORS_CLIENT_ID
+   npx wrangler secret put AMAZON_CREATORS_CLIENT_SECRET
+   ```
+
+3. Set `PRODUCT_DISCOVERY_ENABLED = "true"` in `wrangler.toml`, confirm `AMAZON_PARTNER_TAG` is the UK tracking ID for the registered Associates account, then run `npm test` and `npx wrangler deploy --dry-run` before a separately approved deployment.
+
+Creators API search uses `SearchItems` (up to 10 results), explicitly filters for available new items, and retrieves titles, brands/features, primary and variant image URLs, and offers where returned. Product matches must identify the full product type in the listing title, match any explicit brand/colour/size/model/edition constraints, be explicitly new and in stock, and fit any stated budget. The application rejects uncertain matches, unapproved image hosts and affiliate destinations that do not match the ASIN. If there is no suitable verified match, the existing Amazon search link and decorative local placeholder remain. The account's actual Creators API TPS allocation is unknown; the default global limit is one request per second and can be configured after Amazon confirms the allocation.
+
+Amazon's official Creators API guidance specifies a one-hour cache TTL for `Offers` and one day for other listed resources, including images, item details and detail-page URLs. This application uses a stricter one-hour cache for all normalized Amazon results, never downloads or stores image bytes, and never uses Amazon content when the flag or credentials are absent. Review the [UK Creators API documentation](https://affiliate-program.amazon.co.uk/creatorsapi/docs/en-us/get-started/using-curl), [UK Creators API cache guidance](https://affiliate-program.amazon.co.uk/creatorsapi/docs/en-us/concepts/best-programming-practices), [UK Creators API registration guide](https://affiliate-program.amazon.co.uk/creatorsapi/docs/en-us/onboarding/register-for-creators-api), and [UK Associates policies](https://affiliate-program.amazon.co.uk/help/operating/policies) before enabling or changing this integration.
 
 ## Recommendation quality
 
-Prompt `gift-curator-v3.1` (frozen v2 snapshot in `src/prompts/gift-curator-v2.js`) makes **one** Claude call. The model first fills a structured `recipient_profile` (`known_facts` as `{fact, evidence}` pairs, separate `inferences`, exclusions, budget), then returns **exactly 10 ranked candidate ideas**; the server validates them and shows the best 8. Spare candidates replace rejected ones, so no second API call is needed, and nothing is invented server-side if fewer than 8 survive (`shortfall: true`). Ideas are gift *concepts* to search for, never verified products, prices or availability.
+Prompt `gift-curator-v3.3` (frozen v2 snapshot in `src/prompts/gift-curator-v2.js`) makes **one** Claude call. The model first fills a structured `recipient_profile` (`known_facts` as `{fact, evidence}` pairs, separate `inferences`, exclusions, budget), then returns **exactly 10 ranked candidate ideas**; the server validates them and shows the best 8. Spare candidates replace rejected ones, so no second API call is needed, and nothing is invented server-side if fewer than 8 survive (`shortfall: true`). Ideas are gift *concepts* to search for, never verified products, prices or availability.
 
 **Facts versus inferences.** A `known_fact` must carry a short verbatim `evidence` extract that the server finds in the shopper's text (case and punctuation ignored). Unverified facts are kept in diagnostics (`facts_unverified`) and are never used to build the recipient summary; an unsupported summary is replaced with one built from verified facts only.
 
-**Thinking effort.** Haiku 5.5 uses adaptive thinking at `medium` effort by default, and thinking tokens count towards `max_tokens` (the cause of the truncated smoke-test cases). Every request therefore sends `thinking: {type: "adaptive"}` and `output_config: {effort: "low"}` (never the legacy `budget_tokens`, which Haiku 5.5 rejects). The Worker also forces the `gift_ideas` tool, which makes Haiku skip its thinking phase; the live forced-tool smoke test recorded 0 thinking tokens, so the effort setting is a safeguard rather than the main control. Both the Worker and the benchmark runner build this from `generationParams()` in `src/core.js`. `CLAUDE_EFFORT` (Worker) and `BENCHMARK_EFFORT` (benchmark) can set `low`, `medium` or `high`. Low effort can reduce quality, so judge it on the recommendations, not on token usage alone.
+**Thinking effort.** Haiku 5.5 uses adaptive thinking at `low` effort by default, matching `wrangler.toml`; thinking tokens count towards `max_tokens`. Every request sends `thinking: {type: "adaptive"}` and the configured effort (never the legacy `budget_tokens`, which Haiku 5.5 rejects). The Worker forces the `gift_ideas` tool; a live forced-tool smoke test recorded 0 thinking tokens. Both the Worker and benchmark runner build the request from `generationParams()` in `src/core.js`. `CLAUDE_EFFORT` and `BENCHMARK_EFFORT` can set `low`, `medium` or `high`. Judge effort settings by recommendation quality, not token usage alone.
 
 Server-side checks (`src/validate.js`, rules in `src/rules.js`, recipient parsing in `src/recipient.js`) are deterministic and heuristic. They reject, or repair only by removing text, and never invent content:
-- malformed or missing fields; duplicate titles, concepts and near-identical Amazon queries
+- malformed or missing fields; duplicate titles, concepts and near-identical product search queries
 - budget (parsed from the visitor's input; the model's private price estimate is never displayed)
 - age safety: baby/toddler/child rules, small loose parts, specialist equipment, supervision notes
 - unsupported safety, age-rating, price or stock claims
@@ -96,7 +104,7 @@ Server-side checks (`src/validate.js`, rules in `src/rules.js`, recipient parsin
 - injection echoes, brand/model names and marketing noise in queries, title/query/description mismatch
 - recipient summaries that mention things the shopper never said (replaced by validated known facts)
 
-The API response keeps its existing shape and adds `prompt_version` and `shortfall`. The cache key includes the prompt version, validator version, model, generation settings (thinking, effort, output limit) and input (namespace `/ideas/v5/`), so results produced under different effort settings never share an entry. `MAX_OUTPUT_TOKENS` is 4500: the visible JSON needs roughly 1,500-2,000 tokens, and the rest is headroom. Validators are heuristics and will have false positives and negatives; review them with `npm run validate-run`.
+The API response keeps its existing shape and adds `prompt_version` and `shortfall`; a separate `/api/products` endpoint optionally enriches the concepts. The cache key includes the prompt version, validator version, model, generation settings (thinking, effort, output limit) and input (namespace `/ideas/v6/`), so results produced under different effort settings never share an entry. `MAX_OUTPUT_TOKENS` is 4500: the visible JSON needs roughly 1,500-2,000 tokens, and the rest is headroom. Validators and match scores are heuristic, calibrated with deterministic cases rather than a live-product benchmark; reject any match that fails a hard criterion.
 
 Evaluation is AI-led and subjective; 30 synthetic cases cannot show statistical significance.
 
@@ -108,16 +116,16 @@ The model is configurable with `MODEL`; the default stays Claude Haiku 5.5.
 |---|---|---|
 | Cloudflare Workers | 100,000 requests a day | about 4 per page view plus 1-2 per search |
 | Cloudflare Durable Objects | 100,000 requests a day | 1-2 per search |
-| Pexels | 200 requests an hour, 20,000 a month | up to 8 per new search; repeats are cached for a week |
+| Amazon Creators API | Account-specific request allocation | Disabled by default; capped at 120 calls/hour globally and 32/day per visitor when enabled |
 | Claude Haiku 5.5 | pay as you go | usage depends on input/output tokens; check actual usage in the Anthropic Console |
 
-The Claude API is the main variable cost. At the default cap of 1,500 AI searches a day, total spend depends on the tokens used by each request and response; set a hard monthly spend limit in the Anthropic Console and monitor actual usage rather than relying on a fixed per-search estimate.
+The Claude API is the main variable cost. At the configured cap of 500 AI searches a day, total spend depends on the tokens used by each request and response; set a hard monthly spend limit in the Anthropic Console and monitor actual usage rather than relying on a fixed per-search estimate.
 
 ### Limits that stop costs running away
 
-1. **Daily AI cap** (`DAILY_AI_LIMIT`, default 1,500, resets midnight UTC). Above it, visitors get recipient-aware suggestions from the Worker catalogue.
+1. **Daily AI cap** (`DAILY_AI_LIMIT`, default 500, resets midnight UTC). Above it, visitors get recipient-aware suggestions from the Worker catalogue.
 2. **Per-visitor caps**: 4 AI searches a minute and 15 a day. Visitors are identified by a hashed IP that changes daily; raw IPs are never stored.
-3. **Photo cap** (`PHOTO_HOURLY_LIMIT`, default 180 an hour) keeps you under Pexels' 200 an hour. If Pexels raises your limit (they do this free if you credit them properly), raise this to match.
+3. **Product lookup caps** limit Amazon API calls per second (default 1), per hour and visitor (`PRODUCT_SEARCH_PER_SECOND_LIMIT`, `PRODUCT_SEARCH_HOURLY_LIMIT`, `PRODUCT_SEARCH_PER_VISITOR_DAILY_LIMIT`, `PRODUCT_SEARCH_PER_VISITOR_MINUTE_LIMIT`). Confirm the actual account allocation with Amazon before choosing production limits.
 4. **Browser CORS policy** (`ALLOWED_ORIGINS`) limits which browser origins can read API responses. It is not authentication: non-browser clients can spoof `Origin`, so enable Turnstile and retain rate/spend limits.
 5. **Claude Console spend limit** as the final backstop.
 
@@ -129,10 +137,10 @@ To test a higher-capability model, set `MODEL = "claude-sonnet-5-5"` in `wrangle
 
 - Amazon's required statement, "As an Amazon Associate I earn from qualifying purchases", appears above the results and in the footer, with a plain-English explanation.
 - Every shop link is marked `rel="sponsored"` and labelled "Ad".
-- No prices are shown (Amazon only allows prices from its own API).
-- Photos are labelled as illustrative, so they aren't mistaken for the exact product.
+- A price is shown only when the official API returns a GBP offer and the server-side offer data is still fresh; no price is inferred or invented. Confirm current Associates price-display requirements before enabling product discovery.
+- When product discovery is disabled or no high-confidence result is found, the locally rendered placeholder is clearly identified as decorative, not a product photograph.
 - The affiliate tag is fixed in the code, so visitors can't change it.
-- Everything the AI and Pexels return is checked on the server and shown as plain text, and only Pexels image addresses are accepted.
+- Product titles, destinations, prices and images are validated on the server; only image URLs from the official Amazon product response and approved Amazon image hosts are accepted. Pexels is not used and no Pexels credentials are required.
 - No tracking cookies; fonts are self-hosted, so visitors' browsers don't contact Google.
 
 ## Optional: bot protection
@@ -141,7 +149,7 @@ If you see abuse, create a free Cloudflare Turnstile widget for christmasidea.co
 
 ## Editing the fallback catalogue
 
-The `CATALOGUE` array in `src/catalogue.js` is Worker-side. Each entry has a photo search (`p`), title (`t`), Amazon search (`q`), category (`c`), supported age groups (`a`), coarse budget bands (`b`), interest keywords (`k`) and description (`w`). The fallback is filtered by age and conservative budget-band ceilings, then validated against exclusions, known small-parts rules, preferences and already-owned items. Add and test catalogue entries there; the browser does not contain a second gift list.
+The `CATALOGUE` array in `src/catalogue.js` is Worker-side. Each entry has a title (`t`), Amazon search (`q`), category (`c`), supported age groups (`a`), coarse budget bands (`b`), interest keywords (`k`) and description (`w`). The legacy photo-search field is unused. The fallback is filtered by age and conservative budget-band ceilings, then validated against exclusions, known small-parts rules, preferences and already-owned items. Add and test catalogue entries there; the browser does not contain a second gift list.
 
 The About/contact and privacy pages are drafts in `site/about.html` and `site/privacy.html`. They contain explicit pre-publication notices because the operator's legal name, geographic address and contact email have not been supplied. Complete and verify those notices before publishing.
 
@@ -155,7 +163,7 @@ npm test   # Worker tests
 
 The repository includes a fixed set of 30 synthetic recipient scenarios in `benchmarks/recipients.json`. It covers both freeform and guided inputs, limited budgets, specific hobbies, people who "have everything", age suitability, explicit dislikes, items already owned, low-information requests and cross-interest gift ideas.
 
-The benchmark (protocol 3) builds its request with the **same function as the production Worker** (`buildClaudeRequest` in `src/core.js`). For Haiku 5.5 that means the identical system prompt, the strict `gift_ideas` tool, a **forced** `tool_choice` (`{type: "tool", name: "gift_ideas"}`), `thinking: {type: "adaptive"}`, `output_config.effort: "low"` and the production output limit. Anthropic's Haiku 5.5 migration guide documents that Haiku accepts a forced `tool_choice` and that the response then starts with the tool call and has no thinking block, so forcing the tool also stops hidden thinking tokens consuming the output allowance. Sonnet 5.5 does not support forced tool selection, so if it is selected (`--models=sonnet`) it alone uses `tool_choice: auto` plus an instruction to call the tool. The runner rejects resuming runs made under an older protocol. It does not modify the production model setting and does not call Pexels. It records response time, Anthropic token usage, `stop_reason`, `thinking_tokens`, estimated API cost, the recipient summary, the returned ideas and basic machine-checkable warnings. The default output ceiling is the production limit of 4,500 tokens per response (`BENCHMARK_MAX_TOKENS` can override it) and the default effort is the production `low` (`BENCHMARK_EFFORT` can override it); both are recorded in the run file, and a run cannot be resumed under different settings. Actual billed output is based on tokens generated, not the ceiling. A response that stops with `stop_reason: max_tokens` is recorded with status `truncated`, flagged `TRUNCATED_max_tokens`, and never treated as an ordinary success. The warnings are a triage aid, not a substitute for human judgement. Each result also stores the unfiltered `raw_output`, the visitor-facing `output` and a `validation` block (candidates generated, accepted, rejected with reason codes, repairs, warnings).
+The benchmark (protocol 4) builds its request with the **same function as the production Worker** (`buildClaudeRequest` in `src/core.js`). For Haiku 5.5 that means the identical system prompt, the strict `gift_ideas` tool, a **forced** `tool_choice` (`{type: "tool", name: "gift_ideas"}`), `thinking: {type: "adaptive"}`, `output_config.effort: "low"` and the production output limit. Anthropic's Haiku 5.5 migration guide documents that Haiku accepts a forced `tool_choice` and that the response then starts with the tool call and has no thinking block, so forcing the tool also stops hidden thinking tokens consuming the output allowance. Sonnet 5.5 does not support forced tool selection, so if it is selected (`--models=sonnet`) it alone uses `tool_choice: auto` plus an instruction to call the tool. The runner rejects resuming runs made under an older protocol. It does not modify the production model setting and makes no retailer or image-provider calls. It records response time, Anthropic token usage, `stop_reason`, `thinking_tokens`, estimated API cost, the recipient summary, the returned ideas and basic machine-checkable warnings. The default output ceiling is the production limit of 4,500 tokens per response (`BENCHMARK_MAX_TOKENS` can override it) and the default effort is the production `low` (`BENCHMARK_EFFORT` can override it); both are recorded in the run file, and a run cannot be resumed under different settings. Actual billed output is based on tokens generated, not the ceiling. A response that stops with `stop_reason: max_tokens` is recorded with status `truncated`, flagged `TRUNCATED_max_tokens`, and never treated as an ordinary success. The warnings are a triage aid, not a substitute for human judgement. Each result also stores the unfiltered `raw_output`, the visitor-facing `output` and a `validation` block (candidates generated, accepted, rejected with reason codes, repairs, warnings).
 
 ### 1. Preview without spending API credits
 
@@ -191,7 +199,7 @@ The pilot makes 5 Haiku calls by default (the runner now defaults to `--models=h
 npm run benchmark -- --live --confirm-cost
 ```
 
-This makes 30 Haiku calls with the current prompt (`gift-curator-v3.1`). Add `--models=haiku,sonnet` for the old two-model comparison (60 calls). Calls are made sequentially, retried up to three times for transient rate-limit/server errors, and checkpointed after every response. If interrupted, use the path to the saved `benchmark-results.json`, repeating the same `--models`, `--case` and `--limit` selection:
+This makes 30 Haiku calls with the current prompt (`gift-curator-v3.3`). Add `--models=haiku,sonnet` for the old two-model comparison (60 calls). Calls are made sequentially, retried up to three times for transient rate-limit/server errors, and checkpointed after every response. If interrupted, use the path to the saved `benchmark-results.json`, repeating the same `--models`, `--case` and `--limit` selection:
 
 ```bash
 npm run benchmark -- --live --confirm-cost --resume="benchmarks/runs/<run-folder>/benchmark-results.json"
@@ -221,7 +229,7 @@ Open `review-template.csv` in Excel. Read each pair for the same `case_id` and s
 | Variety | 15% | Ideas are meaningfully different, not small variations of one product. |
 | Originality | 10% | Includes thoughtful, less-obvious suggestions without becoming random. |
 | Constraints and age safety | 15% | Respects dislikes, owned items, age, safety and other explicit restrictions. |
-| Amazon search usefulness | 10% | Queries describe specific product types likely to find relevant results. |
+| Product search usefulness | 10% | Queries describe specific product types likely to find relevant results. |
 | Summary accuracy | 10% | Summary is concise and does not invent interests, traits or facts. |
 
 Use 1 = poor / clear failure, 3 = acceptable / mixed, and 5 = excellent. A clearly unsafe or explicitly excluded recommendation should receive a low constraints-and-safety score, even if the rest of the list is good. Do not award originality for novelty alone: the idea still needs to suit the recipient.
