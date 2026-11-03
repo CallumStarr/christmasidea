@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Christmas Gift Ideas for Anyone on Your List | ChristmasIdea</title>
+<meta name="description" content="Stuck on what to buy? Describe who you're shopping for and get Christmas gift ideas that actually suit them, ready to find on Amazon UK.">
+<link rel="canonical" href="https://christmasidea.co.uk/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://christmasidea.co.uk/">
+<meta property="og:title" content="Christmas gift ideas for anyone on your list">
+<meta property="og:description" content="Describe who you're buying for and get gift ideas that actually suit them.">
+<meta property="og:image" content="https://christmasidea.co.uk/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#8b1631">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://images.pexels.com">
+<link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+/* =====================  SETTINGS  ===================== */
+window.GIFT_CONFIG = {
+  // Disable online recommendations when testing locally without the Worker.
+  USE_API: true,
+  // Your Amazon Associates UK tracking ID.
+  AMAZON_TAG: "mcstarrstud0c-21",
+  AMAZON_HOST: "www.amazon.co.uk",
+  // Optional: Cloudflare Turnstile site key (bot protection). Leave empty to skip.
+  TURNSTILE_SITE_KEY: ""
+};
+</script>
+<style>
+@font-face{font-family:"Fraunces";src:url(/fonts/fraunces.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Figtree";src:url(/fonts/figtree.woff2) format("woff2");font-weight:300 900;font-style:normal;font-display:swap}
+:root{
+  --berry:#8b1631; --berry-deep:#5a0c1f; --berry-ink:#3a0814;
+  --gold:#f2b544; --gold-deep:#c88a17; --gold-pale:#fde9bf;
+  --pine:#0f3d2e; --pine-2:#17543f;
+  --snow:#fff9f3; --card:#ffffff; --ink:#24161b; --muted:#6c5a5f; --line:#ecdcd6;
+  --focus:#1f6fd1;
+  --display:"Fraunces", Georgia, serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--snow);color:var(--ink);font:400 17px/1.55 var(--body)}
+a{color:inherit}
+img{max-width:100%;display:block}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+.display{font-family:var(--display);font-variation-settings:"SOFT" 100}
+
+/* ---------- Hero: the page is a wrapped present ---------- */
+.hero{position:relative;overflow:hidden;color:#fff6ea;background-color:var(--berry);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23f2b544' fill-opacity='.16'%3E%3Cpath d='M30 14l2.6 7.9H41l-6.7 4.9 2.6 7.9L30 29.8l-6.9 4.9 2.6-7.9-6.7-4.9h8.4z'/%3E%3Cpath d='M90 74l2.6 7.9H101l-6.7 4.9 2.6 7.9L90 89.8l-6.9 4.9 2.6-7.9-6.7-4.9h8.4z'/%3E%3Ccircle cx='92' cy='26' r='2.4'/%3E%3Ccircle cx='28' cy='86' r='2.4'/%3E%3Ccircle cx='60' cy='56' r='1.6'/%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(120% 90% at 20% 10%, #a51f3e 0%, var(--berry) 45%, var(--berry-deep) 100%);
+  padding:22px 0 128px}
+.ribbon-v,.ribbon-h{position:absolute;pointer-events:none;
+  background:linear-gradient(90deg,var(--gold-deep),var(--gold) 30%,#ffd98a 50%,var(--gold) 70%,var(--gold-deep))}
+.ribbon-v{top:0;bottom:0;right:17%;width:46px}
+.ribbon-h{left:0;right:0;bottom:96px;height:40px;background:linear-gradient(180deg,var(--gold-deep),var(--gold) 30%,#ffd98a 50%,var(--gold) 70%,var(--gold-deep))}
+.bow{position:absolute;right:calc(17% - 77px);bottom:28px;width:200px;height:170px;pointer-events:none;filter:drop-shadow(0 10px 18px rgba(40,0,10,.35))}
+#snow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.nav{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:800 21px/1 var(--display);font-variation-settings:"SOFT" 100;letter-spacing:-.01em}
+.countdown .short{display:none}
+@media (max-width:760px){.countdown .short{display:inline}}
+.countdown{background:var(--berry-deep);border:1px solid rgba(242,181,68,.6);box-shadow:0 6px 16px -8px rgba(0,0,0,.5);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;white-space:nowrap}
+.hero-copy{position:relative;max-width:640px;margin-top:56px;margin-bottom:64px}
+.hero h1{font:900 clamp(42px,7.4vw,84px)/.95 var(--display);font-variation-settings:"SOFT" 100,"WONK" 1;letter-spacing:-.025em;margin:0 0 20px;text-wrap:balance}
+.hero p{margin:0;font-size:clamp(17px,2vw,20px);color:#ffe3e4;max-width:44ch}
+
+/* ---------- Form ---------- */
+.panel{position:relative;background:var(--card);border-radius:26px;padding:30px;margin-top:-84px;
+  box-shadow:0 2px 0 var(--line),0 30px 60px -30px rgba(90,12,31,.45)}
+.panel::before{content:"";position:absolute;left:28px;right:28px;top:0;height:6px;border-radius:0 0 6px 6px;background:linear-gradient(90deg,var(--gold-deep),var(--gold),var(--gold-deep))}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px 28px}
+.mode-switch{margin-bottom:24px}
+.mode-options{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;background:#f6eeeb;border:1px solid var(--line);border-radius:15px;max-width:560px}
+.mode-option{position:relative;display:block;margin:0;cursor:pointer}
+.mode-option input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.mode-option span{display:flex;align-items:center;justify-content:center;min-height:46px;padding:10px 14px;border:1.5px solid transparent;border-radius:11px;color:var(--muted);font-weight:700;text-align:center;transition:background .15s,border-color .15s,color .15s,box-shadow .15s}
+.mode-option input:checked+span{background:#fff;border-color:var(--line);color:var(--berry);box-shadow:0 2px 7px rgba(58,8,20,.08)}
+.mode-option input:focus-visible+span{outline:3px solid var(--focus);outline-offset:2px}
+.quick-fields{display:grid;gap:18px}
+.full{grid-column:1/-1}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend,label.q{display:block;font:700 16px/1.3 var(--body);margin:0 0 10px}
+.hint{font-size:14px;color:var(--muted);margin:-5px 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:9px 15px;border:1.5px solid var(--line);border-radius:999px;font-size:15px;font-weight:500;cursor:pointer;background:#fff;transition:background .15s,border-color .15s,color .15s,transform .15s}
+.chip span:hover{border-color:var(--berry)}
+.chip input:checked + span{background:var(--berry);border-color:var(--berry);color:#fff}
+.chip input:focus-visible + span{outline:3px solid var(--focus);outline-offset:2px}
+select,input[type=text],textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fffdfb;border:1.5px solid var(--line);border-radius:12px;padding:12px 13px}
+select:focus,input:focus,textarea:focus{border-color:var(--berry);outline:none;box-shadow:0 0 0 3px rgba(139,22,49,.15)}
+textarea{min-height:96px;resize:vertical}
+.count{font-size:13px;color:var(--muted);text-align:right;margin-top:4px}
+.actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:28px}
+.btn{appearance:none;border:0;cursor:pointer;font:700 17px/1 var(--body);border-radius:14px;padding:17px 28px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.btn-gold{background:var(--gold);color:var(--berry-ink);box-shadow:inset 0 -3px 0 var(--gold-deep)}
+.btn-gold:hover{background:#f7c25e}
+.btn-gold[disabled]{opacity:.7;cursor:progress}
+.btn-quiet{background:transparent;color:var(--berry);padding:12px 6px;text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.btn-outline{background:#fff;color:var(--berry);border:2px solid var(--berry)}
+.btn-outline:hover{background:#fdf0f2}
+.privacy{font-size:13.5px;color:var(--muted);max-width:50ch;margin:0}
+#ts{margin-top:18px}
+
+/* ---------- Status, loading ---------- */
+.status{margin:30px 0 0;padding:14px 16px;border-radius:14px;background:#fff4dc;border:1px solid #f1d697;color:#5a4214;font-size:15px}
+.status.err{background:#fdecee;border-color:#f2c1c9;color:#6b1426}
+.loading{display:flex;align-items:center;gap:16px;margin-top:48px;font:700 21px/1.3 var(--display);font-variation-settings:"SOFT" 100;color:var(--berry)}
+.baubles{display:flex;gap:8px}
+.baubles i{display:block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 12%,transparent 13%),var(--berry);animation:swing 1.1s infinite ease-in-out}
+.baubles i:nth-child(2){background-color:var(--gold);animation-delay:.15s;background:radial-gradient(circle at 35% 30%,#fff 0 12%,transparent 13%),var(--gold)}
+.baubles i:nth-child(3){animation-delay:.3s;background:radial-gradient(circle at 35% 30%,#fff 0 12%,transparent 13%),var(--pine-2)}
+@keyframes swing{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+.recipient-insight{margin:14px 0 20px;padding:14px 17px;background:#fffdf8;border:1px solid var(--line);border-left:4px solid var(--gold-deep);border-radius:12px}
+.recipient-insight-label{margin:0 0 3px;color:var(--berry);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.recipient-summary{margin:0;color:var(--ink);font-size:15px;line-height:1.5}
+@media (max-width:600px){.recipient-insight{padding:12px 14px}}
+/* ---------- Results ---------- */
+.results{margin-top:56px}
+.results-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.results-head h2{font:900 clamp(32px,5vw,48px)/1 var(--display);font-variation-settings:"SOFT" 100;margin:0;letter-spacing:-.02em;color:var(--berry)}
+.disclosure{font-size:14px;color:var(--muted);margin:12px 0 0;max-width:72ch}
+.cards{list-style:none;padding:0;margin:28px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px}
+.card{position:relative;background:var(--card);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 1px 0 var(--line),0 18px 40px -26px rgba(90,12,31,.5)}
+.card.reveal{animation:unwrap .55s cubic-bezier(.2,.8,.2,1.15) both;animation-delay:calc(var(--i) * 70ms)}
+@keyframes unwrap{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+.media{position:relative;aspect-ratio:4/3;background:var(--gold-pale);overflow:hidden}
+.media img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;transition:opacity .4s}
+.media img.loading{opacity:0}
+.media .ph{position:absolute;inset:0;display:grid;place-items:center}
+.media .ph svg{width:44%;height:auto}
+.cat{position:absolute;z-index:2;left:12px;top:12px;background:rgba(255,255,255,.94);color:var(--berry-ink);font-size:13px;font-weight:700;padding:6px 11px;border-radius:999px}
+.credit{position:absolute;z-index:2;right:8px;bottom:8px;background:rgba(20,8,12,.62);color:#fff;font-size:11.5px;padding:4px 8px;border-radius:8px;text-decoration:none;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.credit:hover{background:rgba(20,8,12,.85)}
+.card-body{padding:18px 18px 16px;display:flex;flex-direction:column;flex:1}
+.card h3{font:800 22px/1.15 var(--display);font-variation-settings:"SOFT" 100;margin:0 0 8px;letter-spacing:-.01em}
+.card p.why{margin:0 0 18px;font-size:15.5px;line-height:1.5;color:#4a3a3f;flex:1}
+.row{display:flex;gap:8px;align-items:center}
+.shop{flex:1;background:var(--berry);color:#fff;border-radius:12px;padding:13px 12px;font-weight:700;font-size:15.5px;text-decoration:none;text-align:center}
+.shop:hover{background:var(--berry-deep)}
+.save{flex:none;width:48px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--berry);transition:transform .15s}
+.save:hover{border-color:var(--berry)}
+.save[aria-pressed=true]{background:var(--berry);border-color:var(--berry);color:#fff}
+.save[aria-pressed=true] svg{animation:pop .3s ease}
+@keyframes pop{50%{transform:scale(1.3)}}
+.save svg{width:21px;height:21px}
+.aff{font-size:12px;color:var(--muted);margin:9px 0 0}
+.more{margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.source{font-size:13.5px;color:var(--muted);margin:0}
+
+/* ---------- Shortlist ---------- */
+.listbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;padding:12px 16px calc(14px + env(safe-area-inset-bottom));pointer-events:none}
+.listbar button{pointer-events:auto;box-shadow:0 14px 30px -10px rgba(58,8,20,.55)}
+dialog{border:0;border-radius:22px;padding:0;width:min(560px,calc(100vw - 32px));max-height:min(80vh,720px)}
+dialog::backdrop{background:rgba(58,8,20,.55)}
+.dlg{padding:26px}
+.dlg h2{font:900 30px/1.05 var(--display);font-variation-settings:"SOFT" 100;margin:0 0 6px;color:var(--berry)}
+.dlg ul{list-style:none;padding:0;margin:16px 0}
+.dlg li{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line)}
+.dlg li a{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.dlg li small{display:block;color:var(--muted)}
+.dlg .x{background:none;border:0;color:var(--berry);cursor:pointer;font:inherit;font-size:14px;padding:4px}
+.dlg-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+
+/* ---------- Footer ---------- */
+footer{margin-top:96px;background:var(--berry-deep);color:#f7dfe2;padding:40px 0 120px;font-size:14px}
+footer p{margin:0 0 10px;max-width:78ch}
+footer a{color:#fff}
+footer .brand{margin-bottom:18px;color:#fff6ea}
+
+@media (max-width:760px){
+  .grid2{grid-template-columns:1fr}
+  .mode-options{max-width:none}
+  .panel{padding:22px 18px;margin-top:-70px;border-radius:22px}
+  .hero{padding-bottom:110px}
+  .hero-copy{margin-top:40px;margin-bottom:56px}
+  .ribbon-v{display:none}
+  .ribbon-h{bottom:92px;height:24px}
+  .bow{right:10px;bottom:55px;width:110px;height:94px}
+  .countdown .long{display:none}
+  .btn-gold{width:100%}
+  .countdown{font-size:13px;padding:6px 11px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<noscript><p style="padding:1rem;text-align:center;background:#fff3cd">ChristmasIdea needs JavaScript to find gift ideas. Please enable it and reload.</p></noscript>
+
+<header class="hero">
+  <canvas id="snow" aria-hidden="true"></canvas>
+  <div class="ribbon-v" aria-hidden="true"></div>
+  <div class="ribbon-h" aria-hidden="true"></div>
+  <svg class="bow" viewBox="0 0 200 170" aria-hidden="true">
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe09a"/><stop offset=".55" stop-color="#f2b544"/><stop offset="1" stop-color="#b97a10"/></linearGradient>
+      <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe09a"/><stop offset=".55" stop-color="#f2b544"/><stop offset="1" stop-color="#b97a10"/></linearGradient>
+    </defs>
+    <path d="M92 86 C58 108 40 150 52 166 L70 150 L84 166 C82 140 88 112 96 92Z" fill="url(#g1)"/>
+    <path d="M108 86 C142 108 160 150 148 166 L130 150 L116 166 C118 140 112 112 104 92Z" fill="url(#g2)"/>
+    <path d="M98 78 C70 34 12 20 8 52 C4 84 56 96 98 86Z" fill="url(#g1)"/>
+    <path d="M102 78 C130 34 188 20 192 52 C196 84 144 96 102 86Z" fill="url(#g2)"/>
+    <path d="M98 80 C78 54 38 44 30 58" fill="none" stroke="#b97a10" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+    <path d="M102 80 C122 54 162 44 170 58" fill="none" stroke="#b97a10" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+    <ellipse cx="100" cy="82" rx="17" ry="15" fill="url(#g1)" stroke="#b97a10" stroke-width="2"/>
+  </svg>
+
+  <div class="wrap">
+    <nav class="nav" aria-label="Site">
+      <a class="brand" href="/">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="3" y="12" width="24" height="15" rx="3" fill="#fff6ea"/><rect x="2" y="8" width="26" height="6" rx="2" fill="#ffe3e4"/><rect x="13" y="8" width="4" height="19" fill="#f2b544"/><path d="M15 8c-2-5-8-5-7.5-1.5S13 8 15 8zm0 0c2-5 8-5 7.5-1.5S17 8 15 8z" fill="none" stroke="#f2b544" stroke-width="2"/></svg>
+        ChristmasIdea
+      </a>
+      <span class="countdown" id="countdown" hidden></span>
+    </nav>
+    <div class="hero-copy">
+      <h1 class="display">Stuck on what to get them?</h1>
+      <p>Tell us a little about who you're buying for and we'll come back with gift ideas that actually suit them.</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <form class="panel" id="form" novalidate>
+    <div class="mode-switch">
+      <fieldset>
+        <legend>How would you like to describe them?</legend>
+        <div class="mode-options" role="radiogroup" aria-label="How to describe the gift recipient">
+          <label class="mode-option">
+            <input type="radio" name="mode" value="describe" checked>
+            <span>Quick description</span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="guided">
+            <span>Guided questions</span>
+          </label>
+        </div>
+      </fieldset>
+    </div>
+
+    <div id="quick-fields" class="quick-fields">
+      <div>
+        <label class="q" for="description">Describe the person you're buying for</label>
+        <p class="hint" id="description-hint">Tell us about their age, interests, hobbies, personality, budget, things they already own or anything they wouldn't like. Write naturally; you don't need to answer a list of questions.</p>
+        <textarea id="description" name="description" maxlength="1200" rows="5" aria-describedby="description-hint description-count" placeholder="For example: My brother is 34, loves mountain biking, craft coffee and camping. He's quite practical and already owns most of the usual cycling equipment. I'd like something a bit unusual, around £40."></textarea>
+        <div class="count" id="description-count" aria-live="polite">0 / 1,200</div>
+      </div>
+    </div>
+
+    <div id="guided-fields" class="grid2" hidden>
+      <fieldset class="full">
+        <legend>Who are you buying for?</legend>
+        <div class="chips" id="relation"></div>
+      </fieldset>
+
+      <div>
+        <label class="q" for="age">How old are they?</label>
+        <select id="age" name="age">
+          <option value="unknown" selected>Not sure</option>
+          <option value="baby">Baby (under 1)</option>
+          <option value="toddler">Toddler (1 to 3)</option>
+          <option value="child">Child (4 to 8)</option>
+          <option value="tween">9 to 12</option>
+          <option value="teen">Teenager (13 to 17)</option>
+          <option value="20s">20s</option>
+          <option value="30s-40s" selected>30s or 40s</option>
+          <option value="50s-60s">50s or 60s</option>
+          <option value="70-plus">70 or older</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="q" for="occasion">What's the occasion?</label>
+        <select id="occasion" name="occasion">
+          <option value="christmas" selected>Christmas</option>
+          <option value="secret-santa">Secret Santa</option>
+          <option value="birthday">Birthday</option>
+          <option value="anniversary">Anniversary</option>
+          <option value="thank-you">Thank you</option>
+          <option value="other">Just because</option>
+        </select>
+      </div>
+
+      <fieldset class="full">
+        <legend>Budget per gift</legend>
+        <div class="chips" id="budget"></div>
+      </fieldset>
+
+      <div class="full">
+        <label class="q" for="interests">What are they into?</label>
+        <p class="hint" id="interests-hint">Hobbies, fandoms, things they never stop talking about. For example: wild swimming, Taylor Swift, sourdough.</p>
+        <input type="text" id="interests" name="interests" maxlength="200" autocomplete="off" aria-describedby="interests-hint">
+      </div>
+
+      <div class="full">
+        <label class="q" for="about">Anything else about them? <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+        <p class="hint" id="about-hint">Their personality, what they already own, what they'd never want.</p>
+        <textarea id="about" name="about" maxlength="500" aria-describedby="about-hint about-count"></textarea>
+        <div class="count" id="about-count" aria-live="polite">0 / 500</div>
+      </div>
+    </div>
+
+    <p class="privacy">Please don't include names, addresses or other personal details. When the AI helper is enabled, your answers are sent to our AI provider to generate gift suggestions.</p>
+
+    <div id="ts" hidden></div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-gold" id="go">
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1l1.9 5.6L17.5 8l-5.6 1.9L10 15.5 8.1 9.9 2.5 8l5.6-1.4zM16 13l.9 2.1L19 16l-2.1.9L16 19l-.9-2.1L13 16l2.1-.9z"/></svg>
+        Find gift ideas
+      </button>
+    </div>
+  </form>
+
+  <div id="status" role="status" aria-live="polite"></div>
+  <div id="loading" class="loading" hidden><span class="baubles" aria-hidden="true"><i></i><i></i><i></i></span><span id="loading-text">Wrapping up some ideas...</span></div>
+
+  <section class="results" id="results" hidden aria-labelledby="results-title">
+    <div class="results-head">
+      <h2 id="results-title" class="display" tabindex="-1">Gift ideas for them</h2>
+      <button type="button" class="btn btn-quiet" id="restart">Start again</button>
+    </div>
+    <div class="recipient-insight" id="recipient-insight" hidden>
+      <p class="recipient-insight-label">What we picked up</p>
+      <p id="recipient-summary" class="recipient-summary"></p>
+    </div>
+    <p class="disclosure"><strong>Ad.</strong> We earn a commission if you buy through these affiliate links, at no extra cost to you. <strong>As an Amazon Associate I earn from qualifying purchases.</strong> Photos are illustrative, not the exact products, so check product details, price and reviews on Amazon.</p>
+    <ul class="cards" id="cards"></ul>
+    <div class="more">
+      <button type="button" class="btn btn-outline" id="more">Show me different ideas</button>
+      <p class="source" id="source"></p>
+    </div>
+  </section>
+</main>
+
+<div class="listbar" id="listbar" hidden>
+  <button type="button" class="btn btn-gold" id="openlist">Your shortlist (0)</button>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dlg">
+    <h2 id="dlg-title">Your shortlist</h2>
+    <p class="disclosure" style="margin:0">Saved on this device only. Ad: we earn a commission if you buy through these links.</p>
+    <ul id="dlg-list"></ul>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-outline" id="copylist">Copy list</button>
+      <button type="button" class="btn btn-gold" id="closelist">Done</button>
+    </div>
+  </div>
+</dialog>
+
+<footer>
+  <div class="wrap">
+    <div class="brand">ChristmasIdea</div>
+    <p>As an Amazon Associate I earn from qualifying purchases.</p>
+    <p>Gift ideas are suggestions generated automatically and may not suit everyone. Photos are illustrative stock images, not the exact products. Always check product details, age guidance and reviews on Amazon before you buy.</p>
+    <p><a href="https://www.pexels.com" target="_blank" rel="noopener">Photos provided by Pexels</a>.</p>
+    <p><a href="/gifts/">Gift guides</a> · <a href="/about.html">About and contact</a> · <a href="/privacy.html">Privacy</a></p>
+  </div>
+</footer>
+
+<script>
+(() => {
+"use strict";
+const CFG = window.GIFT_CONFIG || {};
+const $ = (s) => document.querySelector(s);
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- countdown ---------- */
+(() => {
+  const now = new Date();
+  let xmas = new Date(now.getFullYear(), 11, 25);
+  if (now > new Date(now.getFullYear(), 11, 25, 23, 59)) xmas = new Date(now.getFullYear() + 1, 11, 25);
+  const days = Math.ceil((xmas - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  const el = $("#countdown");
+  const long = days === 0 ? "It's Christmas Day!" : days === 1 ? "1 day until Christmas" : `${days} days until Christmas`;
+  const short = days === 0 ? "Merry Christmas!" : days === 1 ? "1 day to go" : `${days} days to go`;
+  const l = document.createElement("span"); l.className = "long"; l.textContent = long;
+  const sh = document.createElement("span"); sh.className = "short"; sh.textContent = short;
+  el.append(l, sh);
+  el.hidden = false;
+})();
+
+/* ---------- snow (hero only, paused when off screen) ---------- */
+(() => {
+  if (reduceMotion) return;
+  const c = $("#snow"), hero = c.parentElement, ctx = c.getContext("2d");
+  let w, h, flakes = [], running = true;
+  const resize = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = hero.clientWidth; h = hero.clientHeight;
+    c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.round(Math.min(70, w / 18));
+    flakes = Array.from({ length: n }, () => ({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 2.2 + .8, s: Math.random() * .5 + .25, d: Math.random() * 6.28 }));
+  };
+  const tick = () => {
+    if (!running) return;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "rgba(255,246,234,.85)";
+    for (const f of flakes){
+      f.y += f.s; f.d += .01; f.x += Math.sin(f.d) * .3;
+      if (f.y > h + 4){ f.y = -4; f.x = Math.random() * w; }
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 6.283); ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  };
+  new IntersectionObserver(([e]) => { const was = running; running = e.isIntersecting; if (running && !was) tick(); }).observe(hero);
+  addEventListener("resize", resize);
+  resize(); tick();
+})();
+
+/* ---------- options ---------- */
+const RELATIONS = [
+  ["partner","Partner"],["mum","Mum"],["dad","Dad"],["sibling","Brother or sister"],["friend","Friend"],
+  ["child","Child"],["teen","Teenager"],["grandparent","Grandparent"],["colleague","Colleague"],
+  ["secret-santa","Secret Santa"],["other","Someone else"]
+];
+const BUDGETS = [["any","No set budget"],["under-15","Under £15"],["15-30","£15 to £30"],["30-50","£30 to £50"],["50-100","£50 to £100"],["100-plus","£100+"]];
+
+function chipGroup(el, name, items, checked){
+  for (const [value,label] of items){
+    const l = document.createElement("label"); l.className = "chip";
+    const i = document.createElement("input"); i.type = "radio"; i.name = name; i.value = value;
+    if (value === checked){ i.checked = true; i.defaultChecked = true; }
+    const s = document.createElement("span"); s.textContent = label;
+    l.append(i, s); el.append(l);
+  }
+}
+chipGroup($("#relation"), "relation", RELATIONS, "");
+chipGroup($("#budget"), "budget", BUDGETS, "any");
+
+document.querySelectorAll("input[name=relation]").forEach((r) => r.addEventListener("change", () => {
+  const age = $("#age");
+  if (r.value === "child" && !["baby","toddler","child","tween"].includes(age.value)) age.value = "child";
+  if (r.value === "teen") age.value = "teen";
+  if (r.value === "grandparent" && !["50s-60s","70-plus"].includes(age.value)) age.value = "70-plus";
+  if (r.value === "secret-santa") $("#occasion").value = "secret-santa";
+}));
+$("#about").addEventListener("input", (e) => { $("#about-count").textContent = `${e.target.value.length} / 500`; });
+$("#description").addEventListener("input", (e) => { $("#description-count").textContent = `${e.target.value.length} / 1,200`; });
+
+function setMode(mode){
+  const describe = mode === "describe";
+  $("#quick-fields").hidden = !describe;
+  $("#guided-fields").hidden = describe;
+}
+document.querySelectorAll('input[name="mode"]').forEach((radio) => {
+  radio.addEventListener("change", () => setMode(radio.value));
+});
+setMode("describe");
+
+/* ---------- shortlist storage ---------- */
+const store = {
+  get(){ try { return JSON.parse(localStorage.getItem("ci-shortlist") || "[]"); } catch { return []; } },
+  set(v){ try { localStorage.setItem("ci-shortlist", JSON.stringify(v)); } catch {} }
+};
+let shortlist = store.get().filter((x) => x && typeof x.title === "string" && typeof x.query === "string").slice(0, 50);
+
+/* ---------- links ---------- */
+function amazonUrl(query){
+  const u = new URL(`https://${CFG.AMAZON_HOST || "www.amazon.co.uk"}/s`);
+  u.searchParams.set("k", query);
+  const tag = (CFG.AMAZON_TAG || "").trim();
+  if (tag) u.searchParams.set("tag", tag);
+  return u.toString();
+}
+
+/* ---------- Turnstile (optional) ---------- */
+let tsWidget = null;
+if (CFG.USE_API && CFG.TURNSTILE_SITE_KEY){
+  window.onTurnstileLoad = () => { $("#ts").hidden = false; tsWidget = window.turnstile.render("#ts", { sitekey: CFG.TURNSTILE_SITE_KEY, size: "flexible" }); };
+  const s = document.createElement("script");
+  s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit";
+  s.async = true; s.defer = true; document.head.append(s);
+}
+const tsToken = () => { try { return tsWidget !== null ? (window.turnstile.getResponse(tsWidget) || "") : ""; } catch { return ""; } };
+const tsReset = () => { try { if (tsWidget !== null) window.turnstile.reset(tsWidget); } catch {} };
+
+/* ---------- API ---------- */
+const apiOn = () => CFG.USE_API && location.protocol.startsWith("http");
+
+async function fetchIdeas(input){
+  if (!apiOn()) return { ideas: [], source: "none", notice: "Gift suggestions require the live ChristmasIdea service. Please open this page from the website." };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 35000);
+  try {
+    const res = await fetch("/api/ideas", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...input, turnstileToken: tsToken() }), signal: ctrl.signal
+    });
+    let data = {};
+    try { data = await res.json(); } catch {}
+    if (Array.isArray(data.ideas) && data.fallback) return {
+      ideas: data.ideas, source: "catalogue", notice: data.ideas.length ? data.error : (data.note || data.error)
+    };
+    if (res.ok && Array.isArray(data.ideas) && data.ideas.length) return {
+      ideas: data.ideas, source: data.source || "ai", recipientSummary: typeof data.recipient_summary === "string" ? data.recipient_summary : ""
+    };
+    if (res.ok) return { ideas: [], source: "none", notice: data.note || "We couldn't find enough suitable ideas. Try adding detail or adjusting the budget." };
+    throw Object.assign(new Error(data.error || "Something went wrong. Try again."), { user: true });
+  } catch (err){
+    if (err.user) throw err;
+    return { ideas: [], source: "none", notice: "The recommendation service didn't respond. Please try again in a moment." };
+  } finally { clearTimeout(timer); tsReset(); }
+}
+
+const norm = (q) => String(q || "").toLowerCase().replace(/[^\p{L}\p{N} '&-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 40);
+
+async function fillPhotos(ideas){
+  const need = ideas.filter((i) => !i.image && i.photo);
+  if (!need.length || !apiOn()) return;
+  try {
+    const res = await fetch("/api/photos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ queries: need.map((i) => i.photo) }) });
+    if (!res.ok) return;
+    const { photos = {} } = await res.json();
+    for (const idea of need){
+      const p = photos[norm(idea.photo)];
+      if (p) { idea.image = p; const card = cardsByTitle.get(idea.title); if (card) setMedia(card, idea); }
+    }
+  } catch {}
+}
+
+/* ---------- rendering ---------- */
+const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.6 3 5 6.6 5c2 0 3.4 1.1 4.4 2.5C12 6.1 13.4 5 15.4 5 19 5 21.1 8.6 19.6 11.8 17.5 16.4 12 21 12 21z"/></svg>';
+const PAPERS = ["#8b1631","#17543f","#c88a17","#5a0c1f","#2b5d8a"];
+const GIFT_SVG = (paper) => `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="14" y="40" width="72" height="50" rx="5" fill="${paper}"/><rect x="10" y="28" width="80" height="16" rx="4" fill="${paper}" opacity=".85"/><rect x="45" y="28" width="10" height="62" fill="#f2b544"/><path d="M50 28c-6-14-24-15-22-5s16 5 22 5zm0 0c6-14 24-15 22-5s-16 5-22 5z" fill="none" stroke="#f2b544" stroke-width="5" stroke-linejoin="round"/></svg>`;
+const cardsByTitle = new Map();
+const isSaved = (t) => shortlist.some((x) => x.title === t);
+const ALLOWED_IMG = /^https:\/\/images\.pexels\.com\//, ALLOWED_PAGE = /^https:\/\/www\.pexels\.com\//;
+
+function setMedia(card, idea){
+  const media = card.querySelector(".media");
+  const img = idea.image;
+  if (!img || !ALLOWED_IMG.test(img.src || "")) return;
+  const credit = document.createElement("a"); credit.className = "credit";
+  credit.href = ALLOWED_PAGE.test(img.url || "") ? img.url : "https://www.pexels.com";
+  credit.target = "_blank"; credit.rel = "noopener";
+  credit.textContent = `Illustrative photo: ${img.by || "Pexels"} / Pexels`;
+
+  const el = document.createElement("img");
+  el.className = "loading"; el.alt = img.alt || idea.title; el.loading = "lazy"; el.decoding = "async";
+  el.src = img.srcSmall && ALLOWED_IMG.test(img.srcSmall) ? img.srcSmall : img.src;
+  if (img.srcSmall && ALLOWED_IMG.test(img.srcSmall)) el.srcset = `${img.srcSmall} 350w, ${img.src} 940w`;
+  el.sizes = "(max-width:760px) 100vw, 360px";
+  el.addEventListener("load", () => el.classList.remove("loading"));
+  el.addEventListener("error", () => { el.remove(); credit.remove(); });
+  media.prepend(el);
+  media.append(credit);
+
+}
+
+function renderCards(ideas){
+  const ul = $("#cards"); ul.textContent = ""; cardsByTitle.clear();
+  ideas.forEach((idea, idx) => {
+    const li = document.createElement("li"); li.className = "card reveal"; li.style.setProperty("--i", idx);
+    const media = document.createElement("div"); media.className = "media";
+    const ph = document.createElement("div"); ph.className = "ph"; ph.innerHTML = GIFT_SVG(PAPERS[idx % PAPERS.length]);
+    const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = idea.category || "Gift idea";
+    media.append(ph, cat);
+    const body = document.createElement("div"); body.className = "card-body";
+    const h = document.createElement("h3"); h.textContent = idea.title;
+    const why = document.createElement("p"); why.className = "why"; why.textContent = idea.why;
+    const row = document.createElement("div"); row.className = "row";
+    const a = document.createElement("a"); a.className = "shop"; a.href = amazonUrl(idea.query);
+    a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = "See it on Amazon";
+    a.setAttribute("aria-label", `See ${idea.title} on Amazon (affiliate link, opens in new tab)`);
+    const save = document.createElement("button"); save.type = "button"; save.className = "save"; save.innerHTML = HEART;
+    const sync = () => { const on = isSaved(idea.title); save.setAttribute("aria-pressed", String(on)); save.setAttribute("aria-label", on ? `Remove ${idea.title} from shortlist` : `Save ${idea.title} to shortlist`); };
+    save.addEventListener("click", () => { toggleSave(idea); sync(); });
+    sync();
+    const aff = document.createElement("p"); aff.className = "aff"; aff.textContent = "Ad";
+    row.append(a, save);
+    body.append(h, why, row, aff);
+    li.append(media, body);
+    ul.append(li);
+    cardsByTitle.set(idea.title, li);
+    setMedia(li, idea);
+  });
+}
+
+function toggleSave(idea){
+  if (isSaved(idea.title)) shortlist = shortlist.filter((x) => x.title !== idea.title);
+  else shortlist = [...shortlist, { title: idea.title, query: idea.query, category: idea.category || "" }].slice(-50);
+  store.set(shortlist); renderBar();
+}
+function renderBar(){ $("#listbar").hidden = shortlist.length === 0; $("#openlist").textContent = `Your shortlist (${shortlist.length})`; }
+function renderDialog(){
+  const ul = $("#dlg-list"); ul.textContent = "";
+  if (!shortlist.length){ const li = document.createElement("li"); li.textContent = "Nothing saved yet. Tap the heart on any idea."; ul.append(li); return; }
+  for (const item of shortlist){
+    const li = document.createElement("li");
+    const div = document.createElement("div");
+    const a = document.createElement("a"); a.href = amazonUrl(item.query); a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = item.title;
+    const small = document.createElement("small"); small.textContent = item.category;
+    div.append(a, small);
+    const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "Remove";
+    x.addEventListener("click", () => { shortlist = shortlist.filter((s) => s.title !== item.title); store.set(shortlist); renderDialog(); renderBar(); syncSaveButtons(); });
+    li.append(div, x); ul.append(li);
+  }
+}
+function syncSaveButtons(){ for (const [t, li] of cardsByTitle) li.querySelector(".save").setAttribute("aria-pressed", String(isSaved(t))); }
+$("#openlist").addEventListener("click", () => { renderDialog(); $("#dlg").showModal(); });
+$("#closelist").addEventListener("click", () => $("#dlg").close());
+$("#copylist").addEventListener("click", async (e) => {
+  const text = "My Christmas gift shortlist\n" + shortlist.map((s) => `- ${s.title}`).join("\n");
+  try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied"; } catch { e.target.textContent = "Couldn't copy"; }
+  setTimeout(() => { e.target.textContent = "Copy list"; }, 1800);
+});
+
+function setStatus(msg, isErr){
+  const el = $("#status"); el.textContent = "";
+  if (!msg) return;
+  const p = document.createElement("p"); p.className = "status" + (isErr ? " err" : ""); p.textContent = msg; el.append(p);
+}
+
+/* ---------- form flow ---------- */
+let current = null, shownTitles = [];
+function readForm(){
+  const f = $("#form");
+  const mode = (f.querySelector('input[name="mode"]:checked') || {}).value || "describe";
+  if (mode === "describe"){
+    return {
+      mode, description: $("#description").value.trim(),
+      relation: "other", age: "unknown", budget: "any", occasion: "christmas",
+      interests: "", about: "", exclude: []
+    };
+  }
+  return {
+    mode, description: "",
+    relation: (f.querySelector("input[name=relation]:checked") || {}).value || "other",
+    budget: (f.querySelector("input[name=budget]:checked") || {}).value || "any",
+    age: $("#age").value, occasion: $("#occasion").value,
+    interests: $("#interests").value.trim(), about: $("#about").value.trim(), exclude: []
+  };
+}
+
+async function run(input){
+  const go = $("#go"), more = $("#more");
+  go.disabled = true; more.disabled = true; setStatus(""); $("#loading").hidden = false;
+  const steps = ["Reading your description...", "Choosing ten candidates...", "Checking them against what you told us...", "Almost there - this usually takes 10 to 20 seconds."];
+  const label = $("#loading-text"); let stepIdx = 0; label.textContent = steps[0];
+  const ticker = setInterval(() => { stepIdx = Math.min(stepIdx + 1, steps.length - 1); label.textContent = steps[stepIdx]; }, 4000);
+  try {
+    const out = await fetchIdeas(input);
+    if (!out.ideas.length){ setStatus(out.notice || "We've run out of new ideas for this description. Try adding more detail about them.", false); return; }
+    shownTitles = [...shownTitles, ...out.ideas.map((i) => i.title)].slice(-24);
+    renderCards(out.ideas);
+    const summary = out.source === "ai" && typeof out.recipientSummary === "string" ? out.recipientSummary.trim() : "";
+    $("#recipient-summary").textContent = summary;
+    $("#recipient-insight").hidden = !summary;
+    $("#results").hidden = false;
+    $("#source").textContent = out.source === "ai" ? "Ideas curated by AI from your answers." : "Catalogue suggestions checked against your answers.";
+    if (out.notice) setStatus(out.notice, false);
+    const title = $("#results-title"); title.focus({ preventScroll: true });
+    title.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    fillPhotos(out.ideas);
+  } catch (err){
+    setStatus(err.message, true);
+  } finally {
+    clearInterval(ticker);
+    $("#loading").hidden = true; go.disabled = false; more.disabled = false;
+  }
+}
+
+$("#form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = readForm();
+  if (input.mode === "describe" && !input.description){
+    setStatus("Tell us a little about the person so we can find ideas that suit them.", true);
+    $("#description").focus(); return;
+  }
+  if (input.mode === "guided" && !input.interests && !input.about){
+    setStatus("Tell us at least one thing they're into, so the ideas fit them.", true);
+    $("#interests").focus(); return;
+  }
+  current = input; shownTitles = [];
+  run(input);
+});
+$("#more").addEventListener("click", () => { if (current) run({ ...current, exclude: shownTitles }); });
+$("#restart").addEventListener("click", () => {
+  $("#form").reset();
+  $("#about-count").textContent = "0 / 500";
+  $("#description-count").textContent = "0 / 1,200";
+  setMode("describe");
+  $("#results").hidden = true; setStatus(""); current = null; shownTitles = [];
+  window.scrollTo({ top: 0 }); $("#interests").focus();
+});
+renderBar();
+})();
+</script>
+</body>
+</html>

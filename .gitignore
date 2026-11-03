@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env
+.env.*
+!.env.example
+benchmarks/runs/
+pi.txt
+*.key.txt

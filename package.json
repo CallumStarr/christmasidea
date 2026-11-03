@@ -1,0 +1,18 @@
+{
+  "name": "christmasidea",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test",
+    "build:pages": "node scripts/build-site-pages.mjs",
+    "benchmark": "node scripts/run-benchmark.js",
+    "benchmark:score": "node scripts/score-benchmark.js",
+    "benchmark:compare": "node scripts/compare-prompts.js",
+    "validate-run": "node scripts/validate-run.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

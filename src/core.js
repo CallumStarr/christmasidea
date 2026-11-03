@@ -1,0 +1,472 @@
+// Core request handling for the Gift Helper API.
+// Kept free of Cloudflare-only imports so it can be unit tested in Node.
+
+import { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS } from "./constants.js";
+import { GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage } from "./prompt.js";
+import { VALIDATOR_VERSION, curateIdeas, sanitiseIdeas } from "./validate.js";
+import { cleanText } from "./text.js";
+import { catalogueFallback } from "./catalogue.js";
+
+export { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS };
+export { GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
+export { VALIDATOR_VERSION, curateIdeas, sanitiseIdeas };
+
+export const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+export const ANTHROPIC_VERSION = "2026-10-21";
+// Ten candidate ideas, the recipient profile and some adaptive-thinking headroom. Haiku 5.5 counts
+// thinking tokens as output, so a limit sized only for the visible JSON truncates real responses.
+export const DEFAULT_MAX_OUTPUT_TOKENS = 4500;
+export const DEFAULT_EFFORT = "low";
+const EFFORTS = ["low", "medium", "high"];
+
+/** Effort is validated, never passed through blindly; an unknown value falls back to the default. */
+export function resolveEffort(value) {
+  const v = String(value || "").trim().toLowerCase();
+  return EFFORTS.includes(v) ? v : DEFAULT_EFFORT;
+}
+
+/**
+ * Generation settings shared by the production Worker and the benchmark runner so measured
+ * behaviour is the behaviour visitors get. Haiku 5.5 rejects `budget_tokens` (400); it uses
+ * adaptive thinking steered by `output_config.effort`.
+ */
+export function generationParams({ maxTokens, effort } = {}) {
+  return {
+    max_tokens: Number(maxTokens) || DEFAULT_MAX_OUTPUT_TOKENS,
+    thinking: { type: "adaptive" },
+    output_config: { effort: resolveEffort(effort) },
+  };
+}
+
+/** Everything that changes what the model returns for the same input, for cache keys and metadata. */
+export function generationFingerprint(env = {}) {
+  const p = generationParams({ maxTokens: env.MAX_OUTPUT_TOKENS, effort: env.CLAUDE_EFFORT });
+  return `${p.thinking.type}:${p.output_config.effort}:${p.max_tokens}:forced-strict-tool`;
+}
+
+const MAX = { description: 1200, interests: 200, about: 500, exclude: 24, excludeItem: 80, token: 2048 };
+
+function pick(value, allowed, fallback) {
+  return allowed.includes(value) ? value : fallback;
+}
+
+export function normaliseInput(body) {
+  if (!body || typeof body !== "object") return { ok: false, error: "Send the form as JSON." };
+  const mode = pick(body.mode, ["describe", "guided"], "guided");
+  const input = {
+    mode,
+    description: cleanText(body.description, MAX.description),
+    relation: pick(body.relation, RELATIONS, "other"),
+    age: pick(body.age, AGES, "unknown"),
+    budget: pick(body.budget, Object.keys(BUDGETS), "any"),
+    occasion: pick(body.occasion, OCCASIONS, "christmas"),
+    interests: cleanText(body.interests, MAX.interests),
+    about: cleanText(body.about, MAX.about),
+    exclude: Array.isArray(body.exclude)
+      ? body.exclude.slice(0, MAX.exclude).map((s) => cleanText(s, MAX.excludeItem)).filter(Boolean)
+      : [],
+  };
+  const hasDescription = Boolean(input.description);
+  const hasGuidedDetails = Boolean(input.interests || input.about);
+  if (mode === "describe" ? !hasDescription : !hasGuidedDetails) {
+    return { ok: false, error: mode === "describe"
+      ? "Describe the person you're buying for."
+      : "Tell us at least one thing they're into." };
+  }
+  const token = typeof body.turnstileToken === "string" ? body.turnstileToken.slice(0, MAX.token) : "";
+  return { ok: true, value: input, token };
+}
+
+export function allowedOrigin(origin, env) {
+  const list = String(env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!origin) return null;
+  return list.includes(origin) ? origin : null;
+}
+
+export function corsHeaders(origin) {
+  const h = {
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+  if (origin) h["Access-Control-Allow-Origin"] = origin;
+  return h;
+}
+
+function json(data, status, origin, extra = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      ...corsHeaders(origin),
+      ...extra,
+    },
+  });
+}
+
+async function sha256Hex(text) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export async function verifyTurnstile(token, ip, env, fetchImpl) {
+  if (!env.TURNSTILE_SECRET) return true; // Turnstile not configured
+  if (!token) return false;
+  try {
+    const res = await fetchImpl("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: env.TURNSTILE_SECRET, response: token, remoteip: ip }),
+      signal: AbortSignal.timeout(8000),
+    });
+    const data = await res.json();
+    return data && data.success === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function callClaude(input, env, fetchImpl) {
+  return (await callClaudeDetailed(input, env, fetchImpl)).output;
+}
+
+/** Anthropic's constrained decoding rejects length/count keywords; those limits stay enforced by the prompt and server validation. */
+function makeStrictSchema(schema) {
+  const result = { ...schema };
+  delete result.maxLength;
+  delete result.minLength;
+  delete result.maxItems;
+  delete result.minItems;
+  if (result.type === "object" && result.properties) {
+    result.properties = Object.fromEntries(
+      Object.entries(result.properties).map(([key, value]) => [key, makeStrictSchema(value)]),
+    );
+    result.required = Object.keys(result.properties);
+    result.additionalProperties = false;
+  }
+  if (result.type === "array" && result.items) result.items = makeStrictSchema(result.items);
+  return result;
+}
+
+export const STRICT_GIFT_TOOL = { ...GIFT_TOOL, strict: true, input_schema: makeStrictSchema(GIFT_TOOL.input_schema) };
+
+const STRICT_OUTPUT_NOTE = "\n\nOUTPUT REQUIREMENT\n- Include every field in the tool schema. Use an empty string for note when no additional note is needed.";
+const AUTO_TOOL_NOTE = "\n- You must return the result by calling the gift_ideas tool exactly once. Do not answer with plain text instead.";
+
+/**
+ * The one request builder used by the Worker and by the Haiku benchmark. Haiku 5.5 accepts a forced
+ * tool_choice; the response then starts with the tool call and has no thinking block. Models that
+ * cannot force a tool (Sonnet 5.5) pass forceTool=false and get `auto` plus an explicit instruction.
+ */
+export function buildClaudeRequest({ model, userMessage, maxTokens, effort, forceTool = true }) {
+  return {
+    model,
+    ...generationParams({ maxTokens, effort }),
+    system: forceTool ? `${SYSTEM_PROMPT}${STRICT_OUTPUT_NOTE}` : `${SYSTEM_PROMPT}${STRICT_OUTPUT_NOTE}${AUTO_TOOL_NOTE}`,
+    tools: [STRICT_GIFT_TOOL],
+    tool_choice: forceTool ? { type: "tool", name: STRICT_GIFT_TOOL.name } : { type: "auto" },
+    messages: [{ role: "user", content: userMessage }],
+  };
+}
+
+/** Like callClaude, but also reports why generation stopped so truncation is never mistaken for success. */
+export async function callClaudeDetailed(input, env, fetchImpl) {
+  const res = await fetchImpl(ANTHROPIC_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": ANTHROPIC_VERSION,
+    },
+    body: JSON.stringify(buildClaudeRequest({
+      model: env.MODEL || "claude-haiku-5-5",
+      userMessage: buildUserMessage(input),
+      maxTokens: env.MAX_OUTPUT_TOKENS,
+      effort: env.CLAUDE_EFFORT,
+    })),
+    signal: AbortSignal.timeout(Number(env.UPSTREAM_TIMEOUT_MS) || 25000),
+  });
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.text()).slice(0, 300); } catch {}
+    const err = new Error(`Upstream ${res.status}`);
+    err.status = res.status;
+    err.detail = detail;
+    throw err;
+  }
+  const data = await res.json();
+  const block = Array.isArray(data.content) ? data.content.find((b) => b.type === "tool_use") : null;
+  if (!block) throw new Error("No tool_use block in response");
+  const stopReason = typeof data.stop_reason === "string" ? data.stop_reason : null;
+  return { output: block.input, stopReason, truncated: stopReason === "max_tokens", usage: data.usage || {} };
+}
+
+/* ------------------------- Photos (Pexels) -------------------------
+   Amazon product photos may only be shown via Amazon's Creators API, which needs
+   an established Associates account, so we use free Pexels stock photos instead.
+   Results are cached for a week, and a Durable Object keeps us under Pexels'
+   hourly limit (default 200/hour), so we never hit it. */
+
+const PHOTO_TTL = 7 * 24 * 3600;
+const PEXELS_IMG = /^https:\/\/images\.pexels\.com\//;
+const PEXELS_PAGE = /^https:\/\/www\.pexels\.com\//;
+const QUERY_ALLOWED = /[^\p{L}\p{N} '&-]/gu;
+
+export function normalisePhotoQuery(q) {
+  return cleanText(String(q || "").toLowerCase().replace(QUERY_ALLOWED, " "), 40);
+}
+
+function photoCacheKey(q) {
+  return new Request(`https://cache.gift-helper.internal/photo/v1/${encodeURIComponent(q)}`);
+}
+
+export function pickPhoto(data, q) {
+  const p = data && Array.isArray(data.photos) ? data.photos[0] : null;
+  if (!p || !p.src) return null;
+  const photo = {
+    src: p.src.large,
+    srcSmall: p.src.medium,
+    alt: cleanText(p.alt || q, 120),
+    by: cleanText(p.photographer || "Pexels photographer", 60),
+    byUrl: p.photographer_url,
+    url: p.url,
+  };
+  if (!PEXELS_IMG.test(photo.src || "") || !PEXELS_IMG.test(photo.srcSmall || "")) return null;
+  if (!PEXELS_PAGE.test(photo.url || "")) return null;
+  if (!PEXELS_PAGE.test(photo.byUrl || "")) photo.byUrl = photo.url;
+  return photo;
+}
+
+async function cachedPhoto(q, deps) {
+  if (!deps.cache) return undefined;
+  try {
+    const hit = await deps.cache.match(photoCacheKey(q));
+    if (!hit) return undefined;
+    const data = await hit.json();
+    return data.photo || null; // null = we looked before and found nothing
+  } catch {
+    return undefined;
+  }
+}
+
+async function fetchPhoto(q, env, deps) {
+  try {
+    const u = new URL("https://api.pexels.com/v1/search");
+    u.searchParams.set("query", q);
+    u.searchParams.set("per_page", "1");
+    u.searchParams.set("orientation", "landscape");
+    const res = await deps.fetch(u.toString(), {
+      headers: { Authorization: env.PEXELS_API_KEY },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return undefined; // don't cache failures or rate limits
+    const photo = pickPhoto(await res.json(), q);
+    if (deps.cache) {
+      const p = deps.cache
+        .put(photoCacheKey(q), new Response(JSON.stringify({ photo }), {
+          headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${PHOTO_TTL}` },
+        }))
+        .catch(() => {});
+      if (deps.waitUntil) deps.waitUntil(p);
+    }
+    return photo;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Returns a map of normalised query -> photo object or null. */
+export async function photosFor(queries, ipHash, env, deps) {
+  const out = {};
+  if (!env.PEXELS_API_KEY || !deps.photoBudget) return out;
+  const unique = [...new Set(queries.map(normalisePhotoQuery).filter((q) => q.length >= 2))].slice(0, 10);
+  const misses = [];
+  for (const q of unique) {
+    const c = await cachedPhoto(q, deps);
+    if (c === undefined) misses.push(q);
+    else out[q] = c;
+  }
+  if (misses.length) {
+    const allowed = await deps.photoBudget.take(ipHash, misses.length);
+    const batch = misses.slice(0, Math.max(0, allowed));
+    const found = await Promise.all(batch.map((q) => fetchPhoto(q, env, deps)));
+    batch.forEach((q, i) => { if (found[i] !== undefined) out[q] = found[i]; });
+  }
+  return out;
+}
+
+async function visitorHash(request, env) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const day = new Date().toISOString().slice(0, 10);
+  return { ip, hash: (await sha256Hex(`${env.IP_SALT || "salt"}:${day}:${ip}`)).slice(0, 32) };
+}
+
+/**
+ * deps = {
+ *   fetch: fetch implementation,
+ *   budget: { consume(ipHash) -> Promise<{ok:boolean, reason?:string}> },
+ *   photoBudget: { take(ipHash, n) -> Promise<number> }  (how many Pexels calls are allowed now)
+ *   cache: optional Cache (caches.default),
+ *   waitUntil: optional fn
+ * }
+ */
+async function readJson(request, max) {
+  const length = Number(request.headers.get("Content-Length") || 0);
+  if (length > max) return { error: "Request too large.", status: 413 };
+  try {
+    return { body: await request.json() };
+  } catch {
+    return { error: "Send the form as JSON.", status: 400 };
+  }
+}
+
+async function withPhotos(ideas, ipHash, env, deps) {
+  const photos = await photosFor(ideas.map((i) => i.photo || i.title), ipHash, env, deps);
+  return ideas.map((i) => {
+    const photo = photos[normalisePhotoQuery(i.photo || i.title)];
+    return photo ? { ...i, image: photo } : i;
+  });
+}
+
+// Counts of rejected/repaired/warned checks only. Never includes shopper text or model output.
+function logCuration(diagnostics, stopReason) {
+  const counts = {};
+  for (const { code, action } of diagnostics.issues) counts[`${action}:${code}`] = (counts[`${action}:${code}`] || 0) + 1;
+  for (const candidate of diagnostics.rejected || []) {
+    for (const code of candidate.codes || []) counts[`rejected:${code}`] = (counts[`rejected:${code}`] || 0) + 1;
+  }
+  const fn = diagnostics.shortfall || diagnostics.truncated ? console.warn : console.log;
+  fn("Gift curation", JSON.stringify({
+    prompt: PROMPT_VERSION, validator: diagnostics.validator, stop_reason: stopReason,
+    truncated: diagnostics.truncated, candidates: diagnostics.candidates, returned: diagnostics.returned, issues: counts,
+  }));
+}
+
+function fallbackResponse(input, message, status, origin) {
+  const result = catalogueFallback(input);
+  logCuration(result.diagnostics, "catalogue_fallback");
+  return json({
+    error: message,
+    fallback: true,
+    source: "catalogue",
+    ideas: result.ideas,
+    shortfall: result.diagnostics.shortfall,
+    note: result.ideas.length ? "" : "We don't have enough verified catalogue ideas for this recipient and budget. Try adding detail or adjusting the budget.",
+  }, status, origin);
+}
+
+export async function handleRequest(request, env, deps) {
+  const url = new URL(request.url);
+  const origin = allowedOrigin(request.headers.get("Origin"), env);
+
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: origin ? 204 : 403, headers: corsHeaders(origin) });
+  }
+  if (url.pathname === "/api/health") return json({ ok: true }, 200, origin);
+  if (url.pathname !== "/api/ideas" && url.pathname !== "/api/photos") return json({ error: "Not found" }, 404, origin);
+  if (request.method !== "POST") return json({ error: "Use POST." }, 405, origin);
+  if (!origin) return json({ error: "This site isn't allowed to use the API." }, 403, null);
+
+  const { ip, hash: ipHash } = await visitorHash(request, env);
+
+  /* ---- photos for AI and catalogue ideas ---- */
+  if (url.pathname === "/api/photos") {
+    const r = await readJson(request, 4000);
+    if (r.error) return json({ error: r.error }, r.status, origin);
+    const queries = Array.isArray(r.body && r.body.queries) ? r.body.queries.slice(0, 10).map(String) : [];
+    const photos = await photosFor(queries, ipHash, env, deps);
+    return json({ photos }, 200, origin);
+  }
+
+  /* ---- AI ideas and recipient-aware catalogue fallback ---- */
+  const r = await readJson(request, 8000);
+  if (r.error) return json({ error: r.error }, r.status, origin);
+  const parsed = normaliseInput(r.body);
+  if (!parsed.ok) return json({ error: parsed.error }, 400, origin);
+  const input = parsed.value;
+  if (!env.ANTHROPIC_API_KEY) {
+    return fallbackResponse(input, "AI recommendations are temporarily unavailable. Here are catalogue suggestions checked against your answers.", 503, origin);
+  }
+
+  const human = await verifyTurnstile(parsed.token, ip, env, deps.fetch);
+  if (!human) return json({ error: "Please complete the check and try again.", retryTurnstile: true }, 403, origin);
+
+  // Identical requests are served from cache and cost nothing. The key covers everything that
+  // changes the answer: prompt, validator rules, model and the visitor's input.
+  const cacheKeyHash = await sha256Hex(JSON.stringify([PROMPT_VERSION, VALIDATOR_VERSION, env.MODEL || "", generationFingerprint(env), input]));
+  const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v5/${cacheKeyHash}`);
+  if (deps.cache) {
+    try {
+      const hit = await deps.cache.match(cacheKey);
+      if (hit) {
+        const data = await hit.json();
+        const ideas = await withPhotos(data.ideas || [], ipHash, env, deps);
+        return json({ ...data, ideas, cached: true }, 200, origin);
+      }
+    } catch {}
+  }
+
+  const allowance = await deps.budget.consume(ipHash);
+  if (!allowance.ok) {
+    if (allowance.reason === "burst") {
+      return json({ error: "That's a lot of requests in a row. Give it a minute and try again.", fallback: false, reason: allowance.reason }, 429, origin);
+    }
+    return fallbackResponse(input, "Our AI helper has reached today's limit. Here are catalogue suggestions checked against your answers.", 429, origin);
+  }
+
+  let result;
+  let truncated = false;
+  try {
+    const call = await callClaudeDetailed(input, env, deps.fetch);
+    truncated = call.truncated;
+    result = curateIdeas(call.output, input, { truncated });
+    logCuration(result.diagnostics, call.stopReason);
+  } catch (err) {
+    console.error("Claude call failed", err && err.status, err && err.detail, String(err));
+    return fallbackResponse(input, "Our AI helper is busy right now. Here are catalogue suggestions checked against your answers.", 502, origin);
+  }
+  if (truncated && !result.ideas.length) {
+    return fallbackResponse(input, "Our AI response was incomplete. Here are catalogue suggestions checked against your answers.", 502, origin);
+  }
+
+  const payload = {
+    ideas: result.ideas,
+    note: result.note,
+    recipient_summary: result.recipientSummary,
+    source: "ai",
+    prompt_version: PROMPT_VERSION,
+    shortfall: result.diagnostics.shortfall,
+  };
+  if (truncated) payload.truncated = true;
+  // A cut-off response is shown if it still holds valid ideas, but is never cached.
+  if (deps.cache && result.ideas.length && !truncated) {
+    const ttl = result.diagnostics.shortfall ? 3600 : 86400; // don't pin a thin result for a full day
+    const p = deps.cache
+      .put(cacheKey, new Response(JSON.stringify(payload), {
+        headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${ttl}` },
+      }))
+      .catch(() => {});
+    if (deps.waitUntil) deps.waitUntil(p);
+  }
+  const ideas = await withPhotos(payload.ideas, ipHash, env, deps);
+  return json({ ...payload, ideas }, 200, origin);
+}
+
+/** Returns a 301 to the canonical host for www or other aliases, otherwise null. */
+export function canonicalRedirect(request, env) {
+  const canonical = env.CANONICAL_HOST;
+  if (!canonical) return null;
+  const url = new URL(request.url);
+  const h = url.hostname;
+  if (h === canonical || h === "localhost" || h === "127.0.0.1" || h.endsWith(".workers.dev")) return null;
+  url.hostname = canonical;
+  url.protocol = "https:";
+  url.port = "";
+  return Response.redirect(url.toString(), 301);
+}

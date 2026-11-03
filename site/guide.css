@@ -1,0 +1,11 @@
+:root{font-family:"Figtree",system-ui,Arial,sans-serif;color:#20342c;background:#fbfaf6;line-height:1.6}
+body{margin:0}.wrap{max-width:760px;margin:0 auto;padding:2rem 1.25rem 4rem}
+a{color:#17624b}h1,h2{line-height:1.2}h1{font-size:2.2rem}
+nav.crumb{font-size:.95rem;margin-bottom:1rem}
+.disclosure{font-size:.9rem;padding:.6rem .8rem;background:#eef6f1;border-radius:6px}
+.idea{padding:1rem 0;border-bottom:1px solid #e3e0d6}.idea h3{margin:.1rem 0}
+.cta{margin:2rem 0;padding:1.25rem;background:#8b1631;color:#fff;border-radius:10px}
+.cta a{color:#fff;font-weight:700}
+.more{columns:2;padding-left:1.2rem}
+footer{margin-top:3rem;font-size:.9rem;color:#5b6b64}
+@media(max-width:600px){.more{columns:1}h1{font-size:1.8rem}}
