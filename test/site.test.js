@@ -1,4 +1,4 @@
-import test from "node:test";
+﻿import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 
@@ -25,7 +25,7 @@ test("at least ten gift guides exist, each with eight ideas and tagged sponsored
 test("sitemap lists every guide and robots.txt points to it", async () => {
   const sitemap = await read("sitemap.xml");
   const files = (await readdir(site("gifts/"))).filter((f) => f.startsWith("gifts-for-") || f.startsWith("secret-santa"));
-  for (const file of files) assert.ok(sitemap.includes(`/gifts/${file}`), file);
+  for (const file of files) assert.ok(sitemap.includes(`/gifts/${file.replace(".html", "")}`), file);
   assert.match(await read("robots.txt"), /Sitemap: https:\/\/christmasidea\.co\.uk\/sitemap\.xml/);
 });
 
