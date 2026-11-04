@@ -1,5 +1,5 @@
-/* The finder and an honest example collection. */
-.atelier{display:grid;grid-template-columns:minmax(0,1.06fr) minmax(0,1fr);gap:clamp(40px,5vw,72px);align-items:start;padding-top:48px;padding-bottom:64px}
+/* A focused, single-column finder. */
+.atelier{max-width:760px;padding-top:48px;padding-bottom:64px}
 .hero-copy .eyebrow{margin:0 0 20px;font-size:11px;letter-spacing:.11em}
 .hero-copy h1{font-size:clamp(62px,6vw,82px);line-height:1;font-weight:450;letter-spacing:-.055em;color:var(--accent);margin:0 0 22px}
 h1 em,h2 em{font-weight:400;font-style:italic;font-synthesis:style}
@@ -52,22 +52,6 @@ legend,label.q{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
 .chip span{display:flex;align-items:center;justify-content:center;min-height:44px;padding:9px 13px;border:1px solid var(--line);border-radius:3px;font-size:13px;background:var(--surface);transition:color .18s,background .18s}
 .chip input:checked+span{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 #ts:not([hidden]){margin-top:14px;min-height:65px}
-
-.example-edit{background:#e5e8dc;color:#284735;padding:28px 30px 20px;min-width:0;margin-top:4px}
-.example-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.example-heading .eyebrow{font-size:10px;letter-spacing:.07em;color:#40523c;margin:0}
-.example-label{font-size:11px;white-space:nowrap;border:1px solid #7d8b72;border-radius:20px;padding:3px 9px}
-.example-edit h2{font-size:clamp(25px,2.4vw,33px);font-weight:450;letter-spacing:-.035em;line-height:1.2;margin:24px 0 12px}
-.example-recipient{font-size:12px;color:#526149;margin:0}
-.example-edit .object-scene{margin:-6px auto -4px;max-width:440px}
-.example-ideas{list-style:none;padding:0;margin:0}
-.example-ideas li{display:flex;gap:16px;padding:13px 0;border-top:1px solid #b5bea8}
-.example-ideas li>span{font-size:11px;padding-top:3px;color:#526149}
-.example-ideas h3{font-size:18px;line-height:1.3;letter-spacing:-.02em;margin:0 0 4px}
-.example-ideas p{font-size:13px;line-height:1.5;margin:0;color:#526149}
-.example-bottom{border-top:1px solid #b5bea8;margin-top:4px;padding-top:10px}
-.example-bottom>p{font-size:11px;color:#526149;margin:0}
-.example-try{color:#284735;font-size:13px}
 
 /* Waiting is legible, finite and cancellable. */
 .status{margin:16px 0 0;padding:16px 20px;border:1px solid var(--line);border-left:3px solid var(--gold);background:var(--surface);font-size:13px}
@@ -201,26 +185,16 @@ dialog::backdrop{background:rgb(10 18 14 / .65)}
 @keyframes save{50%{transform:scale(1.2)}}
 @keyframes reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .card.reveal{animation:reveal .35s ease-out both;animation-delay:calc(min(var(--i),5) * 35ms)}
-@media(min-width:1000px){
-  .concierge:has(#guided-fields:not([hidden]))+.example-edit{position:sticky;top:24px}
-}
 @media(max-width:1100px){
-  .atelier{gap:36px;padding-top:36px}
+  .atelier{padding-top:36px}
   .hero-copy h1{font-size:66px}
   .prompt-examples{display:block}
   .prompt-examples p{margin-top:6px}
-  .example-edit{padding:24px}
-  .example-heading{align-items:flex-start}
-  .example-heading .eyebrow{max-width:20ch}
   .guide-shelf{gap:24px}
   .section-heading{align-items:flex-start}
 }
 @media(min-width:761px) and (max-width:999px){
-  .atelier{grid-template-columns:1.1fr 1fr;gap:28px}
   .hero-copy h1{font-size:62px}
-  .example-heading{flex-direction:column;gap:10px}
-  .example-heading .eyebrow{max-width:none}
-  .example-edit h2{font-size:26px}
   .card.featured{grid-column:span 7}
   .card.companion{grid-column:span 5}
   .featured .card-body,.companion .card-body{padding:28px}
@@ -230,7 +204,7 @@ dialog::backdrop{background:rgb(10 18 14 / .65)}
   .guide-index{font-size:10px}
 }
 @media(max-width:760px){
-  .atelier{grid-template-columns:1fr;gap:32px;padding-top:28px;padding-bottom:40px}
+  .atelier{padding-top:28px;padding-bottom:40px}
   .hero-copy .eyebrow{font-size:11px;margin-bottom:14px;letter-spacing:.08em}
   .hero-copy h1{font-size:clamp(50px,12vw,72px);margin-bottom:16px}
   .deck{font-size:16px;max-width:43ch}
@@ -245,12 +219,6 @@ dialog::backdrop{background:rgb(10 18 14 / .65)}
   .field-foot{padding-inline:14px;font-size:11px}
   .field-foot>span:first-child{max-width:22ch}
   .field-foot .count{font-size:11px}
-  .example-edit{padding:24px;max-width:560px;justify-self:center;width:100%;margin:0}
-  .example-heading{align-items:center}
-  .example-heading .eyebrow{font-size:10px;max-width:22ch}
-  .example-edit h2{font-size:28px;margin-top:20px}
-  .example-edit .object-scene{max-width:350px;margin-block:-12px -4px}
-  .example-try>span:last-child{display:inline}
   .grid2{gap:20px}
   .chips{gap:7px}
   .chip span{padding:8px 11px}
@@ -299,7 +267,4 @@ dialog::backdrop{background:rgb(10 18 14 / .65)}
   .results-head{flex-direction:column;gap:6px}
   .guide-copy h3{font-size:22px}
   .round-arrow{display:none}
-  .example-edit{padding:20px}
-  .example-heading{align-items:flex-start}
-  .example-edit h2{font-size:26px}
 }

@@ -69,18 +69,18 @@ test("editorial styles stay lightweight and avoid gradients, shadows and uniform
     "all recommendation roles must collapse into a single mobile reading column");
 });
 
-test("the homepage demonstrates an explicitly illustrated example without fake product imagery", async () => {
+test("the homepage keeps a focused finder without an example sidebar or fake product imagery", async () => {
   const html = await read("index.html");
-  assert.match(html, /aria-labelledby="example-title"/);
-  assert.match(html, /class="example-label">An example/);
-  assert.match(html, /Illustrated gift ideas, not product listings/);
-  assert.match(html, /href="\/gift-objects\.svg#finder"/);
+  assert.doesNotMatch(html, /example-edit|example-title|example-try|gift-objects\.svg#finder/);
+  assert.match(html, /id="form"/);
   assert.match(html, /data-description="[^"]+"/);
   assert.match(html, /description\.value = button\.dataset\.description/);
   assert.match(html, /id="nav-shortlist"/);
   assert.match(html, /class="recommendation-disclosure"/);
   assert.doesNotMatch(html, /GIFT_SVG|Illustrative placeholder/);
   const styles = await read("home.css");
+  assert.match(styles, /\.atelier\{max-width:760px;/);
+  assert.doesNotMatch(styles, /\.example-/);
   assert.match(styles, /\.media\{display:none\}/);
   assert.match(styles, /\.verified \.media\{display:block/);
   for (const name of ["gift-objects.svg"]) {
@@ -107,9 +107,6 @@ test("original artwork captions meet AA on their fixed paper colours", async () 
   const panels = [...css.matchAll(/\.guide-(?:garden|books|gesture) \.guide-art\{background:(#[\da-f]{6});color:(#[\da-f]{6})/gi)];
   assert.equal(panels.length, 3);
   for (const [, background, foreground] of panels) assert.ok(contrast(foreground, background) >= 4.5);
-  for (const color of ["#284735", "#40523c", "#526149"]) {
-    assert.ok(contrast(color, "#e5e8dc") >= 4.5, `example: ${color}`);
-  }
   assert.match(await read("theme.css"), /\.object-scene\{[^}]*fill:none/);
   assert.match(css, /\.guide-art svg\{[^}]*fill:none/);
 });

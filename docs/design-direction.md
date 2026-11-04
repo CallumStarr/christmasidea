@@ -20,8 +20,8 @@ Sources checked on 4 November 2026:
 
 1. A recognisable wordmark, botanical maker's mark and restrained seasonal masthead.
 2. Warm parchment, deep forest, aged gold and a little terracotta. Fraunces is expressive, not indiscriminately enormous; Figtree handles clear, comfortable interface text.
-3. Original, self-hosted SVG object illustrations: books, garden snips, a coffee flask, toys and hobby equipment. Ten distinct guide scenes and one example collection share the same ink-and-paper vocabulary. No gradients, stock-image dependencies, canvas loops or 3D libraries.
-4. A compact finder beside an explicitly labelled example collection. Show how a description becomes ideas, without pretending that illustrations are product listings. One clear prompt, working examples, a real submit button and a quieter guided alternative. Privacy and disclosures remain accessible and explicit.
+3. Original, self-hosted SVG object illustrations: books, garden snips, a coffee flask, toys and hobby equipment. Ten distinct guide scenes share the same ink-and-paper vocabulary. No gradients, stock-image dependencies, canvas loops or 3D libraries.
+4. A compact, centred single-column finder, without a sample-collection sidebar. One clear prompt, small example-description buttons, a real submit button and a quieter guided alternative. Privacy and disclosures remain accessible and explicit.
 5. A featured typographic selection, a complementary adjacent idea, then lighter editorial entries. No invented photographs or giant placeholder boxes. Product imagery appears only when the existing verified-product pipeline provides it.
 6. Useful animation only: short button/arrow transitions, a gentle first entrance and a legible curation sequence. No scroll hijacking, marquees, parallax or cursor effects.
 7. Illustrated guide starting points, substantial buying notes and related reading. Every page uses the same masthead and footer. The homepage is the shared-markup source; the page generator synchronizes the shell into generated and authored pages while preserving legal content and CSS.
@@ -36,7 +36,7 @@ Sources checked on 4 November 2026:
 
 ## Acceptance criteria
 
-- At 1440 x 900, headline, description input and submit action are visible without scrolling. On mobile, the finder precedes large decorative artwork.
+- At 1440 x 900, headline, description input and submit action are visible without scrolling. The homepage hero contains only the finder, not a decorative or sample sidebar.
 - No horizontal overflow at 320, 375, 390, 768, 1024, 1440 or 1920 CSS pixels, in either colour scheme.
 - No new runtime or UI dependencies, external fonts or third-party image hosts. Keep combined authored CSS below 10 kB gzipped and original SVG artwork below 30 kB.
 - Normal text contrast >= 4.5:1; control/focus contrast >= 3:1. Touch targets >= 44 CSS pixels where practical. Respect reduced motion.
@@ -47,7 +47,7 @@ Sources checked on 4 November 2026:
 
 Visual quality is a judgement, not a measurable promise of perfection. The final review should state what was actually checked and distinguish synthetic browser fixtures from live provider testing.
 
-## Review evidence
+## Initial redesign review evidence
 
 - Reassessed desktop and mobile screenshots after implementation, then corrected SVG fill inheritance and simplified cramped mobile form labels. Reviewed the dark homepage, populated recommendations, illustrated directory and mobile guide composition again.
 - Checked all 15 routes at 320, 375, 390, 768, 1024, 1440 and 1920 CSS pixels in both themes: 210 layout checks without horizontal overflow, clipped main headings or duplicate shared shells.
@@ -55,9 +55,13 @@ Visual quality is a judgement, not a measurable promise of perfection. The final
 - A computed-colour scan of all routes in both themes, plus a populated dark collection, checked 2,717 visible text elements without a text-contrast failure. The scan composites ancestor background colours and respects the large-text threshold; it is not a full accessibility certification.
 - Both local font faces loaded. The homepage submit action ends at approximately 851 CSS pixels at 1440 x 900, and 762 at 375 x 844. The security-widget region remains below the action, with production token gating unchanged.
 - Exercised zero/one/eight-idea responses, single-card layout, save, dismissal, featured-card promotion, all-dismissed messaging, dialog Escape and saved-idea navigation from a secondary page.
-- Verified that trying the illustrated example from guided mode switches to the quick description and fills it. Service errors remain visible, and cancelling a pending request preserves the description.
+- Verified that example-description buttons switch to the quick description and fill it. Service errors remain visible, and cancelling a pending request preserves the description.
 - Automated regressions cover the shared shell, all 80 buying notes, ten distinct guide illustrations, repeatable generation, countdown edge cases and validated shortlist counts. Existing frontend/API and Turnstile regressions remain part of validation.
 - Final validation: all 282 tests pass with `npm test`; `npx wrangler deploy --dry-run` and `git diff --check` pass. The asynchronous frontend integration test now waits against a bounded deadline rather than a CPU-dependent loop count.
 - No new runtime or UI dependencies, external fonts or image hosts. The active object sprite is 13,272 bytes; combined authored CSS is 8,502 bytes gzipped, below the 10 kB budget.
 
 Interaction checks used browser-only synthetic ideas and a locally disabled Turnstile challenge, not live AI or Amazon results. No production configuration was relaxed and no deployment was performed. Production Core Web Vitals and live-provider behaviour still require post-deployment measurement; local screenshots and layout checks do not establish those results.
+
+## Sidebar removal
+
+Removed the sample collection and its desktop/mobile styles following design feedback. The finder now sits in a centred, 760-pixel maximum-width column; guide illustrations and the small description-prompt buttons remain. Verified the absence of the sidebar and horizontal overflow at all seven widths in both themes, checked the simplified desktop composition, and exercised mode switching and a description prompt. All 282 regression tests pass. Production Turnstile settings remain unchanged; local challenge rejection is not a live-service failure.
