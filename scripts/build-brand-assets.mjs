@@ -14,11 +14,16 @@ for (const name of ["garden", "books", "space", "play", "baby", "history", "coff
   }
   console.log(`Rendered ${name}: 400, 800 and 1200 pixel WebP`);
 }
-for (const [source, output, width, height] of [
-  ["og-image.svg", "og-image.png", 1200, 630],
-  ["brand-icon.svg", "apple-touch-icon.png", 180, 180],
-]) {
-  const svg = await readFile(new URL(source, site));
-  await sharp(svg).resize(width, height).png().toFile(fileURLToPath(new URL(output, site)));
-  console.log(`Rendered ${output}: ${width} x ${height}`);
+const christmas = await readFile(new URL("christmas.webp", originals));
+for (const width of [800, 1400, 2000]) {
+  await sharp(christmas).resize({ width }).webp({ quality: 82, effort: 6 })
+    .toFile(fileURLToPath(new URL(`images/christmas-${width}.webp`, site)));
 }
+const socialPhoto = await sharp(christmas).resize(600, 630, { fit: "cover", position: "right" }).toBuffer();
+await sharp(await readFile(new URL("og-image.svg", site)))
+  .composite([{ input: socialPhoto, left: 600, top: 0 }])
+  .png({ palette: true, colours: 128, effort: 10 })
+  .toFile(fileURLToPath(new URL("og-image.png", site)));
+await sharp(await readFile(new URL("brand-icon.svg", site)))
+  .resize(180, 180).png().toFile(fileURLToPath(new URL("apple-touch-icon.png", site)));
+console.log("Rendered Christmas banner variants, sharing image and home-screen icon");

@@ -57,9 +57,32 @@ test("guide heroes describe AI-created scenes and decorative linked images avoid
   }
 });
 
-test("social artwork and home-screen icon retain their approved dimensions and current palette", async () => {
+test("the approved Christmas banner has local responsive variants and priority loading", async () => {
+  for (const [width, height, budget] of [[800, 356, 40000], [1400, 622, 90000], [2000, 889, 160000]]) {
+    const bytes = await readFile(new URL(`images/christmas-${width}.webp`, site));
+    const metadata = await sharp(bytes).metadata();
+    assert.equal(metadata.width, width);
+    assert.equal(metadata.height, height);
+    assert.equal(metadata.format, "webp");
+    assert.ok(bytes.length < budget);
+  }
+  const html = await read("index.html");
+  const hero = html.match(/<img class="hero-photo"[^>]+>/)?.[0];
+  assert.ok(hero);
+  assert.match(hero, /fetchpriority="high"/);
+  assert.match(hero, /alt=""/);
+  assert.match(hero, /width="2000" height="889"/);
+  assert.doesNotMatch(hero, /loading="lazy"/);
+  for (const width of [800, 1400, 2000]) assert.ok(hero.includes(`/images/christmas-${width}.webp ${width}w`));
+  assert.match(html, /A little thought\.<br>A lovely gift\./);
+  const css = await read("home.css");
+  assert.match(css.slice(css.indexOf("@media(max-width:760px)")), /\.hero-photo\{object-position:left center\}/,
+    "the mobile crop must keep the headline on the empty linen, away from the presents");
+});
+
+test("social artwork and home-screen icon use the approved oxblood and ivory identity", async () => {
   for (const [name, width, height, budget] of [
-    ["og-image.png", 1200, 630, 150000],
+    ["og-image.png", 1200, 630, 300000],
     ["apple-touch-icon.png", 180, 180, 20000],
   ]) {
     const bytes = await readFile(new URL(name, site));
@@ -68,11 +91,12 @@ test("social artwork and home-screen icon retain their approved dimensions and c
     assert.equal(metadata.height, height, name);
     assert.ok(bytes.length < budget, name);
     const pixel = await sharp(bytes).extract({ left: 20, top: 20, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
-    assert.deepEqual([...pixel], name === "og-image.png" ? [251, 249, 245] : [27, 59, 43], name);
+    assert.deepEqual([...pixel], [251, 247, 240], name);
   }
   for (const name of ["favicon.svg", "brand-icon.svg", "og-image.svg"]) {
     const svg = await read(name);
-    assert.match(svg, /#1b3b2b/);
+    assert.match(svg, /#6d1028/);
+    assert.doesNotMatch(svg, /#1b3b2b/);
     assert.doesNotMatch(svg, /https?:\/\/(?!www\.w3\.org)|<image|<script/i);
   }
 });

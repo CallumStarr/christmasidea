@@ -1,8 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
   <title>Santa's Helper</title>
-  <rect width="32" height="32" rx="6" fill="#1b3b2b"/>
-  <path d="M7 15h18v12H7z" fill="#eee5cd"/>
-  <path d="M6 12h20v4H6z" fill="#fbf9f5"/>
-  <path d="M14.5 12h3v15h-3z" fill="#c59b47"/>
-  <path d="M16 12C3 11 8 2 12 6l4 6c1-3 4-8 7-6 4 3-1 6-7 6Z" fill="#e0c58b"/>
+  <rect width="32" height="32" rx="5" fill="#fbf7f0"/>
+  <path d="m16 3 2 9 7-5-5 7 9 2-9 2 5 7-7-5-2 9-2-9-7 5 5-7-9-2 9-2-5-7 7 5Z" fill="#6d1028"/>
 </svg>

@@ -16,12 +16,12 @@ Sources checked on 4 November 2026:
 
 ## Art direction
 
-**A warm British Christmas gift edit.** Concrete ideas, useful buying advice and cohesive photographic-style editorial imagery should demonstrate the service, rather than relying on abstract promises of thoughtfulness. The photographic direction is approved; a broader design change remains subject to explicit approval.
+**A warm British Christmas gift edit.** Concrete ideas, useful buying advice and cohesive photographic-style editorial imagery should demonstrate the service, rather than relying on abstract promises of thoughtfulness. The user explicitly approved the oxblood-and-ivory editorial proposal after rejecting the plain and forest split-screen proposals.
 
-1. A recognisable wordmark, botanical maker's mark and restrained seasonal masthead.
-2. Warm parchment, deep forest, aged gold and a little terracotta. Fraunces is expressive, not indiscriminately enormous; Figtree handles clear, comfortable interface text.
+1. A recognisable serif wordmark, small Christmas star and restrained seasonal masthead.
+2. Warm ivory, oxblood and pale blush, with a little antique gold. Fraunces uses restrained optical styling without the previous soft/wonky treatment; Figtree handles clear, comfortable interface text. A complementary dark palette preserves legibility and user colour-scheme preferences.
 3. Ten self-hosted, AI-created editorial scenes: books, garden tools, a telescope, toys and hobby equipment. Rich natural light, tactile materials and identifiable objects replace the rejected line illustrations. Local responsive WebPs, not remote image services or runtime generation.
-4. A compact, centred single-column finder, without a sample-collection sidebar. One clear prompt, small example-description buttons, a real submit button and a quieter guided alternative. Privacy and disclosures remain accessible and explicit.
+4. A compact photographic banner, followed by a centred, unboxed finder without a sample-collection sidebar. One clear prompt, small example-description buttons, a real submit button and a quieter guided alternative. Keep all existing controls, rather than inventing a separate quick-mode budget selector from the mockup. Privacy and disclosures remain accessible and accurate.
 5. A featured typographic selection, a complementary adjacent idea, then lighter editorial entries. No giant placeholder boxes. AI-created category imagery is explicitly disclosed and separate from recommendation product imagery, which appears only when the existing verified-product pipeline provides it.
 6. Useful animation only: short button/arrow transitions, a gentle first entrance and a legible curation sequence. No scroll hijacking, marquees, parallax or cursor effects.
 7. Photographic guide starting points, substantial buying notes and related reading. Every page uses the same masthead and footer. The homepage is the shared-markup source; the page generator synchronizes the shell into generated and authored pages while preserving legal content and CSS.
@@ -36,7 +36,7 @@ Sources checked on 4 November 2026:
 
 ## Acceptance criteria
 
-- At 1440 x 900, headline, description input and submit action are visible without scrolling. The homepage hero contains only the finder, not a decorative or sample sidebar.
+- At 1440 x 900, headline, description input and submit action are visible without scrolling; the submit button should end before 850 CSS pixels. A compact photographic banner introduces the page without a decorative or sample sidebar.
 - No horizontal overflow at 320, 375, 390, 768, 1024, 1440 or 1920 CSS pixels, in either colour scheme.
 - No new runtime or UI dependencies, external fonts or third-party image hosts. Keep combined authored CSS below 10 kB gzipped. Editorial variants are 400 x 280, 800 x 560 and 1200 x 840, with respective per-image budgets of 35, 100 and 180 kB.
 - Normal text contrast >= 4.5:1; control/focus contrast >= 3:1. Touch targets >= 44 CSS pixels where practical. Respect reduced motion.
@@ -84,4 +84,16 @@ The SVG scene refinements above were subsequently rejected. The ten approved pho
 
 The existing page structure, colours, typography and finder behaviour are retained. The brand mark, favicon and social graphic remain purpose-made brand artwork. Editorial images are disclosed as AI-created inspiration, never evidence of a reviewed product. The image tests cover every responsive source, dimensions, budgets, accessible descriptions and disclosure; the full 286-test suite and deployment dry-run pass.
 
-Overall website mockups are proposals only. Neither the original plain design nor the richer heritage proposal was approved. The next refinement reduces ornamental framing and integrates the finder with the photographic first-screen composition. Do not implement any broader redesign until the user explicitly approves it; approval of category imagery is not design approval.
+At this stage the overall website mockups were proposals only. Neither the original plain design nor the richer heritage proposal was approved; the subsequent forest split-screen was rejected as worse. Approval of category imagery was not treated as design approval.
+
+## Approved oxblood-and-ivory design
+
+The user subsequently approved the new oxblood-and-ivory editorial proposal with "Yes — implement this design". This implementation preserves the ten approved category photographs and existing finder functionality. A new AI-created Christmas still life supplies the photographic banner and sharing image. The banner has three responsive variants (29,448 / 67,910 / 121,448 bytes); it is prioritised, while category thumbnails remain lazy-loaded. The sharing PNG is 210,774 bytes; the star touch icon is 4,419 bytes.
+
+The masthead, compact footer, guide articles, directory, recommendation states, shortlist and legal pages share the new palette and star identity. Photographs are unframed rather than sitting inside the old sage/oat/clay illustration mattes. The banner was made more compact than the mockup so the primary action remains prominent. Privacy, affiliate and AI-imagery disclosures remain explicit; the recommendation pipeline, provider configuration, production Turnstile and product verification logic are unchanged.
+
+The image build remains deterministic from local masters and SVG brand sources. The full 287-test suite and deployment dry-run pass. Browser interaction checks use isolated synthetic responses and a loopback-only fixture with Turnstile disabled in the served copy; this does not certify live AI/provider behaviour or change production protection.
+
+Final browser review covered 15 routes at seven widths in both themes (210 checks), with actual viewport dimensions asserted, loaded images and no horizontal overflow or clipped main headings. A populated eight-idea collection passed another 14 width/theme combinations. The submit button ends at 816 CSS pixels on a 1440-pixel desktop and 740 on a 375-pixel mobile screen. A screenshot review caught the mobile headline reaching into the presents; the image now anchors left on mobile, keeping the lettering on the empty linen. Combined authored CSS is 7,961 bytes gzipped.
+
+Checked quick/guided validation, example mode switching, zero/one/eight-idea states, saving, dismissal and featured-card promotion, all-dismissed messaging, dialog Done and Escape, error/retry visibility, input preservation, waiting/cancellation and a shortlist opened from a guide. Pointer activation and validation focus were rechecked at mobile width. A rendered-colour scan of the populated page checked 279 text elements across both themes without a contrast failure; this complements token tests rather than constituting accessibility certification.

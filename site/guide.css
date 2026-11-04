@@ -9,11 +9,8 @@
 .guide-intro .eyebrow{font-size:11px;margin:0}
 .guide-intro h1{max-width:16ch}
 .standfirst{font:400 18px/1.65 var(--body);max-width:53ch;color:var(--muted);margin:0}
-.guide-illustration{padding:24px 28px 8px;align-self:stretch;display:flex;flex-direction:column;justify-content:center;min-width:0}
-.guide-illustration>span,.directory-art>span{display:block;font-size:12px}
-.tone-sage{background:#dce1d2;color:#304735}
-.tone-oat{background:#e8ddca;color:#705b37}
-.tone-clay{background:#e9d4c8;color:#754733}
+.guide-illustration{align-self:center;display:flex;flex-direction:column;min-width:0}
+.guide-illustration>span,.directory-art>span{display:block;font-size:11px;color:var(--accent);margin-bottom:10px;letter-spacing:.04em}
 .guide-jumps{display:flex;align-items:center;flex-wrap:wrap;gap:8px 24px;margin-top:24px;font-size:14px}
 .guide-jumps a{display:flex;align-items:center;gap:20px;min-height:44px}
 .guide-jumps a:first-child{font-weight:500}
@@ -41,8 +38,8 @@
 .idea>a span{font-size:20px;transition:transform .2s}
 .idea>a:hover span{transform:translate(2px,-2px)}
 .idea:first-child,.idea:nth-child(2){padding:28px;margin-bottom:24px;border:0;background:var(--surface)}
-.idea:first-child{background:#1b3b2b;--ink:#fbf9f5;--muted:#d0d5c6;--accent:#f4ead5;--gold-ink:#e0c58b;--focus:#e0c58b;color:var(--ink)}
-.finder-cta{display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px;padding:32px 36px;background:var(--inset);margin:48px 0}
+.idea:first-child{background:#591125;--ink:#fbf7f0;--muted:#edd5d6;--accent:#fbf0df;--gold-ink:#ebc99a;--focus:#ebc99a;color:var(--ink)}
+.finder-cta{display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px;padding:32px 36px;background:var(--surface);border-block:3px double var(--accent);margin:48px 0}
 .finder-cta .eyebrow{font-size:11px;margin:0 0 12px}
 .finder-cta h2{font-size:34px}
 .finder-cta p:last-child{font-size:15px;line-height:1.65;color:var(--muted);max-width:56ch;margin:12px 0 0}
@@ -53,7 +50,7 @@
 .related-shelf{grid-template-columns:repeat(3,minmax(0,1fr))}
 .related-shelf li,.guide-directory li{min-width:0}
 .related-shelf a,.guide-directory a{display:block;text-decoration:none}
-.directory-art{padding:18px 22px 2px;overflow:hidden}
+.directory-art{overflow:hidden}
 .directory-art .editorial-photo{transition:transform .25s}
 .related-shelf a:hover .editorial-photo,.guide-directory a:hover .editorial-photo{transform:translateY(-3px)}
 .directory-copy{position:relative;padding:20px 30px 0 0}
@@ -78,8 +75,7 @@
 .directory-section-heading p{font-size:14px;color:var(--muted);margin:0;max-width:40ch}
 .guide-directory{grid-template-columns:1fr 1fr;gap:40px 32px}
 .guide-directory a{display:grid;grid-template-columns:.9fr 1fr;gap:24px;align-items:center}
-.guide-directory .directory-art{padding:12px 0 0}
-.guide-directory .directory-art>span{padding-inline:16px;font-size:11px}
+.guide-directory .directory-art>span{font-size:11px}
 .guide-directory .directory-copy{padding-top:0}
 .guide-directory .directory-copy h3{font-size:27px}
 .guide-directory .directory-arrow{top:0}
@@ -97,8 +93,7 @@
   .guide-intro{gap:36px}
   .guide-intro h1{font-size:54px}
   .guide-directory a{grid-template-columns:1fr;gap:20px}
-  .guide-directory .directory-art{padding:16px 24px 0}
-  .guide-directory .directory-art>span{padding:0;font-size:12px}
+  .guide-directory .directory-art>span{font-size:11px}
   .guide-directory .editorial-photo{max-height:230px}
   .directory-section-heading{align-items:flex-start;flex-direction:column;gap:12px}
   .related-shelf{gap:24px}
@@ -112,7 +107,6 @@
   .guide-intro{grid-template-columns:1fr;gap:24px;margin-top:20px;margin-bottom:32px}
   .guide-intro h1{font-size:clamp(40px,10.5vw,58px);max-width:17ch;margin-bottom:18px}
   .standfirst{font-size:16px;line-height:1.7}
-  .guide-illustration{padding:20px 24px 0}
   .guide-illustration .editorial-photo{max-height:230px}
   .guide-jumps{font-size:13px;gap:6px 20px;margin-top:18px}
   .choosing{grid-template-columns:1fr;gap:22px;padding-block:28px;margin-bottom:32px}
@@ -152,7 +146,6 @@
   .guide-directory a{grid-template-columns:1fr;gap:20px}
   .guide-directory .directory-copy h3{font-size:30px}
   .guide-directory .directory-copy p{font-size:15px}
-  .guide-directory .directory-art{padding:18px 24px 0}
   .guide-directory .editorial-photo{max-height:240px}
   .legal-page{padding-block:32px 40px}
   .legal-page h1{font-size:44px}

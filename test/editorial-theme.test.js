@@ -18,7 +18,7 @@ function contrast(a, b) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-test("heritage text, controls and focus tokens meet AA in both themes", async () => {
+test("oxblood editorial text, controls and focus tokens meet AA in both themes", async () => {
   const css = await read("theme.css");
   const [light, dark] = css.split("@media(prefers-color-scheme:dark)");
   for (const [theme, palette] of [["light", tokens(light)], ["dark", { ...tokens(light), ...tokens(dark) }]]) {
@@ -46,6 +46,8 @@ test("every page uses shared local fonts and theme, without inline font drift", 
     assert.match(html, /href="\/theme\.css"/, name);
     assert.match(html, /href="\/fonts\/fraunces\.woff2"/, name);
     assert.match(html, /href="\/fonts\/figtree\.woff2"/, name);
+    assert.match(html, /name="theme-color" content="#FBF7F0"/, name);
+    assert.match(html, /name="theme-color" content="#1C1518"/, name);
     assert.doesNotMatch(html, /font-family:Arial|<canvas|linearGradient|radial-gradient/i, name);
   }
   const css = await read("theme.css");
@@ -79,7 +81,10 @@ test("the homepage keeps a focused finder without an example sidebar or fake pro
   assert.match(html, /class="recommendation-disclosure"/);
   assert.doesNotMatch(html, /GIFT_SVG|Illustrative placeholder/);
   const styles = await read("home.css");
-  assert.match(styles, /\.atelier\{max-width:760px;/);
+  assert.match(styles, /\.atelier\{max-width:840px;/);
+  assert.match(html, /class="seasonal-hero"/);
+  assert.match(html, /class="browse-band"/);
+  assert.match(styles, /\.browse-band\{[^}]*border-block:3px double var\(--accent\)/);
   assert.doesNotMatch(styles, /\.example-/);
   assert.match(styles, /\.media\{display:none\}/);
   assert.match(styles, /\.verified \.media\{display:block/);
@@ -88,7 +93,7 @@ test("the homepage keeps a focused finder without an example sidebar or fake pro
   assert.match(html, /Editorial imagery is AI-created/);
 });
 
-test("featured recommendation and colophon have readable fixed palettes in either theme", async () => {
+test("featured recommendations retain readable oxblood palettes in either theme", async () => {
   const css = await read("home.css");
   const featured = tokens(css.match(/\.card\.featured\{([\s\S]*?)\n\}/)[1]);
   for (const foreground of ["ink", "muted", "accent", "gold-ink"]) {
@@ -96,15 +101,15 @@ test("featured recommendation and colophon have readable fixed palettes in eithe
     assert.ok(contrast(featured[foreground], featured.surface) >= 4.5, `${foreground} on inset`);
   }
   assert.ok(contrast(featured.focus, featured.paper) >= 3);
-  assert.ok(contrast("#f4ead5", "#1b3b2b") >= 4.5, "footer wordmark");
-  assert.ok(contrast("#cbd2c2", "#1b3b2b") >= 4.5, "footer small print");
+  assert.equal(featured.paper, "#591125");
+  assert.doesNotMatch((await Promise.all(["theme.css", "home.css", "guide.css"].map(read))).join("\n"), /#1b3b2b|#284735/i);
 });
 
-test("editorial image captions meet AA on their existing fixed paper colours", async () => {
+test("photographic guides remain unframed and captions use the shared accessible palette", async () => {
   const css = await read("home.css");
-  const panels = [...css.matchAll(/\.guide-(?:garden|books|gesture) \.guide-art\{background:(#[\da-f]{6});color:(#[\da-f]{6})/gi)];
-  assert.equal(panels.length, 3);
-  for (const [, background, foreground] of panels) assert.ok(contrast(foreground, background) >= 4.5);
+  assert.doesNotMatch(css, /\.guide-(?:garden|books|gesture) \.guide-art\{background:/);
+  assert.match(css, /\.guide-copy h3\{[^}]*color:var\(--accent\)/);
   assert.match(await read("theme.css"), /\.editorial-photo\{[^}]*aspect-ratio:10\/7/);
   assert.match(css, /\.guide-art \.editorial-photo\{/);
+  assert.match(await read("theme.css"), /\.site-footer\{[^}]*background:var\(--paper\);color:var\(--accent\)/);
 });
