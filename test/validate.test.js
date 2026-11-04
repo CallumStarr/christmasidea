@@ -13,7 +13,7 @@ const codes = (r) => r.diagnostics.issues.map((i) => `${i.action}:${i.code}`);
 const GARDEN = input("My aunt is 60 and loves gardening and tea. Budget £25.");
 
 test("prompt version and validator version are exposed for cache/benchmark keys", () => {
-  assert.equal(PROMPT_VERSION, "gift-curator-v3.3");
+  assert.equal(PROMPT_VERSION, "gift-intelligence-v4.0");
   assert.ok(VALIDATOR_VERSION);
 });
 

@@ -13,10 +13,15 @@ import {
   DEFAULT_MAX_OUTPUT_TOKENS,
   resolveEffort,
   VALIDATOR_VERSION,
+  ENGINE_VERSION,
+  CANDIDATE_COUNT,
   buildUserMessage,
   normaliseInput,
   sanitiseIdeas,
   curateIdeas,
+  promptHints,
+  runEngine,
+  understand,
 } from "../src/core.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -28,7 +33,14 @@ export const MODELS = {
 
 // Protocol 4: Haiku is benchmarked with exactly the production request (forced strict tool, shared
 // thinking/effort/limit). Sonnet 5.5 cannot force a tool, so it alone uses tool_choice=auto.
-export const BENCHMARK_PROTOCOL_VERSION = 4;
+// Protocol 5: the user message carries the same graph discovery hints as production, and results
+// are curated by the Gift Intelligence Engine (graph backups, ranking, connections) as visitors see.
+export const BENCHMARK_PROTOCOL_VERSION = 5;
+
+/** The user message production would send for this input, including server-side discovery hints. */
+export function productionUserMessage(input) {
+  return buildUserMessage(input, promptHints(understand(input)));
+}
 
 export const BENCHMARK_GIFT_TOOL = STRICT_GIFT_TOOL;
 
@@ -62,6 +74,7 @@ function parseArgs(argv) {
     else if (arg.startsWith("--models=")) out.models = arg.slice(9).split(",").map((s) => s.trim()).filter(Boolean);
     else if (arg.startsWith("--resume=")) out.resume = arg.slice(9);
     else if (arg.startsWith("--output=")) out.output = arg.slice(9);
+    else if (arg.startsWith("--cases-file=")) out.casesFile = arg.slice(13);
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (out.limit !== null && (!Number.isInteger(out.limit) || out.limit < 1)) throw new Error("--limit must be a positive integer.");
@@ -92,12 +105,12 @@ function titleSimilarity(a, b) {
   return overlap / (aa.size + bb.size - overlap);
 }
 
-export function assessOutput(raw, caseInput) {
+export function assessOutput(raw, caseInput, expected = CANDIDATE_COUNT) {
   const flags = [];
   const items = Array.isArray(raw?.ideas) ? raw.ideas : [];
   if (!items.length) flags.push("no_ideas_returned");
-  if (items.length !== 10) flags.push(`candidate_count_not_10_generated_${items.length}`);
-  if (items.length > 10) flags.push("more_than_10_candidates");
+  if (items.length !== expected) flags.push(`candidate_count_not_${expected}_generated_${items.length}`);
+  if (items.length > expected) flags.push(`more_than_${expected}_candidates`);
   if (items.length > 0 && items.length < 6) flags.push("fewer_than_6_ideas_review_whether_insufficient_info");
   if (typeof raw?.recipient_summary !== "string" || raw.recipient_summary.length > 180) flags.push("invalid_or_overlong_recipient_summary");
 
@@ -141,7 +154,7 @@ function stableBlindLabel(caseId, modelKey) {
   return modelKey === firstKey ? "A" : "B";
 }
 
-export function renderReviewCsv(results, cases, key) {
+export function renderReviewCsv(results, cases, key, expected = CANDIDATE_COUNT) {
   const caseById = new Map(cases.map((c) => [c.id, c]));
   const headers = [
     "case_id", "case_name", "blind_model", "recipient_request", "evaluation_focus", "recipient_summary",
@@ -160,8 +173,8 @@ export function renderReviewCsv(results, cases, key) {
     const ideas = (result.output?.ideas || []).map((idea, i) => `${i + 1}. ${idea.title} — ${idea.why} [Product search: ${idea.search_query || idea.query || ""}]`).join("\n");
     const warnings = [...(result.auto_flags || [])];
     const generated = Array.isArray(result.raw_output?.ideas) ? result.raw_output.ideas.length : null;
-    if (generated !== null && generated !== 10) {
-      const countWarning = `candidate_count_not_10_generated_${generated}`;
+    if (generated !== null && generated !== expected) {
+      const countWarning = `candidate_count_not_${expected}_generated_${generated}`;
       if (!warnings.includes(countWarning)) warnings.push(countWarning);
     }
     const row = [
@@ -189,7 +202,7 @@ function estimateCost(result, model) {
 /** Builds the stored record for one model response. Truncated responses get their own status so they are never counted as ordinary successes. */
 export function buildResultRecord({ caseId, model, response, input, blindLabel, latencyMs }) {
   const truncated = response.stop_reason === "max_tokens";
-  const curated = curateIdeas(response.output, input, { truncated });
+  const curated = runEngine(response.output, input, { truncated });
   const flags = assessOutput(response.output, input);
   if (curated.diagnostics.shortfall) flags.push(`validated_shortfall_${curated.diagnostics.shortfall_count}`);
   if (truncated) flags.unshift("TRUNCATED_max_tokens");
@@ -212,6 +225,7 @@ export function buildResultRecord({ caseId, model, response, input, blindLabel, 
       recipient_summary: curated.recipientSummary,
       ideas: curated.ideas,
       note: curated.note || "",
+      recipient: curated.recipient,
     },
     raw_output: response.output,
     validation: curated.diagnostics,
@@ -267,13 +281,14 @@ async function callWithRetry(model, message) {
 }
 
 function printHelp() {
-  console.log(`Santa's Helper benchmark (prompt ${PROMPT_VERSION}, default model: Haiku 5.5 only)\n\nDry run (no API calls):\n  npm run benchmark\n\nLive run (one call per case per model):\n  $env:ANTHROPIC_API_KEY="..."; npm run benchmark -- --live --confirm-cost --models=haiku\n\nSmall live smoke test:\n  npm run benchmark -- --live --confirm-cost --models=haiku --limit=5\n\nOptions:\n  --models=haiku,sonnet  Select models (default: haiku)\n  --case=case-01          Run a specific case (repeatable)\n  --limit=5               Run the first N cases\n  --resume=<results.json> Continue an interrupted run\n  --output=<directory>   Choose a run output directory\n  --live                  Actually call Anthropic\n  --confirm-cost          Required alongside --live\n\nResponses cut off at the token limit are recorded with status "truncated", never as ordinary successes.\nThe live run writes benchmark-results.json, review-template.csv and blind-key.json.\nFor the blind v2-vs-v3 comparison use: npm run benchmark:compare -- --help\nNo model is changed in the production Worker.`);
+  console.log(`Santa's Helper benchmark (prompt ${PROMPT_VERSION}, default model: Haiku 5.5 only)\n\nDry run (no API calls):\n  npm run benchmark\n\nLive run (one call per case per model):\n  $env:ANTHROPIC_API_KEY="..."; npm run benchmark -- --live --confirm-cost --models=haiku\n\nSmall live smoke test:\n  npm run benchmark -- --live --confirm-cost --models=haiku --limit=5\n\nOptions:\n  --models=haiku,sonnet  Select models (default: haiku)\n  --case=case-01          Run a specific case (repeatable)\n  --limit=5               Run the first N cases\n  --resume=<results.json> Continue an interrupted run\n  --output=<directory>   Choose a run output directory\n  --cases-file=<json>     Use another case set (e.g. benchmarks/v3.4/cases.json)\n  --live                  Actually call Anthropic\n  --confirm-cost          Required alongside --live\n\nResponses cut off at the token limit are recorded with status "truncated", never as ordinary successes.\nThe live run writes benchmark-results.json, review-template.csv and blind-key.json.\nFor the blind v2-vs-v3 comparison use: npm run benchmark:compare -- --help\nNo model is changed in the production Worker.`);
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) return printHelp();
-  const allCases = JSON.parse(await fs.readFile(CASES_PATH, "utf8"));
+  const casesPath = args.casesFile ? path.resolve(args.casesFile) : CASES_PATH;
+  const allCases = JSON.parse(await fs.readFile(casesPath, "utf8"));
   let cases = allCases;
   if (args.cases.length) {
     const wanted = new Set(args.cases);
@@ -333,6 +348,8 @@ async function main() {
       created_at: new Date().toISOString(),
       prompt_version: PROMPT_VERSION,
       validator_version: VALIDATOR_VERSION,
+      engine_version: ENGINE_VERSION,
+      cases_file: path.relative(ROOT, casesPath),
       max_tokens: benchmarkMaxTokens(),
       thinking: generationParams().thinking,
       effort: benchmarkEffort(),
@@ -353,7 +370,7 @@ async function main() {
   for (const c of cases) {
     const parsed = normaliseInput(c.input);
     if (!parsed.ok) throw new Error(`Invalid benchmark case ${c.id}: ${parsed.error}`);
-    const userMessage = buildUserMessage(parsed.value);
+    const userMessage = productionUserMessage(parsed.value);
     for (const model of selectedModels) {
       const key = `${c.id}:${model.key}`;
       if (completed.has(key)) {

@@ -77,6 +77,19 @@ export class BudgetCounter extends DurableObject {
     }
     return allowed;
   }
+
+  // Feedback counts live in "F2026-11-02" buckets for 90 days; per-visitor rate limiting uses the short minute bucket.
+  async recordFeedback(ipHash, keys) {
+    const b = this.buckets();
+    const minuteLimit = Number(this.env.FEEDBACK_PER_VISITOR_MINUTE_LIMIT) || 40;
+    if (this.count(b.minute, `fb:${ipHash}`) >= minuteLimit) return { ok: false };
+    this.add(b.minute, `fb:${ipHash}`);
+    const day = `F${b.day.slice(1)}`;
+    const cutoff = `F${new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10)}`;
+    this.sql.exec("DELETE FROM usage WHERE bucket LIKE 'F%' AND bucket < ?", cutoff);
+    for (const k of keys.slice(0, 64)) this.add(day, k);
+    return { ok: true };
+  }
 }
 
 const SECURITY_HEADERS = {
@@ -120,6 +133,7 @@ export default {
         fetch: (...args) => fetch(...args),
         budget: { consume: (ipHash) => stub.consume(ipHash) },
         productBudget: { take: (ipHash, n) => stub.takeProducts(ipHash, n) },
+        feedback: { record: (ipHash, keys) => stub.recordFeedback(ipHash, keys) },
         cache: typeof caches !== "undefined" ? caches.default : null,
         waitUntil: (p) => ctx.waitUntil(p),
       });

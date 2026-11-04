@@ -2,19 +2,21 @@
 // Kept free of Cloudflare-only imports so it can be unit tested in Node.
 
 import { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS } from "./constants.js";
-import { GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage } from "./prompt.js";
+import { CANDIDATE_COUNT, GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage } from "./prompt.js";
 import { VALIDATOR_VERSION, curateIdeas, sanitiseIdeas } from "./validate.js";
 import { cleanText } from "./text.js";
-import { catalogueFallback } from "./catalogue.js";
 import { productDiscoveryAvailable, searchProductsForIdeas } from "./product-search.js";
+import { ENGINE_VERSION, engineFallback, promptHints, runEngine, understand } from "./engine/index.js";
+import { feedbackKeys } from "./engine/feedback.js";
 
 export { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS };
-export { GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
+export { CANDIDATE_COUNT, GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
 export { VALIDATOR_VERSION, curateIdeas, sanitiseIdeas };
+export { ENGINE_VERSION, engineFallback, promptHints, runEngine, understand };
 
 export const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 export const ANTHROPIC_VERSION = "2026-10-21";
-// Ten candidate ideas, the recipient profile and some adaptive-thinking headroom. Haiku 5.5 counts
+// Twelve candidate ideas, discovery directions, the recipient profile and some adaptive-thinking headroom. Haiku 5.5 counts
 // thinking tokens as output, so a limit sized only for the visible JSON truncates real responses.
 export const DEFAULT_MAX_OUTPUT_TOKENS = 4500;
 export const DEFAULT_EFFORT = "low";
@@ -177,7 +179,7 @@ export function buildClaudeRequest({ model, userMessage, maxTokens, effort, forc
 }
 
 /** Like callClaude, but also reports why generation stopped so truncation is never mistaken for success. */
-export async function callClaudeDetailed(input, env, fetchImpl) {
+export async function callClaudeDetailed(input, env, fetchImpl, hints = null) {
   const res = await fetchImpl(ANTHROPIC_URL, {
     method: "POST",
     headers: {
@@ -187,7 +189,7 @@ export async function callClaudeDetailed(input, env, fetchImpl) {
     },
     body: JSON.stringify(buildClaudeRequest({
       model: env.MODEL || "claude-haiku-5-5",
-      userMessage: buildUserMessage(input),
+      userMessage: buildUserMessage(input, hints),
       maxTokens: env.MAX_OUTPUT_TOKENS,
       effort: env.CLAUDE_EFFORT,
     })),
@@ -242,19 +244,22 @@ function logCuration(diagnostics, stopReason) {
   }
   const fn = diagnostics.shortfall || diagnostics.truncated ? console.warn : console.log;
   fn("Gift curation", JSON.stringify({
-    prompt: PROMPT_VERSION, validator: diagnostics.validator, stop_reason: stopReason,
-    truncated: diagnostics.truncated, candidates: diagnostics.candidates, returned: diagnostics.returned, issues: counts,
+    prompt: PROMPT_VERSION, engine: ENGINE_VERSION, validator: diagnostics.validator, stop_reason: stopReason,
+    truncated: diagnostics.truncated, candidates: diagnostics.candidates, returned: diagnostics.returned,
+    backups_used: diagnostics.backups_used || 0, discovery_shown: diagnostics.engine?.discovery_shown ?? null, issues: counts,
   }));
 }
 
 function fallbackResponse(input, message, status, origin, env) {
-  const result = catalogueFallback(input);
+  const result = engineFallback(input);
   logCuration(result.diagnostics, "catalogue_fallback");
   return json({
     error: message,
     fallback: true,
     source: "catalogue",
     ideas: result.ideas,
+    recipient: result.recipient,
+    engine_version: ENGINE_VERSION,
     shortfall: result.diagnostics.shortfall,
     product_discovery_enabled: productDiscoveryAvailable(env),
     note: result.ideas.length ? "" : "We don't have enough verified catalogue ideas for this recipient and budget. Try adding detail or adjusting the budget.",
@@ -269,11 +274,22 @@ export async function handleRequest(request, env, deps) {
     return new Response(null, { status: origin ? 204 : 403, headers: corsHeaders(origin) });
   }
   if (url.pathname === "/api/health") return json({ ok: true }, 200, origin);
-  if (url.pathname !== "/api/ideas" && url.pathname !== "/api/products") return json({ error: "Not found" }, 404, origin);
+  if (!["/api/ideas", "/api/products", "/api/feedback"].includes(url.pathname)) return json({ error: "Not found" }, 404, origin);
   if (request.method !== "POST") return json({ error: "Use POST." }, 405, origin);
   if (!origin) return json({ error: "This site isn't allowed to use the API." }, 403, null);
 
   const { ip, hash: ipHash } = await visitorHash(request, env);
+
+  /* ---- anonymous, aggregate feedback counters ---- */
+  if (url.pathname === "/api/feedback") {
+    const r = await readJson(request, 4000);
+    if (r.error) return json({ error: r.error }, r.status, origin);
+    const fb = feedbackKeys(r.body);
+    if (!fb.ok) return json({ error: fb.error }, 400, origin);
+    if (!deps.feedback) return json({ ok: true, recorded: false }, 202, origin);
+    const done = await deps.feedback.record(ipHash, fb.keys);
+    return done?.ok ? json({ ok: true, recorded: true }, 202, origin) : json({ error: "Too many events." }, 429, origin);
+  }
 
   /* ---- optional, verified product enrichment ---- */
   if (url.pathname === "/api/products") {
@@ -299,8 +315,8 @@ export async function handleRequest(request, env, deps) {
 
   // Identical requests are served from cache and cost nothing. The key covers everything that
   // changes the answer: prompt, validator rules, model and the visitor's input.
-  const cacheKeyHash = await sha256Hex(JSON.stringify([PROMPT_VERSION, VALIDATOR_VERSION, env.MODEL || "", generationFingerprint(env), input]));
-  const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v6/${cacheKeyHash}`);
+  const cacheKeyHash = await sha256Hex(JSON.stringify([PROMPT_VERSION, VALIDATOR_VERSION, ENGINE_VERSION, env.MODEL || "", generationFingerprint(env), input]));
+  const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v7/${cacheKeyHash}`);
   if (deps.cache) {
     try {
       const hit = await deps.cache.match(cacheKey);
@@ -321,16 +337,18 @@ export async function handleRequest(request, env, deps) {
 
   let result;
   let truncated = false;
+  const understanding = understand(input);
   try {
-    const call = await callClaudeDetailed(input, env, deps.fetch);
+    const call = await callClaudeDetailed(input, env, deps.fetch, promptHints(understanding));
     truncated = call.truncated;
-    result = curateIdeas(call.output, input, { truncated });
+    result = runEngine(call.output, input, { truncated, understanding });
     logCuration(result.diagnostics, call.stopReason);
   } catch (err) {
     console.error("Claude call failed", err && err.status, err && err.detail, String(err));
     return fallbackResponse(input, "Our AI helper is busy right now. Here are catalogue suggestions checked against your answers.", 502, origin, env);
   }
-  if (truncated && !result.ideas.length) {
+  // A cut-off response with no surviving model ideas is a failure, even if graph backups could pad it.
+  if (truncated && !result.ideas.some((i) => i.source === "model")) {
     return fallbackResponse(input, "Our AI response was incomplete. Here are catalogue suggestions checked against your answers.", 502, origin, env);
   }
 
@@ -338,9 +356,11 @@ export async function handleRequest(request, env, deps) {
     ideas: result.ideas,
     note: result.note,
     recipient_summary: result.recipientSummary,
+    recipient: result.recipient,
     source: "ai",
     product_discovery_enabled: productDiscoveryAvailable(env),
     prompt_version: PROMPT_VERSION,
+    engine_version: ENGINE_VERSION,
     shortfall: result.diagnostics.shortfall,
   };
   if (truncated) payload.truncated = true;

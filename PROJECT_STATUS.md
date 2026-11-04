@@ -11,6 +11,8 @@ Brand: **Santa's Helper**. Domain: **ChristmasIdea.co.uk** (retained). Worker na
 - Amazon Creators API product-discovery implementation. It is dormant: `PRODUCT_DISCOVERY_ENABLED = "false"` in `wrangler.toml`.
 - v3.3 Haiku 5.5 quality baseline: `benchmarks/baselines/v3.3-pre-refactor/` (4.133/5 weighted, 30 synthetic cases, single AI reviewer; see its README for limitations).
 - Recovery points: `refs/snapshots/phase0-pre-refactor` and `C:\Christmas_List2\backups\christmasidea-phase0-snapshot.bundle`.
+- **Gift intelligence engine (`gift-engine-v1`, prompt `gift-intelligence-v4.0`)**. Covers the recipient model with stated and inferred facts, an interest/motivation graph, hybrid BM25 + graph retrieval with RRF, multi-objective ranking with MMR and caps, quoted connections, discovery ideas, one listing per card, a source registry, and anonymous feedback counters (`POST /api/feedback`). See `docs/gift-intelligence-engine.md`.
+- v3.4 benchmark: 50 cases, structural metrics and a live Haiku run. See `benchmarks/v3.4/README.md`. Blind human scoring is still to do.
 
 ## Blocked (external dependencies)
 
@@ -19,28 +21,22 @@ Brand: **Santa's Helper**. Domain: **ChristmasIdea.co.uk** (retained). Worker na
 
 ## Not yet implemented
 
-- Richer associative gift discovery.
-- Improved originality and diversity.
-- Better budget reasoning.
-- More sophisticated semantic constraint handling.
+- Semantic embeddings (Workers AI + Vectorize): designed, worthwhile once a real product catalogue exists.
 - Multi-retailer product discovery.
-- Trend and popularity intelligence.
-- Recommendation feedback and learning.
+- Trend and popularity intelligence: needs an authorised, timestamped data source.
+- Learning ranker (LinUCB contextual bandit): designed. Counters are collected, but they do not affect ranking until purchase-quality signals and enough volume exist.
+- Blind human review of v3.4 against v3.3.
 - Occasion-specific modes beyond Christmas.
 
-## Next phase: v3.4 recommendation-engine improvement (proposal, not implemented)
+## v3.4 audit findings: status
 
-Targets from the v3.3 audit: originality 3.30, budget fit 3.63, variety 3.83, plus constraint/compatibility weaknesses.
-Findings to investigate:
+Targets from the v3.3 audit were originality 3.30, budget fit 3.63 and variety 3.83, plus constraint and compatibility weaknesses.
 
-- Prompt step 5 ("relevance always beats novelty") suppresses adventurous ideas.
-- Variety caps are by category/angle/type, not by interest.
-- Constraints are enforced only lexically.
-- The budget check relies on the model's own price estimate.
-- `product_spec` is about a third of output tokens and is used only by disabled product matching.
-- The summary is hard-sliced at 180 characters.
-
-Proposed method: small prompt and code changes, then a blind paired v3.4 vs v3.3 benchmark (repeated runs, deterministic metrics added).
+- Prompt v4 asks for adjacent "discovery directions". Ranking scores novelty and guarantees adjacent ideas when they exist.
+- Variety caps now cover category, type and strategy, with a coverage bonus per interest. Interests the shopper says are already well stocked get a cap of 3.
+- Owned items and dislikes are checked by stem and by group. Graph concepts carry an audience (child, teen or adult) and a price ceiling, and pass the same validator as the model's ideas.
+- Budget fit is scored as well as gated. Graph backups use curated price bands.
+- Still open: whether any of this improves *perceived* quality. That needs the blind review.
 
 ## Open product-policy decision
 

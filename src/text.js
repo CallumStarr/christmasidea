@@ -10,7 +10,7 @@ export function cleanText(value, max) {
 }
 
 // Words that carry no product or preference meaning.
-const STOP = new Set((
+export const STOP = new Set((
   "a an the and or of for to in on at by with without from into as is are was were be been it its this that these those " +
   "i my me we our you your he him his she her they them their who whom which what when so but not no nor than then " +
   "very really quite just also too some any all each every more most much many other another such own same " +
@@ -18,7 +18,7 @@ const STOP = new Set((
 ).split(" "));
 
 // Words too vague to identify a product or an exclusion on their own.
-const VAGUE = new Set((
+export const VAGUE = new Set((
   "gift gifts present presents thing things item items product products stuff something anything " +
   "generic basic usual ordinary normal standard good great nice new old kind type sort set " +
   "equipment gear kit kits accessory accessories ideas idea"

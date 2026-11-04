@@ -1681,13 +1681,8 @@ function matchedKeywords(item, text) {
   return item.k.filter((keyword) => lower.includes(keyword.toLowerCase()));
 }
 
-/**
- * Produces fallback ideas from the curated catalogue and subjects every candidate to the same
- * recipient-aware validator as model output. Price bands are only used when the budget can cover
- * their stated upper bound; entries without a suitable band are not shown.
- */
-export function catalogueFallback(input) {
-  const recipient = deriveRecipient(input);
+/** Age- and budget-eligible catalogue entries as raw ideas, keyword matches first. */
+export function catalogueCandidates(input, recipient = deriveRecipient(input)) {
   const audience = ageAudience(recipient, input);
   const text = recipient.text;
   const allItems = [...CATALOGUE, ...BABY_CATALOGUE, ...BUDGET_CATALOGUE];
@@ -1721,11 +1716,21 @@ export function catalogueFallback(input) {
       category: CATEGORIES.includes(item.c) ? item.c : "Home",
       angle: "practical",
       estimated_max_price_gbp: Math.min(...item.b.map((band) => PRICE_BAND_MAX[band])),
+      matched: matched.length,
     }));
+  return { candidates, filtered, total: allItems.length };
+}
 
+/**
+ * Produces fallback ideas from the curated catalogue and subjects every candidate to the same
+ * recipient-aware validator as model output. Price bands are only used when the budget can cover
+ * their stated upper bound; entries without a suitable band are not shown.
+ */
+export function catalogueFallback(input) {
+  const { candidates, filtered, total } = catalogueCandidates(input);
   const result = curateIdeas({ recipient_summary: "", ideas: candidates }, input, { limit: 8 });
-  result.diagnostics.catalogue_count = allItems.length;
-  result.diagnostics.raw_count = allItems.length;
+  result.diagnostics.catalogue_count = total;
+  result.diagnostics.raw_count = total;
   result.diagnostics.rejected_count += filtered.length;
   result.diagnostics.rejected.push(...filtered);
   return result;

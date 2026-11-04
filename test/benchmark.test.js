@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normaliseInput } from "../src/core.js";
+import { CANDIDATE_COUNT, normaliseInput } from "../src/core.js";
 import { assessOutput, BENCHMARK_GIFT_TOOL, BENCHMARK_PROTOCOL_VERSION, buildBenchmarkRequest, renderReviewCsv } from "../scripts/run-benchmark.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -42,7 +42,7 @@ test("automatic assessment flags duplicated and malformed outputs", () => {
   assert.ok(flags.includes("idea_3_invalid_category"));
 });
 
-test("automatic assessment flags any candidate count other than ten, including an otherwise valid eight", () => {
+test("automatic assessment flags any candidate count other than CANDIDATE_COUNT, including an otherwise valid eight", () => {
   const eight = {
     recipient_summary: "A space-loving child.",
     ideas: Array.from({ length: 8 }, (_, index) => ({
@@ -53,10 +53,11 @@ test("automatic assessment flags any candidate count other than ten, including a
     })),
   };
   assert.ok(assessOutput(eight, { mode: "describe", description: "A child likes space" })
-    .includes("candidate_count_not_10_generated_8"));
-  const ten = { ...eight, ideas: [...eight.ideas, { ...eight.ideas[0], title: "Space gift 8" }, { ...eight.ideas[0], title: "Space gift 9" }] };
-  assert.ok(!assessOutput(ten, { mode: "describe", description: "A child likes space" })
-    .some((flag) => flag.startsWith("candidate_count_not_10")));
+    .includes(`candidate_count_not_${CANDIDATE_COUNT}_generated_8`));
+  const full = { ...eight, ideas: Array.from({ length: CANDIDATE_COUNT }, (_, index) => ({ ...eight.ideas[0], title: `Space gift ${index}` })) };
+  assert.ok(!assessOutput(full, { mode: "describe", description: "A child likes space" })
+    .some((flag) => flag.startsWith("candidate_count_not_")));
+  assert.ok(assessOutput(eight, { mode: "describe", description: "x" }, 10).includes("candidate_count_not_10_generated_8"), "v3.3 outputs can still be assessed against ten");
 });
 
 test("review CSV reads the visitor-facing query field instead of writing undefined", () => {
@@ -73,7 +74,7 @@ test("review CSV reads the visitor-facing query field instead of writing undefin
     { "case-07": { haiku: "A" } },
   );
   assert.match(csv, /Product search: solar system model/);
-  assert.match(csv, /candidate_count_not_10_generated_8/);
+  assert.match(csv, new RegExp(`candidate_count_not_${CANDIDATE_COUNT}_generated_8`));
   assert.doesNotMatch(csv, /undefined/);
 });
 
@@ -81,7 +82,7 @@ test("review CSV reads the visitor-facing query field instead of writing undefin
 
 test("Sonnet (which cannot force a tool) uses auto tool choice with the same strict schema", () => {
   const request = buildBenchmarkRequest({ id: "claude-sonnet-5-5", forceTool: false }, "test recipient");
-  assert.equal(BENCHMARK_PROTOCOL_VERSION, 4);
+  assert.equal(BENCHMARK_PROTOCOL_VERSION, 5);
   assert.deepEqual(request.tool_choice, { type: "auto" });
   assert.equal(request.tools[0].strict, true);
   assert.equal(request.tools[0].name, "gift_ideas");
