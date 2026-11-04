@@ -30,7 +30,7 @@ test("all rendered editorial images reserve space and expose responsive local so
     assert.doesNotMatch(html, /gift-objects\.svg|guide-motifs\.svg|atelier\.svg/, file);
     const images = [...html.matchAll(/<img class="editorial-photo"[^>]+>/g)];
     assert.ok(images.length, file);
-    assert.match(html, /Editorial imagery is AI-created/, file);
+    assert.match(html, /AI-created illustrations, not (?:a photograph|photos) of products we've tested/, file);
     for (const [image] of images) {
       const name = image.match(/src="\/images\/([a-z]+)-800\.webp"/)?.[1];
       assert.ok(scenes.includes(name), file);

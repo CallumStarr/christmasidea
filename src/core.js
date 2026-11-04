@@ -313,7 +313,7 @@ function fallbackResponse(input, message, status, origin, env) {
     engine_version: baseline ? "baseline-v3.3" : ENGINE_VERSION,
     shortfall: result.diagnostics.shortfall,
     product_discovery_enabled: productDiscoveryAvailable(env),
-    note: result.ideas.length ? "" : "We don't have enough verified catalogue ideas for this recipient and budget. Try adding detail or adjusting the budget.",
+    note: result.ideas.length ? "" : "We couldn't find enough suitable ideas this time. Try adding a little more detail or adjusting the budget.",
   }, status, origin);
 }
 

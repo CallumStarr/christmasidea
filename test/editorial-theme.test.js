@@ -94,7 +94,7 @@ test("the homepage keeps a focused finder without an example sidebar or fake pro
   assert.match(styles, /\.verified \.media\{display:block/);
   assert.equal((html.match(/<img class="editorial-photo"/g) || []).length, 3);
   assert.doesNotMatch(html, /gift-objects\.svg/);
-  assert.match(html, /Editorial imagery is AI-created/);
+  assert.match(html, /guide images are AI-created illustrations, not photos of products we've tested/);
 });
 
 test("featured recommendations retain readable oxblood palettes in either theme", async () => {

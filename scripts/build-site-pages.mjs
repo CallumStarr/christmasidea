@@ -241,7 +241,7 @@ const EDITS = {
   "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", description: "AI-created scene of a wooden toy train, building blocks and colouring pencils on an oak table", group: "family", tone: "clay" },
   "gifts-for-new-babies": { art: "baby", title: "For a new arrival", label: "The first Christmas", description: "AI-created scene of a teddy bear, picture book and wooden rattle on a folded blanket", group: "family", tone: "clay" },
   "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", description: "AI-created scene of a telescope and brass globe beside a window at dusk", group: "interests", tone: "sage" },
-  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "The outdoor edit", description: "AI-created scene of garden secateurs, gloves, seed envelopes and potted rosemary on limestone", group: "interests", tone: "sage" },
+  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "Out in the garden", description: "AI-created scene of garden secateurs, gloves, seed envelopes and potted rosemary on limestone", group: "interests", tone: "sage" },
   "gifts-for-history-lovers": { art: "history", title: "For the history lover", label: "Another time & place", description: "AI-created scene of a classical temple model, old map, magnifying glass and leatherbound books", group: "interests", tone: "oat" },
   "gifts-for-tea-and-coffee-lovers": { art: "coffee", title: "For the tea & coffee lover", label: "The morning ritual", description: "AI-created scene of a cafetiere, green ceramic teapot and stoneware cup in morning light", group: "interests", tone: "oat" },
   "gifts-for-mum": { art: "mum", title: "For mum", label: "Her kind of Christmas", description: "AI-created scene of a linen journal, amber candle, cup of tea and ribbon-tied present", group: "family", tone: "clay" },
@@ -323,19 +323,19 @@ function guidePage(g) {
     .slice(0, 3);
   return head(title, g.desc, path, `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
 `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/gifts/">Gift guides</a><span aria-hidden="true">/</span><span aria-current="page">${esc(EDITS[g.slug].title)}</span></nav>
-<div class="guide-intro"><div><p class="eyebrow">The Christmas gift guides</p><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Explore the eight ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">How to choose</a></nav></div>${art(g)}</div>
-<section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><p class="eyebrow">Before you choose</p><h2 id="choosing-title">A few things<br>worth knowing.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
+<div class="guide-intro"><div><p class="eyebrow">A few thoughtful ideas</p><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Things to keep in mind</a></nav></div>${art(g)}</div>
+<section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><p class="eyebrow">A few things to keep in mind</p><h2 id="choosing-title">Choose what feels<br>right for them.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section id="gift-ideas" aria-labelledby="ideas-title">
-<div class="ideas-heading"><div><p class="eyebrow">The possibilities</p><h2 id="ideas-title">Eight ideas to consider</h2></div><p>Gift concepts, not tested products.<br>Check the details before buying.</p></div>
-<p class="disclosure">Ad: we earn a commission from qualifying Amazon purchases. These links search Amazon UK, not a specific verified product. Prices and availability can change. Editorial imagery is AI-created, not a photograph of a tested product.</p>
+<div class="ideas-heading"><div><p class="eyebrow">A few places to start</p><h2 id="ideas-title">Eight ideas to explore</h2></div><p>These are ideas, not product reviews.<br>Check the details before you buy.</p></div>
+<p class="disclosure">Ad: Some links are Amazon affiliate links. We may earn a commission if you buy through them. They search Amazon UK rather than linking to a specific checked product, and prices can change. The images are AI-created illustrations, not photos of products we've tested.</p>
 <div class="idea-grid">
 ${g.ideas.map(([name, why, q, note], i) => {
     if (!note) throw new Error(`Missing buying advice: ${g.slug} / ${name}`);
     return `<article class="idea"><span class="idea-number">${String(i + 1).padStart(2, "0")}</span><h3>${esc(name)}</h3><p class="idea-why">${esc(why)}</p><p class="buying-note"><strong>What to look for</strong>${esc(note)}</p><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search Amazon UK for ${name} (affiliate link, opens in a new tab)`)}">Search Amazon UK <span aria-hidden="true">&nearr;</span></a></article>`;
   }).join("\n")}
 </div></section>
-<aside class="finder-cta"><div><p class="eyebrow">Make it more personal</p><h2>Not quite their thing?</h2><p>Add their interests, what they already own and your budget. Our AI finder can suggest a different direction.</p></div><a href="/#form">Find a gift for them <span aria-hidden="true">&rarr;</span></a></aside>
-<section class="related-guides" aria-labelledby="more-guides"><div class="ideas-heading"><h2 id="more-guides">Another direction to explore</h2><a href="/gifts/">All gift guides <span aria-hidden="true">&rarr;</span></a></div><ul class="related-shelf">${related.map(guideLink).join("")}</ul></section>
+<aside class="finder-cta"><div><p class="eyebrow">Looking for something more personal?</p><h2>Tell us what they're like.</h2><p>Share a few interests, what they already own and your budget. We'll suggest a fresh set of ideas to explore.</p></div><a href="/#form">Find ideas for them <span aria-hidden="true">&rarr;</span></a></aside>
+<section class="related-guides" aria-labelledby="more-guides"><div class="ideas-heading"><h2 id="more-guides">Still looking? Try these</h2><a href="/gifts/">Browse all the guides <span aria-hidden="true">&rarr;</span></a></div><ul class="related-shelf">${related.map(guideLink).join("")}</ul></section>
 </main>
 ${FOOTER}
 </body>
@@ -345,11 +345,11 @@ ${FOOTER}
 
 function indexPage() {
   return head("Gift guides | Santa's Helper", "Original gift guides for children, new babies, hobbyists, mum, dad and Secret Santa.", "/gifts/") +
-`<div class="directory-intro"><div><p class="eyebrow">The Christmas edit</p><h1>The gift guides</h1><p class="standfirst">For the lifelong hobbies, the new arrivals and the people who are impossible to buy for. Start with someone you know.</p></div><p class="directory-count"><strong>${GUIDES.length}</strong> guides to explore<br>Eight possibilities in each.</p></div>
+`<div class="directory-intro"><div><p class="eyebrow">A little inspiration for your list</p><h1>Gift guides</h1><p class="standfirst">For the hobbies they love, the newest arrivals and the people who are hard to buy for. Start with what you know about them.</p></div><p class="directory-count"><strong>${GUIDES.length}</strong> guides to browse<br>Eight ideas in each.</p></div>
 <nav class="directory-jumps" aria-label="Browse guides by"><a href="#interests">Their interests <span aria-hidden="true">&darr;</span></a><a href="#family">Your people <span aria-hidden="true">&darr;</span></a><a href="#budget">A smaller budget <span aria-hidden="true">&darr;</span></a></nav>
-<p class="disclosure">Editorial imagery is AI-created for inspiration, not a photograph of a tested product.</p>
-${[["interests", "Start with what they love", "From a garden full of plans to a shelf full of books."], ["family", "For the people on your list", "A few starting points. Their interests make the difference."], ["budget", "A little gift goes a long way", "Secret Santa ideas to check against your agreed limit."]].map(([group, title, description]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2><p>${description}</p></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
-<aside class="finder-cta"><div><p class="eyebrow">For someone specific</p><h2>Tell us a little about them.</h2><p>Combine their interests, age and your budget for a more personal set of AI-generated ideas.</p></div><a href="/#form">Try the gift finder <span aria-hidden="true">&rarr;</span></a></aside>
+<p class="disclosure">The guide images are AI-created illustrations, not photos of products we've tested.</p>
+${[["interests", "Start with what they love", "From the garden to the bookshelf, find a starting point in their interests."], ["family", "For someone close to you", "A few ideas for the people who matter most. What they enjoy makes all the difference."], ["budget", "Small gifts, thoughtfully chosen", "Secret Santa ideas to browse, with the budget in mind."]].map(([group, title, description]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2><p>${description}</p></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
+<aside class="finder-cta"><div><p class="eyebrow">Shopping for someone in particular?</p><h2>Tell us a little about them.</h2><p>Share their interests, age and your budget, and we'll suggest ideas that feel more personal.</p></div><a href="/#form">Try the gift finder <span aria-hidden="true">&rarr;</span></a></aside>
 </main>
 ${FOOTER}
 </body>
@@ -360,7 +360,7 @@ ${FOOTER}
 function notFoundPage() {
   return head("Page not found | Santa's Helper", "That page could not be found.", "/404.html").replace(
     '<link rel="canonical" href="https://christmasidea.co.uk/404.html">\n', "<meta name=\"robots\" content=\"noindex\">\n") +
-`<div class="not-found"><p class="eyebrow">Page not found &middot; 404</p><h1>This one's gone<br>off the list.</h1><p>That page may have moved. There are still plenty of good places to start.</p><div class="guide-jumps"><a href="/#form">Find a gift <span aria-hidden="true">&rarr;</span></a><a href="/gifts/">Explore the guides</a></div></div>
+`<div class="not-found"><p class="eyebrow">Page not found</p><h1>We can't find<br>that page.</h1><p>The link may be out of date, or the page may have moved. There are still plenty of good places to start.</p><div class="guide-jumps"><a href="/#form">Find a gift <span aria-hidden="true">&rarr;</span></a><a href="/gifts/">Browse the gift guides</a></div></div>
 </main>
 ${FOOTER}
 </body>

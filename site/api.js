@@ -11,7 +11,7 @@ function requestError(status, data) {
   }
   if (status === 403) return "Please complete the security check and try again.";
   if (status === 413) return "That description is too long. Shorten it and try again.";
-  if (status === 429) return "There have been too many searches. Please wait a moment and try again.";
+  if (status === 429) return "Too many searches just now. Wait a moment, then try again.";
   return "Gift suggestions are temporarily unavailable. Your description is still here; please try again.";
 }
 
@@ -57,7 +57,7 @@ export async function fetchIdeas(input, {
       source: "catalogue",
       productDiscoveryEnabled: data.product_discovery_enabled === true,
       recipient: data.recipient,
-      notice: data.ideas.length ? data.error || "" : data.note || data.error || "No suitable catalogue suggestions were available.",
+      notice: data.ideas.length ? data.error || "" : data.note || data.error || "We couldn't find suitable ideas this time. Try adding a little more detail.",
       error: false,
     };
   }

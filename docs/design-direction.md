@@ -16,7 +16,7 @@ Sources checked on 4 November 2026:
 
 ## Art direction
 
-**A warm British Christmas gift edit.** Concrete ideas, useful buying advice and cohesive photographic-style editorial imagery should demonstrate the service, rather than relying on abstract promises of thoughtfulness. The user explicitly approved the oxblood-and-ivory editorial proposal after rejecting the plain and forest split-screen proposals.
+**A warm, distinctly British Christmas gift guide.** Concrete ideas, useful buying advice and cohesive photographic-style editorial imagery should demonstrate the service, rather than relying on abstract promises of thoughtfulness. The user explicitly approved the oxblood-and-ivory editorial proposal after rejecting the plain and forest split-screen proposals.
 
 1. A recognisable serif wordmark, small Christmas star and restrained seasonal masthead.
 2. Warm ivory, oxblood and pale blush, with a little antique gold. Fraunces uses restrained optical styling without the previous soft/wonky treatment; Figtree handles clear, comfortable interface text. Keep this approved light palette regardless of device theme; the automatic dark reinterpretation was rejected.

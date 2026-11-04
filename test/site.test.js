@@ -18,7 +18,7 @@ test("at least ten gift guides exist, each with eight ideas and tagged sponsored
       assert.match(link, /rel="sponsored noopener"/, file);
       assert.ok(link.includes(`tag=${tag}`), `${file} missing affiliate tag`);
     }
-    assert.match(html, /Ad: we earn a commission/, `${file} needs a disclosure`);
+    assert.match(html, /Ad: Some links are Amazon affiliate links/, `${file} needs a disclosure`);
     assert.match(html, /<link rel="canonical"/, file);
   }
 });
@@ -44,6 +44,21 @@ test("site files are valid UTF-8 without mojibake or a byte-order mark", async (
     assert.notDeepEqual([...bytes.subarray(0, 3)], [0xef, 0xbb, 0xbf], `${name} has a BOM`);
     assert.doesNotMatch(bytes.toString("utf8"), /\u00c2|\u00e2\u20ac|\u00c3/, `${name} has mojibake`);
   }
+});
+
+test("site copy avoids gift-edit jargon and uses clear, friendly finder language", async () => {
+  const files = [
+    "index.html", "about.html", "privacy.html", "404.html",
+    ...(await readdir(site("gifts/"))).filter((name) => name.endsWith(".html")).map((name) => `gifts/${name}`),
+  ];
+  for (const name of files) {
+    assert.doesNotMatch(await read(name), /the (?:christmas )?gift edit/i, name);
+  }
+  const home = await read("index.html");
+  assert.match(home, /Who are you shopping for\?/);
+  assert.match(home, /Please leave out names and sensitive details/);
+  assert.doesNotMatch(home, /Curating your collection|Ideas curated by AI|Adjacent discovery/);
+  assert.match(await read("404.html"), /We can't find/);
 });
 
 test("Worker sets CSP and HSTS headers and locks framing", async () => {
@@ -139,14 +154,14 @@ test("homepage separates gift concepts from verified products and offers accessi
   const html = await read("index.html");
   assert.match(html, /Example descriptions/);
   assert.match(html, /class="prompt-chip"/);
-  assert.match(html, /Search Amazon for this idea/);
-  assert.match(html, /not verified products/);
+  assert.match(html, /See options on Amazon UK/);
+  assert.match(html, /not specific products unless marked as verified/);
   const disclosure = html.match(/<div class="recommendation-disclosure">([\s\S]*?)<\/div>/)?.[1];
   assert.ok(disclosure, "shopping links need a dedicated disclosure");
   const visibleDisclosure = disclosure.match(/<p class="disclosure">([\s\S]*?)<\/p>/)?.[1];
   assert.ok(visibleDisclosure, "the concept/product distinction must not be hidden inside details");
   assert.match(visibleDisclosure, /Amazon affiliate links/);
-  assert.match(visibleDisclosure, /gift ideas, not verified products unless labelled/);
+  assert.match(visibleDisclosure, /Ideas are not specific products unless marked as verified/);
   assert.match(visibleDisclosure, /earn a commission/);
   assert.ok(html.indexOf(disclosure) < html.indexOf('id="cards"'), "disclosure must precede shopping results");
   const css = await read("home.css");
@@ -155,7 +170,7 @@ test("homepage separates gift concepts from verified products and offers accessi
   const verification = html.match(/function setVerifiedProduct\(card, idea, product\)\{([\s\S]*?)\n\}/)?.[1];
   assert.ok(verification);
   assert.match(verification, /card\.classList\.add\("verified"\)/);
-  assert.match(verification, /Verified Amazon product/);
+  assert.match(verification, /Matched Amazon listing/);
   assert.match(html, /id="cancel"/);
   assert.match(html, /id="loading-text" role="status" aria-live="polite"/);
   assert.ok(html.indexOf('id="ts"') > html.indexOf('id="go"'), "the security widget must not push the primary action below the first screen");
