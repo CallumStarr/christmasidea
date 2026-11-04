@@ -7,7 +7,7 @@ import {
 import { CANDIDATE_COUNT } from "../src/prompt.js";
 import { verifyKnownFacts } from "../src/validate.js";
 import { deriveRecipient } from "../src/recipient.js";
-import { buildBenchmarkRequest, buildResultRecord, benchmarkMaxTokens, benchmarkEffort } from "../scripts/run-benchmark.js";
+import { buildBenchmarkRequest, buildResultRecord, benchmarkMaxTokens, benchmarkEffort, productionUserMessage } from "../scripts/run-benchmark.js";
 
 const ORIGIN = "https://gifts.example.com";
 const env = { ALLOWED_ORIGINS: ORIGIN, ANTHROPIC_API_KEY: "sk-test", MODEL: "claude-haiku-5-5" };
@@ -102,7 +102,7 @@ test("production and the Haiku benchmark send byte-identical requests for the sa
   const description = "My aunt is 60 and loves tea. Budget £25.";
   const parsed = normaliseInput({ mode: "describe", description }).value;
   const prod = await captureProductionRequest();
-  const bench = buildBenchmarkRequest({ id: "claude-haiku-5-5", forceTool: true }, buildUserMessage(parsed));
+  const bench = buildBenchmarkRequest({ id: "claude-haiku-5-5", forceTool: true }, productionUserMessage(parsed));
   assert.deepEqual(bench, prod);
   assert.equal(JSON.stringify(bench), JSON.stringify(prod));
 });
@@ -127,11 +127,11 @@ test("the real benchmark model table forces the tool for Haiku only", async () =
   assert.equal(MODELS.sonnet.forceTool, false);
 });
 
-test("the strict schema keeps known_facts evidence and exactly-ten wording, and closes every object", () => {
+test("the strict schema keeps known_facts evidence and exact-count wording, and closes every object", () => {
   const facts = STRICT_GIFT_TOOL.input_schema.properties.recipient_profile.properties.known_facts.items;
   assert.deepEqual(facts.required.sort(), ["evidence", "fact"]);
   assert.equal(facts.additionalProperties, false);
-  assert.match(STRICT_GIFT_TOOL.description + SYSTEM_PROMPT, /exactly 10/);
+  assert.match(STRICT_GIFT_TOOL.description + SYSTEM_PROMPT, new RegExp(`exactly ${CANDIDATE_COUNT}`));
 });
 
 test("benchmark results record stop_reason, thinking tokens and the request configuration", () => {
@@ -144,13 +144,13 @@ test("benchmark results record stop_reason, thinking tokens and the request conf
   assert.equal(rec.validation.raw_count, 1);
 });
 
-// ---------- exactly ten candidates ----------
+// ---------- exact candidate count ----------
 
-test("the prompt and schema ask for exactly ten distinct candidates", () => {
-  assert.equal(CANDIDATE_COUNT, 10);
-  assert.match(SYSTEM_PROMPT, /exactly 10 distinct candidate ideas/);
+test("the prompt and schema ask for exactly twelve distinct candidates", () => {
+  assert.equal(CANDIDATE_COUNT, 12);
+  assert.match(SYSTEM_PROMPT, /exactly 12 distinct candidate ideas/);
   assert.doesNotMatch(SYSTEM_PROMPT, /Return fewer than/);
-  assert.equal(GIFT_TOOL.input_schema.properties.ideas.maxItems, 10);
+  assert.equal(GIFT_TOOL.input_schema.properties.ideas.maxItems, 12);
 });
 
 test("an under-delivering model is reported honestly with no server-side invented ideas", () => {

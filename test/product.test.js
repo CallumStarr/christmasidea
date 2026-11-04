@@ -397,7 +397,9 @@ test("duplicate primary queries are fetched and reserved once for concurrent ide
     },
   }, "visitor");
   assert.equal(result.products.length, 2);
-  assert.ok(result.products.every((entry) => entry?.asin === ASIN));
+  assert.equal(result.products[0]?.asin, ASIN);
+  assert.equal(result.products[1], null, "the same listing is never shown on two cards");
+  assert.equal(result.duplicates_removed, 1);
   assert.equal(calls.filter((url) => url.endsWith("/searchItems")).length, 1);
   assert.deepEqual(reservations, [1]);
 });

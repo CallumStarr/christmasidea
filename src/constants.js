@@ -27,6 +27,14 @@ export const ANGLES = [
   "practical-upgrade", "niche-hobby", "combines-interests", "problem-solver",
   "personalised", "creative-or-learning-kit", "everyday-quality", "versatile",
 ];
+
+// v4 discovery strategies: how an idea relates to what the shopper said.
+export const STRATEGIES = [
+  "core-interest", "deeper-niche", "adjacent-driver", "cross-interest",
+  "problem-solver", "make-or-do", "personalised", "everyday-upgrade", "versatile",
+];
+// Strategies that move away from the literal interest (the "gift they didn't know existed").
+export const DISCOVERY_STRATEGIES = new Set(["adjacent-driver", "cross-interest"]);
 export const AGE_BANDS = ["baby", "toddler", "child", "tween", "teen", "adult", "unknown"];
 export const BUDGET_SCOPES = ["per_gift", "total", "unspecified"];
 

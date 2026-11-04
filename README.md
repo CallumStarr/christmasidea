@@ -89,7 +89,9 @@ Amazon's official Creators API guidance specifies a one-hour cache TTL for `Offe
 
 ## Recommendation quality
 
-Prompt `gift-curator-v3.3` (frozen v2 snapshot in `src/prompts/gift-curator-v2.js`) makes **one** Claude call. The model first fills a structured `recipient_profile` (`known_facts` as `{fact, evidence}` pairs, separate `inferences`, exclusions, budget), then returns **exactly 10 ranked candidate ideas**; the server validates them and shows the best 8. Spare candidates replace rejected ones, so no second API call is needed, and nothing is invented server-side if fewer than 8 survive (`shortfall: true`). Ideas are gift *concepts* to search for, never verified products, prices or availability.
+Prompt `gift-intelligence-v4.0` (v3.3 is frozen in `src/prompts/gift-curator-v3.3.js`) still makes **one** Claude call. The model fills a structured `recipient_profile` and suggests discovery directions, then returns **12 candidate ideas**. The gift intelligence engine (`src/engine/`, described in [docs/gift-intelligence-engine.md](docs/gift-intelligence-engine.md)) then takes over. It builds a recipient model and walks an interest/motivation graph to find adjacent ideas. It retrieves curated graph concepts (BM25 + graph ranker, fused with RRF) and scores every candidate on grounding, fit, novelty, specificity and budget. It picks 8 with MMR diversification and attaches a connection quoted from the shopper's own words.
+
+Graph concepts only top up a thin list (at most 3), so `shortfall: true` is now rare. Ideas are gift *concepts* to search for, never verified products, prices or availability. Anonymous click, save and dismiss counters go to `POST /api/feedback`; they do not change ranking yet.
 
 **Facts versus inferences.** A `known_fact` must carry a short verbatim `evidence` extract that the server finds in the shopper's text (case and punctuation ignored). Unverified facts are kept in diagnostics (`facts_unverified`) and are never used to build the recipient summary; an unsupported summary is replaced with one built from verified facts only.
 
@@ -104,7 +106,7 @@ Server-side checks (`src/validate.js`, rules in `src/rules.js`, recipient parsin
 - injection echoes, brand/model names and marketing noise in queries, title/query/description mismatch
 - recipient summaries that mention things the shopper never said (replaced by validated known facts)
 
-The API response keeps its existing shape and adds `prompt_version` and `shortfall`; a separate `/api/products` endpoint optionally enriches the concepts. The cache key includes the prompt version, validator version, model, generation settings (thinking, effort, output limit) and input (namespace `/ideas/v6/`), so results produced under different effort settings never share an entry. `MAX_OUTPUT_TOKENS` is 4500: the visible JSON needs roughly 1,500-2,000 tokens, and the rest is headroom. Validators and match scores are heuristic, calibrated with deterministic cases rather than a live-product benchmark; reject any match that fails a hard criterion.
+The API response keeps its existing shape and adds `prompt_version` and `shortfall`; a separate `/api/products` endpoint optionally enriches the concepts. The cache key includes the prompt version, validator version, model, generation settings (thinking, effort, output limit) and input (namespace `/ideas/v7/`), so results produced under different effort settings never share an entry. `MAX_OUTPUT_TOKENS` is 4500: the visible JSON needs roughly 1,500-2,000 tokens, and the rest is headroom. Validators and match scores are heuristic, calibrated with deterministic cases rather than a live-product benchmark; reject any match that fails a hard criterion.
 
 Evaluation is AI-led and subjective; 30 synthetic cases cannot show statistical significance.
 

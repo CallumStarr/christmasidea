@@ -3,8 +3,9 @@
 // The model is asked for a few spare candidates so a rejected idea can be replaced by the
 // next-best valid one rather than leaving the visitor with a short list.
 
-import { ANGLES, CATEGORIES } from "./constants.js";
+import { ANGLES, CATEGORIES, STRATEGIES } from "./constants.js";
 import { deriveRecipient } from "./recipient.js";
+import { giftTypeEnabled, normaliseGiftType } from "./engine/gift-types.js";
 import {
   AGE_RATING_CLAIM, ALWAYS_BLOCKED, BABY_BLOCKED, INJECTION_ECHO, MINOR_BLOCKED, PREFERENCE_TOPICS,
   PREFERENCE_VERB, PRICE_OR_STOCK_CLAIM, QUERY_ACRONYMS, QUERY_FOR_PHRASE, QUERY_NOISE, SAFETY_CLAIM,
@@ -12,7 +13,7 @@ import {
 } from "./rules.js";
 import { cleanText, contentStems, jaccard, sentences, stem, stemSet, words } from "./text.js";
 
-export const VALIDATOR_VERSION = "validator-v4";
+export const VALIDATOR_VERSION = "validator-v5";
 export const MAX_IDEAS = 8;
 
 const QUERY_ALLOWED = /[^\p{L}\p{N} '&-]/gu;
@@ -48,11 +49,12 @@ function toQuery(value) {
   return cleanText(String(value || "").replace(QUERY_ALLOWED, " "), 60);
 }
 
-export function normaliseCandidates(raw) {
+export function normaliseCandidates(raw, { source = "model", indexOffset = 0 } = {}) {
   const list = raw && Array.isArray(raw.ideas) ? raw.ideas : [];
   const out = [];
-  list.forEach((item, index) => {
+  list.forEach((item, n) => {
     if (!item || typeof item !== "object") return;
+    const index = n + indexOffset;
     const title = cleanText(item.title, 60);
     const why = cleanText(item.why, 260);
     const rawQuery = toQuery(item.search_query);
@@ -70,6 +72,12 @@ export function normaliseCandidates(raw) {
       angle: ANGLES.find((a) => a.toLowerCase() === String(item.angle || "").trim().toLowerCase()) || "",
       basedOn: cleanText(item.based_on, 100),
       estMax: Number.isFinite(est) && est > 0 ? est : null,
+      strategy: STRATEGIES.find((s) => s === String(item.strategy || "").trim().toLowerCase()) || "",
+      direction: cleanText(item.direction, 40),
+      giftType: normaliseGiftType(item.gift_type),
+      source: source !== "model" && (item.source === "graph" || item.source === "catalogue") ? item.source : source,
+      // Server-built backups carry their own verified provenance; model ideas never do.
+      provenance: source === "model" ? null : (item.provenance || null),
     });
   });
   return out;
@@ -158,6 +166,7 @@ function evaluate(c, ctx, corpusText) {
   const idea = { ...c };
 
   if (INJECTION_ECHO.test(`${label} ${c.why} ${c.basedOn}`)) return reject("prompt_injection_echo");
+  if (c.giftType && !giftTypeEnabled(c.giftType)) return reject("gift_type_not_enabled");
   // "magazine single issue (subscription alternative)" is the opposite of a subscription.
   const blocked = firstMatch(ALWAYS_BLOCKED, label.replace(NEGATED_SERVICE, " "));
   if (blocked) return reject(blocked);
@@ -269,7 +278,7 @@ function tiedToStatedInterest(c, ctx, topicTerms) {
     .some((s) => ctx.textStems.has(s) && !own.has(s) && !GENERIC_LABEL.has(s) && !BODY_WORDS.has(s));
 }
 
-function productType(c) {
+export function productType(c) {
   // "Bread lame with replacement blades" is a lame, not a blade: use the part before the first preposition.
   const basis = (c.concept || c.title).split(/\b(?:with|for|and|in|to|from|of|that|featuring|by)\b|[,:(–]/i)[0] || c.title;
   const stems = contentStems(basis);
@@ -298,7 +307,7 @@ export function unsupportedSummaryTerms(text, ctx) {
   return unsupported;
 }
 
-const normEvidence = (s) => String(s || "").toLowerCase().replace(/[^\p{L}\p{N}£]+/gu, " ").trim();
+export const normEvidence = (s) => String(s || "").toLowerCase().replace(/[^\p{L}\p{N}£]+/gu, " ").trim();
 
 /**
  * known_facts must be things the shopper actually wrote. Each fact needs a short verbatim extract
@@ -338,15 +347,22 @@ function chooseSummary(raw, ctx, issues, facts) {
 /**
  * @param raw   the tool input returned by the model (untrusted)
  * @param input the normalised shopper input, or null for structural checks only
- * @param opts  { exclude: string[] (ideas already shown), limit }
+ * @param opts  { exclude: string[] (ideas already shown), limit, truncated,
+ *                extraCandidates: raw ideas from the server's own graph/catalogue (validated identically),
+ *                rank(unique, ctx, limit) -> chosen ideas in display order (default: legacy variety caps),
+ *                decorate(idea, ctx) -> extra public fields for a chosen idea }
  */
 export function curateIdeas(raw, input, opts = {}) {
   const limit = opts.limit || MAX_IDEAS;
   const exclude = opts.exclude || (input && input.exclude) || [];
   const ctx = input ? deriveRecipient(input) : null;
   const corpusText = ctx ? ctx.text : "";
-  const candidates = normaliseCandidates(raw);
+  const extra = Array.isArray(opts.extraCandidates) && opts.extraCandidates.length
+    ? normaliseCandidates({ ideas: opts.extraCandidates }, { source: "graph", indexOffset: 1000 })
+    : [];
+  const candidates = [...normaliseCandidates(raw), ...extra];
   const rawCount = raw && Array.isArray(raw.ideas) ? raw.ideas.length : 0;
+  const modelCandidates = candidates.filter((c) => c.source === "model").length;
   const issues = [];
   const valid = [];
   // Every rejected candidate is retained with its title and reason(s), so filtering can be audited.
@@ -395,7 +411,10 @@ export function curateIdeas(raw, input, opts = {}) {
   }
 
   // Pass 1 enforces variety caps; pass 2 only tops up so variety never costs us a valid idea.
-  const chosen = [];
+  let chosen = [];
+  if (typeof opts.rank === "function") {
+    chosen = opts.rank(unique, ctx, limit, { productType, issues }).slice(0, limit);
+  } else {
   const tally = { category: {}, angle: {}, type: {} };
   const add = (idea) => {
     chosen.push(idea);
@@ -419,6 +438,7 @@ export function curateIdeas(raw, input, opts = {}) {
     issues.push({ index: idea.index, code: "variety_cap_relaxed", action: "warned" });
   }
   chosen.sort((a, b) => a.index - b.index);
+  }
 
   const ideas = chosen.map((i) => ({
     title: i.title,
@@ -427,6 +447,7 @@ export function curateIdeas(raw, input, opts = {}) {
     concept: i.concept || i.title,
     category: i.category,
     productSpec: productSpecOf(i, ctx),
+    ...(typeof opts.decorate === "function" ? opts.decorate(i, ctx) : {}),
   }));
   let note = noteOf(raw);
   if (note && (INJECTION_ECHO.test(note) || /https?:|www\./i.test(note) || (ctx && /£\s?\d/.test(note) && ![...note.matchAll(/£\s?(\d+)/g)].every((m) => ctx.text.includes(m[1]))))) {
@@ -443,20 +464,23 @@ export function curateIdeas(raw, input, opts = {}) {
     recipientSummary,
     diagnostics: {
       validator: VALIDATOR_VERSION,
-      candidates: candidates.length,
+      candidates: modelCandidates,
       returned: ideas.length,
       shortfall: ideas.length < limit,
       shortfall_count: Math.max(0, limit - ideas.length),
       truncated: Boolean(opts.truncated),
       raw_count: rawCount,
-      malformed: rawCount - candidates.length,
+      malformed: rawCount - modelCandidates,
       accepted: ideas.length,
-      rejected_count: rejected.size,
-      rejected: [...rejected.values()],
+      rejected_count: [...rejected.keys()].filter((i) => i < 1000).length,
+      rejected: [...rejected.values()].filter((r) => r.index < 1000),
+      backups_rejected: [...rejected.values()].filter((r) => r.index >= 1000).map((r) => ({ title: r.title, codes: r.codes })),
       // Valid ideas that were not needed because eight had already been chosen.
       spare_unused: unique.length - ideas.length,
       // Shown ideas that came from beyond the first `limit` positions, i.e. replacements.
-      replacements_used: chosen.filter((i) => i.index >= limit).length,
+      replacements_used: chosen.filter((i) => i.source === "model" && i.index >= limit).length,
+      backup_candidates: extra.length,
+      backups_used: chosen.filter((i) => i.source !== "model").length,
       facts_verified: facts.verified.length,
       facts_unverified: facts.unverified,
       issues,

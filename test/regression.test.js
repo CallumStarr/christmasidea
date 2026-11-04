@@ -42,19 +42,32 @@ test("API: ten valid candidates give eight frontend-compatible ideas plus additi
   assert.equal(res.status, 200);
   assert.equal(data.ideas.length, 8);
   assert.equal(data.source, "ai");
-  assert.equal(data.prompt_version, "gift-curator-v3.3");
+  assert.equal(data.prompt_version, "gift-intelligence-v4.0");
+  assert.equal(data.engine_version, "gift-engine-v1");
   assert.equal(data.shortfall, false);
   assert.equal(typeof data.recipient_summary, "string");
+  assert.ok(Array.isArray(data.recipient.explicit) && Array.isArray(data.recipient.inferred), "recipient model separates facts from guesses");
   for (const i of data.ideas) {
     for (const f of ["title", "why", "query", "category"]) assert.equal(typeof i[f], "string", `idea.${f}`);
+    assert.ok(["model", "graph", "catalogue"].includes(i.source));
+    assert.equal(typeof i.discovery, "boolean");
   }
 });
 
-test("API: fewer than eight valid ideas are returned with shortfall=true, not hidden", async () => {
+test("API: fewer than eight model ideas are topped up by at most three graph backups", async () => {
   const res = await handleRequest(req(gardenBody), env, { fetch: claude(wrap(tenGardenIdeas(5))), budget: okBudget });
   const data = await res.json();
   assert.equal(res.status, 200);
-  assert.equal(data.ideas.length, 5);
+  assert.equal(data.ideas.filter((i) => i.source === "model").length, 5);
+  const backups = data.ideas.filter((i) => i.source !== "model");
+  assert.ok(backups.length >= 1 && backups.length <= 3, `backups: ${backups.length}`);
+  assert.equal(data.shortfall, data.ideas.length < 8);
+});
+
+test("API: two model ideas are never padded past the backup cap, so shortfall stays honest", async () => {
+  const res = await handleRequest(req(gardenBody), env, { fetch: claude(wrap(tenGardenIdeas(2))), budget: okBudget });
+  const data = await res.json();
+  assert.ok(data.ideas.length <= 5);
   assert.equal(data.shortfall, true);
 });
 
@@ -131,13 +144,13 @@ test("diagnostics record truncation, counts and rejection reasons", () => {
   assert.ok(typeof d.malformed === "number");
 });
 
-test("worst-case schema-bounded payload for ten ideas fits the output token limit", () => {
+test("worst-case schema-bounded payload for twelve ideas fits the output token limit", () => {
   const fields = Object.keys(GIFT_TOOL.input_schema.properties.ideas.items.properties);
-  assert.equal(fields.length, 9, "update the estimate if the idea schema changes");
+  assert.equal(fields.length, 10, "update the estimate if the idea schema changes");
   // Characters per field at the limits the schema descriptions ask for, plus JSON key/punctuation overhead.
-  const perIdea = 60 + 30 + 260 + 100 + 14 + 4 + 60 + 30 + 25 + 150;
-  const profile = 800 + 180; // recipient_profile plus recipient_summary
-  const pessimisticTokens = Math.ceil((perIdea * 10 + profile) / 3); // 3 chars per token is deliberately pessimistic
+  const perIdea = 60 + 30 + 160 + 60 + 20 + 30 + 14 + 4 + 50 + 25 + 150;
+  const profile = 900 + 180 + 6 * 120; // recipient_profile, recipient_summary, up to six directions
+  const pessimisticTokens = Math.ceil((perIdea * 12 + profile) / 3.5);
   assert.ok(pessimisticTokens < DEFAULT_MAX_OUTPUT_TOKENS, `estimate ${pessimisticTokens} vs limit ${DEFAULT_MAX_OUTPUT_TOKENS}`);
 });
 

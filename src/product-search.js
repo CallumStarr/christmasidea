@@ -2,6 +2,7 @@ import { scoreProductMatch, productMatchThresholds } from "./product-matcher.js"
 import { normaliseProductIdea } from "./product-validation.js";
 import { createProvider, configuredProviderId } from "./providers/index.js";
 import { AmazonProviderError } from "./providers/amazon.js";
+import { assignUniqueProducts } from "./engine/product-identity.js";
 
 const CACHE_TTL = 3600;
 const MAX_IDEAS = 8;
@@ -145,8 +146,9 @@ export async function searchProductsForIdeas(values, env, deps, ipHash) {
       .sort((a, b) => b.matchScore - a.matchScore)[0];
     return best ? provider.validateProduct(best) : null;
   });
-  matched.forEach((product, index) => { results[ideas[index].index] = product; });
-  return { enabled: true, limited, products: results };
+  const unique = assignUniqueProducts(matched);
+  unique.products.forEach((product, index) => { results[ideas[index].index] = product; });
+  return { enabled: true, limited, products: results, ...(unique.duplicates ? { duplicates_removed: unique.duplicates } : {}) };
 }
 
 export async function getCachedProduct(provider, productId, env, deps) {

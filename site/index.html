@@ -124,6 +124,16 @@ textarea{min-height:96px;resize:vertical}
 .recipient-insight{margin:14px 0 20px;padding:14px 17px;background:#fffdf8;border:1px solid var(--line);border-left:4px solid var(--gold-deep);border-radius:12px}
 .recipient-insight-label{margin:0 0 3px;color:var(--berry);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .recipient-summary{margin:0;color:var(--ink);font-size:15px;line-height:1.5}
+.understood{margin:10px 0 0;font-size:14px;color:#4a3a3f}
+.understood summary{cursor:pointer;font-weight:700;color:var(--berry)}
+.understood ul{margin:8px 0 0;padding-left:18px}
+.understood li{margin:2px 0}
+.understood .guess{color:#6b5a5f;font-style:italic}
+.card p.connection{margin:-10px 0 16px;font-size:13.5px;line-height:1.45;color:#6b5a5f}
+.card p.connection strong{color:var(--berry-ink);font-weight:700}
+.discovery-tag{position:absolute;z-index:2;right:12px;top:12px;background:var(--gold);color:#3a2a00;font-size:12px;font-weight:800;padding:5px 10px;border-radius:999px}
+.dismiss{margin-top:8px;background:none;border:0;padding:4px 0;color:#6b5a5f;font-size:13px;text-decoration:underline;cursor:pointer;align-self:flex-start}
+.card.dismissed{opacity:.45}
 @media (max-width:600px){.recipient-insight{padding:12px 14px}}
 /* ---------- Results ---------- */
 .results{margin-top:56px}
@@ -343,6 +353,10 @@ footer .brand{margin-bottom:18px;color:#fff6ea}
     <div class="recipient-insight" id="recipient-insight" hidden>
       <p class="recipient-insight-label">What we picked up</p>
       <p id="recipient-summary" class="recipient-summary"></p>
+      <details class="understood" id="understood" hidden>
+        <summary>What we understood</summary>
+        <ul id="understood-list"></ul>
+      </details>
     </div>
     <p class="disclosure"><strong>Ad.</strong> We earn a commission if you buy through these affiliate links, at no extra cost to you. <strong>As an Amazon Associate I earn from qualifying purchases.</strong> When a verified product is found, its photo and shopping link are for that same listing. Decorative placeholders are not product photos; check listing details, prices and reviews before buying.</p>
     <ul class="cards" id="cards"></ul>
@@ -511,11 +525,13 @@ async function fetchIdeas(input){
     try { data = await res.json(); } catch {}
     if (Array.isArray(data.ideas) && data.fallback) return {
       ideas: data.ideas, source: "catalogue", productDiscoveryEnabled: data.product_discovery_enabled === true,
+      recipient: data.recipient,
       notice: data.ideas.length ? data.error : (data.note || data.error)
     };
     if (res.ok && Array.isArray(data.ideas) && data.ideas.length) return {
       ideas: data.ideas, source: data.source || "ai",
       recipientSummary: typeof data.recipient_summary === "string" ? data.recipient_summary : "",
+      recipient: data.recipient,
       productDiscoveryEnabled: data.product_discovery_enabled === true
     };
     if (res.ok) return { ideas: [], source: "none", notice: data.note || "We couldn't find enough suitable ideas. Try adding detail or adjusting the budget." };
@@ -613,6 +629,27 @@ function setVerifiedProduct(card, idea, product){
   note.textContent = "Verified product image";
 }
 
+/* ---------- anonymous feedback (enumerated fields only, never titles or text) ---------- */
+const fbItem = (idea, position) => ({ strategy: idea.strategy, source: idea.source, discovery: idea.discovery === true, position });
+function sendFeedback(body){
+  if (!apiOn()) return;
+  try { fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), keepalive: true }).catch(() => {}); } catch {}
+}
+
+function renderUnderstood(recipient){
+  const list = $("#understood-list"); list.textContent = "";
+  const facts = Array.isArray(recipient?.explicit) ? recipient.explicit.filter((f) => typeof f?.fact === "string").slice(0, 8) : [];
+  const guesses = Array.isArray(recipient?.inferred) ? recipient.inferred.filter((g) => typeof g?.label === "string").slice(0, 4) : [];
+  for (const f of facts){ const li = document.createElement("li"); li.textContent = f.fact; list.append(li); }
+  for (const g of guesses){
+    const li = document.createElement("li"); li.className = "guess";
+    li.textContent = typeof g.because === "string" && g.because ? `Our guess: they may enjoy ${g.label} (from \u201c${g.because}\u201d)` : `Our guess: they may enjoy ${g.label}`;
+    list.append(li);
+  }
+  $("#understood").hidden = !list.childElementCount;
+  return list.childElementCount > 0;
+}
+
 function renderCards(ideas){
   const ul = $("#cards"); ul.textContent = ""; cardsByTitle.clear();
   ideas.forEach((idea, idx) => {
@@ -622,24 +659,42 @@ function renderCards(ideas){
     const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = idea.category || "Gift idea";
     const imageNote = document.createElement("span"); imageNote.className = "image-note"; imageNote.textContent = "Illustrative placeholder";
     media.append(ph, cat, imageNote);
+    if (idea.discovery === true){ const tag = document.createElement("span"); tag.className = "discovery-tag"; tag.textContent = "Something different"; media.append(tag); }
     const body = document.createElement("div"); body.className = "card-body";
     const h = document.createElement("h3"); h.textContent = idea.title;
     const why = document.createElement("p"); why.className = "why"; why.textContent = idea.why;
+    let connection = null;
+    if (idea.connection && typeof idea.connection.text === "string" && idea.connection.text){
+      connection = document.createElement("p"); connection.className = "connection";
+      const label = document.createElement("strong"); label.textContent = "Why we thought of this: ";
+      connection.append(label, document.createTextNode(idea.connection.text));
+    }
     const row = document.createElement("div"); row.className = "row";
     const a = document.createElement("a"); a.className = "shop"; a.href = amazonUrl(idea.query);
     a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = "See it on Amazon";
     a.setAttribute("aria-label", `See ${idea.title} on Amazon (affiliate link, opens in new tab)`);
+    a.addEventListener("click", () => sendFeedback({ event: "click", item: fbItem(idea, idx) }));
     const save = document.createElement("button"); save.type = "button"; save.className = "save"; save.innerHTML = HEART;
     const sync = () => { const on = isSaved(idea.title); save.setAttribute("aria-pressed", String(on)); save.setAttribute("aria-label", on ? `Remove ${idea.title} from shortlist` : `Save ${idea.title} to shortlist`); };
-    save.addEventListener("click", () => { toggleSave(idea); sync(); });
+    save.addEventListener("click", () => { const adding = !isSaved(idea.title); toggleSave(idea); sync(); if (adding) sendFeedback({ event: "save", item: fbItem(idea, idx) }); });
     sync();
     const aff = document.createElement("p"); aff.className = "aff"; aff.textContent = "Ad";
+    const dismiss = document.createElement("button"); dismiss.type = "button"; dismiss.className = "dismiss"; dismiss.textContent = "Not for them";
+    dismiss.setAttribute("aria-label", `Not for them: ${idea.title}`);
+    dismiss.addEventListener("click", () => {
+      if (li.classList.contains("dismissed")) return;
+      li.classList.add("dismissed"); dismiss.textContent = "Noted \u2014 thanks"; dismiss.disabled = true;
+      sendFeedback({ event: "dismiss", item: fbItem(idea, idx) });
+    });
     row.append(a, save);
-    body.append(h, why, row, aff);
+    body.append(h, why);
+    if (connection) body.append(connection);
+    body.append(row, aff, dismiss);
     li.append(media, body);
     ul.append(li);
     cardsByTitle.set(idea.title, li);
   });
+  sendFeedback({ event: "shown", items: ideas.slice(0, 12).map(fbItem) });
 }
 
 function toggleSave(idea){
@@ -701,7 +756,7 @@ function readForm(){
 async function run(input){
   const go = $("#go"), more = $("#more");
   go.disabled = true; more.disabled = true; setStatus(""); $("#loading").hidden = false;
-  const steps = ["Reading your description...", "Choosing ten candidates...", "Checking them against what you told us...", "Almost there - this usually takes 10 to 20 seconds."];
+  const steps = ["Reading your description...", "Working out what they enjoy and why...", "Exploring ideas beyond the obvious...", "Checking every idea against what you told us...", "Almost there - this usually takes 10 to 20 seconds."];
   const label = $("#loading-text"); let stepIdx = 0; label.textContent = steps[0];
   const ticker = setInterval(() => { stepIdx = Math.min(stepIdx + 1, steps.length - 1); label.textContent = steps[stepIdx]; }, 4000);
   try {
@@ -711,7 +766,8 @@ async function run(input){
     renderCards(out.ideas);
     const summary = out.source === "ai" && typeof out.recipientSummary === "string" ? out.recipientSummary.trim() : "";
     $("#recipient-summary").textContent = summary;
-    $("#recipient-insight").hidden = !summary;
+    const understood = renderUnderstood(out.recipient);
+    $("#recipient-insight").hidden = !summary && !understood;
     $("#results").hidden = false;
     $("#source").textContent = out.source === "ai" ? "Ideas curated by AI from your answers." : "Catalogue suggestions checked against your answers.";
     if (out.notice) setStatus(out.notice, false);
@@ -740,7 +796,7 @@ $("#form").addEventListener("submit", (e) => {
   current = input; shownTitles = [];
   run(input);
 });
-$("#more").addEventListener("click", () => { if (current) run({ ...current, exclude: shownTitles }); });
+$("#more").addEventListener("click", () => { if (current){ sendFeedback({ event: "more" }); run({ ...current, exclude: shownTitles }); } });
 $("#restart").addEventListener("click", () => {
   $("#form").reset();
   $("#about-count").textContent = "0 / 500";

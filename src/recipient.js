@@ -4,7 +4,11 @@
 
 import { BUDGETS, BUDGET_CAPS, LABELS } from "./constants.js";
 import { DISLIKE_GROUPS } from "./rules.js";
-import { contentStems, splitList, stem } from "./text.js";
+import { VAGUE, contentStems, splitList, stem } from "./text.js";
+
+// "train sets" -> "sets" survives the pre-stem vague filter; owned items must be compared on the
+// product word ("train") because idea titles drop the vague word ("Wooden train set" -> "train").
+const VAGUE_STEMS = new Set([...VAGUE].map(stem));
 
 const NUMBER_WORDS = {
   one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11,
@@ -132,7 +136,7 @@ export function extractConstraints(text) {
       const key = phrase.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      const stems = new Set(contentStems(phrase));
+      const stems = new Set(contentStems(phrase).filter((s) => kind !== "owned" || !VAGUE_STEMS.has(s)));
       const groups = kind === "avoid" ? DISLIKE_GROUPS.filter((g) => g.trigger.test(phrase)) : [];
       if (!stems.size && !groups.length) continue;
       out.push({ phrase, stems, head: [...stems].pop() || "", groups, kind });

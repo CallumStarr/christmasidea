@@ -40,9 +40,12 @@ test("happy path calls Claude with forced tool and returns sanitised ideas", asy
   const data = await res.json();
   assert.equal(data.source, "ai");
   assert.equal(data.recipient_summary, "They enjoy climbing and coffee, and the budget is £15 to £30.");
-  assert.equal(data.ideas.length, 2); // link spam + duplicate dropped
-  assert.equal(data.ideas[1].category, "Home"); // unknown category normalised
-  assert.ok(!/[<>]/.test(data.ideas[1].query), "query stripped of markup characters");
+  const fromModel = data.ideas.filter((i) => i.source === "model");
+  assert.equal(fromModel.length, 2); // link spam + duplicate dropped
+  assert.ok(data.ideas.filter((i) => i.source === "graph").length <= 3, "graph backups top up but never take over");
+  const grinder = fromModel.find((i) => /grinder/i.test(i.title));
+  assert.equal(grinder.category, "Home"); // unknown category normalised
+  assert.ok(!/[<>]/.test(grinder.query), "query stripped of markup characters");
 
   const call = captured[0];
   assert.equal(call.url, "https://api.anthropic.com/v1/messages");
@@ -139,7 +142,7 @@ test("cache hit skips budget and Claude", async () => {
   await handleRequest(req(body), env, { fetch: fakeFetch(captured), budget, cache });
   const second = await handleRequest(req(body), env, { fetch: fakeFetch(captured), budget, cache });
   assert.equal((await second.json()).cached, true);
-  assert.ok(cacheKeys.every((key) => key.includes("/ideas/v6/")), "new prompt uses a fresh cache namespace");
+  assert.ok(cacheKeys.every((key) => key.includes("/ideas/v7/")), "new engine uses a fresh cache namespace");
   assert.equal(consumed, 1);
   assert.equal(captured.length, 1);
 });
@@ -195,9 +198,12 @@ test("Claude receives the upgraded curator prompt and output schema", async () =
   const body = JSON.parse(captured[0].init.body);
   assert.match(body.system, /TRUST BOUNDARY/);
   assert.match(body.system, /recipient_profile/);
-  assert.match(body.system, /exactly 10 distinct candidate ideas/); // strict schemas cannot carry maxItems
-  assert.equal(GIFT_TOOL.input_schema.properties.ideas.maxItems, 10);
+  assert.match(body.system, /exactly 12 distinct candidate ideas/); // strict schemas cannot carry maxItems
+  assert.match(body.system, /DISCOVERY/);
+  assert.equal(GIFT_TOOL.input_schema.properties.ideas.maxItems, 12);
   assert.ok(body.tools[0].input_schema.required.includes("recipient_summary"));
+  assert.ok(body.tools[0].input_schema.required.includes("directions"));
+  assert.match(body.messages[0].content, /<discovery_hints>/, "graph hints reach the model for a recognised interest");
 });
 
 test("OPTIONS preflight from allowed origin", async () => {
@@ -242,4 +248,26 @@ test("www redirects to the main domain, keeping path and query", () => {
   assert.equal(r.headers.get("Location"), "https://christmasidea.co.uk/a/b?x=1");
   assert.equal(canonicalRedirect(new Request("https://christmasidea.co.uk/"), e), null);
   assert.equal(canonicalRedirect(new Request("https://christmasidea.yourname.workers.dev/"), e), null);
+});
+
+test("/api/feedback stores only enumerated counters and fails safely", async () => {
+  const fb = (body, opts = {}) => req(body, { path: "/api/feedback", ...opts });
+  const good = { event: "click", item: { strategy: "adjacent-driver", source: "graph", discovery: true, position: 1, title: "secret" } };
+  const recorded = [];
+  const feedback = { record: async (ip, keys) => { recorded.push({ ip, keys }); return { ok: true }; } };
+
+  assert.equal((await handleRequest(fb(good, { origin: "https://evil.example" }), env, { feedback })).status, 403);
+  assert.equal((await handleRequest(fb({ event: "purchase" }), env, { feedback })).status, 400);
+  const none = await handleRequest(fb(good), env, {});
+  assert.equal(none.status, 202);
+  assert.deepEqual(await none.json(), { ok: true, recorded: false });
+
+  const ok = await handleRequest(fb(good), env, { feedback });
+  assert.equal(ok.status, 202);
+  assert.equal(recorded.length, 1);
+  assert.notEqual(recorded[0].ip, "1.2.3.4", "visitor is hashed, never stored raw");
+  assert.doesNotMatch(JSON.stringify(recorded), /secret/);
+
+  const limited = await handleRequest(fb(good), env, { feedback: { record: async () => ({ ok: false }) } });
+  assert.equal(limited.status, 429);
 });

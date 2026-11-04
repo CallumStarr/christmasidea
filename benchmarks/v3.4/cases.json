@@ -1,0 +1,776 @@
+[
+  {
+    "id": "case-01",
+    "name": "The dad who has everything",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My dad is 63 and spends loads of time gardening. He already has all the usual tools and doesn't need more generic garden gadgets. He likes birds and wildlife too. Budget around £35 for Christmas."
+    },
+    "evaluation_focus": [
+      "Avoid generic tools",
+      "Find a thoughtful adjacent interest",
+      "Respect £35 ceiling"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-02",
+    "name": "Teen artist with limited screen time",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My niece is 14 and loves drawing characters, manga and making things by hand. Her parents are trying to reduce screen time, so please avoid apps and electronics. She has plenty of ordinary sketchbooks already. Up to £25."
+    },
+    "evaluation_focus": [
+      "Age appropriateness",
+      "Non-digital creative ideas",
+      "Avoid ordinary sketchbooks"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-03",
+    "name": "Beginner climber",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "I'm buying for a 31-year-old friend who has recently got into indoor bouldering. They already own climbing shoes and a chalk bag. They're practical and enjoy trying new hobbies. Budget £30."
+    },
+    "evaluation_focus": [
+      "Specific climbing relevance",
+      "Avoid duplicates",
+      "Do not recommend safety-critical climbing equipment casually"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-04",
+    "name": "Potter in a small flat",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My partner is 36, loves pottery and visiting galleries, and lives with me in a fairly small flat. They dislike clutter and decorative objects that have no use. Birthday present, budget about £50."
+    },
+    "evaluation_focus": [
+      "Functional or experiential-feeling physical gifts",
+      "Avoid clutter",
+      "Pottery and art relevance"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-05",
+    "name": "Grandparent interested in railways",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My grandad is 78, enjoys railway history, model trains and doing crosswords. He likes traditional things but is happy to learn something new. Christmas gift, around £40."
+    },
+    "evaluation_focus": [
+      "Respectful, non-patronising ideas",
+      "Railway specificity",
+      "Age suitability"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-06",
+    "name": "Low-budget office Secret Santa",
+    "mode": "guided",
+    "input": {
+      "mode": "guided",
+      "relation": "colleague",
+      "age": "30s-40s",
+      "budget": "under-15",
+      "occasion": "secret-santa",
+      "interests": "Stationery, organisation, spreadsheets and desk plants",
+      "about": "Professional relationship; keep it appropriate for an office and avoid anything too personal."
+    },
+    "evaluation_focus": [
+      "Under £15",
+      "Workplace-appropriate",
+      "Avoid overly personal gifts"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-07",
+    "name": "Space-obsessed eight-year-old",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 8-year-old nephew is fascinated by planets, rockets and astronauts. He likes building things and asking how things work. His parents prefer toys that encourage learning rather than noisy electronic toys. Budget £30."
+    },
+    "evaluation_focus": [
+      "Age-appropriate STEM ideas",
+      "No noisy electronic toys",
+      "Safe for age eight"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-08",
+    "name": "Baker who owns the basics",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My mum is 55 and loves baking sourdough and experimenting with bread recipes. She already owns a stand mixer, scales and the basic baking equipment. Avoid food gifts because I don't know her current dietary preferences. Budget £45."
+    },
+    "evaluation_focus": [
+      "Baking-specific accessories or learning tools",
+      "Avoid basic equipment and food",
+      "£45 budget"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-09",
+    "name": "PC gamer with existing gear",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My brother is 27, enjoys PC gaming, building PCs and customising his desk setup. He already has a good headset, mouse and keyboard, so don't suggest those. Budget up to £60."
+    },
+    "evaluation_focus": [
+      "PC gaming relevance",
+      "Avoid headset, mouse and keyboard",
+      "Avoid compatibility assumptions"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-10",
+    "name": "Runner who tracks everything",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "A friend of mine is 42 and runs road races and trails. They already own a Garmin watch, headphones and a hydration vest. They're interested in recovery, training and race-day organisation. Around £40."
+    },
+    "evaluation_focus": [
+      "Runner-specific ideas",
+      "Avoid listed equipment",
+      "Avoid making medical claims"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-11",
+    "name": "Birdwatching aunt",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My aunt is 67 and loves birdwatching, walking local nature reserves and keeping a wildlife-friendly garden. She already has binoculars. She likes practical things and doesn't want ornaments. Budget £30."
+    },
+    "evaluation_focus": [
+      "Birding and wildlife relevance",
+      "Avoid binoculars and ornaments",
+      "Practical gifts within budget"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-12",
+    "name": "Vegan home cook",
+    "mode": "guided",
+    "input": {
+      "mode": "guided",
+      "relation": "friend",
+      "age": "30s-40s",
+      "budget": "30-50",
+      "occasion": "birthday",
+      "interests": "Vegan cooking, meal preparation, gardening and reducing household waste",
+      "about": "Avoid food products because preferences and allergies are unknown. They enjoy useful kitchen equipment and growing herbs."
+    },
+    "evaluation_focus": [
+      "Avoid food / consumables",
+      "Kitchen and gardening relevance",
+      "No assumptions about dietary products"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-13",
+    "name": "Film photography enthusiast",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My partner is 34 and is really into analogue film photography, developing their own photos and making photo books. They already have a camera and several lenses. They appreciate quality tools. Budget around £100."
+    },
+    "evaluation_focus": [
+      "Analogue photography specificity",
+      "Avoid camera and lens duplicates",
+      "Useful items within £100"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-14",
+    "name": "Independent seventeen-year-old",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "I'm buying a birthday present for my 17-year-old cousin. They're into music production, learning guitar and making short films. They don't like branded clothing or novelty gifts. I can spend up to £50."
+    },
+    "evaluation_focus": [
+      "Teen suitability",
+      "Creative interests",
+      "Avoid branded clothing and novelty gifts"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-15",
+    "name": "Four-year-old who dislikes noisy toys",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My friend has a four-year-old daughter who enjoys puzzles, picture books, drawing and imaginative play. Her parents prefer quiet, simple toys without lots of tiny loose pieces. Budget around £20."
+    },
+    "evaluation_focus": [
+      "Conservative age safety",
+      "Quiet play",
+      "Avoid small loose parts"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-16",
+    "name": "New baby gift",
+    "mode": "guided",
+    "input": {
+      "mode": "guided",
+      "relation": "child",
+      "age": "baby",
+      "budget": "30-50",
+      "occasion": "christmas",
+      "interests": "New baby; parents appreciate practical, well-made items",
+      "about": "Choose age-appropriate products intended for babies under one. Avoid sleep-positioning products, teething medicines, food and anything with unclear safety suitability."
+    },
+    "evaluation_focus": [
+      "Baby safety",
+      "Avoid unsafe sleep products and medicines",
+      "Useful gift for baby or parents"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-17",
+    "name": "Nine-year-old craft and science fan",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My niece is 9, loves making things, simple science experiments and solving puzzles. She gets bored with kits that only work once. Her parents want age-labelled products with clear instructions. Budget £25."
+    },
+    "evaluation_focus": [
+      "Age-labelled products",
+      "Reusable / repeat-play value",
+      "Craft and science variety"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-18",
+    "name": "Coffee and camping combination",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My brother is 34 and loves mountain biking, craft coffee and camping. He's practical and already owns most normal cycling accessories. I'd like something a bit unusual that combines two of his interests, ideally around £40."
+    },
+    "evaluation_focus": [
+      "Combine interests creatively",
+      "Avoid generic cycling kit",
+      "Budget accuracy"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-19",
+    "name": "Cook and retro-gaming fan",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My partner is 33, enjoys cooking from scratch and collecting retro video games. They have a well-equipped kitchen and don't need another frying pan or basic utensil. Budget £35 for an anniversary gift."
+    },
+    "evaluation_focus": [
+      "Explore two interests",
+      "Avoid basic kitchen equipment",
+      "Anniversary-appropriate without assumptions"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-20",
+    "name": "Minimalist tea drinker",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My sister is 50 and has recently moved into a smaller flat. She loves tea, calm routines and practical design. She is a minimalist and dislikes clutter, scented products and novelty items. Under £25."
+    },
+    "evaluation_focus": [
+      "Minimalist / useful",
+      "Avoid scent and novelty items",
+      "Under £25"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-21",
+    "name": "Student in a tiny room",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 20-year-old nephew is at university and lives in a very small shared room. He enjoys reading, drawing and making coffee. He has little storage space and is on a tight budget. Keep it under £15."
+    },
+    "evaluation_focus": [
+      "Compact gifts",
+      "Under £15",
+      "Avoid bulky items"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-22",
+    "name": "Outdoor-loving teenager",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 15-year-old cousin enjoys hiking, map reading, nature photography and weekend camping with family. They already have a basic backpack and walking boots. Budget £35. Avoid knives or fire-starting equipment."
+    },
+    "evaluation_focus": [
+      "Teen-appropriate outdoor products",
+      "Explicitly avoid knives and fire-starting equipment",
+      "Avoid existing backpack and boots"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-23",
+    "name": "Fantasy reader who owns the books",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My friend is 29 and loves epic fantasy, maps, world-building and tabletop role-playing games. They own a huge book collection already, so don't suggest more novels. They enjoy thoughtful desk accessories and making things. Budget £30."
+    },
+    "evaluation_focus": [
+      "Fantasy adjacent ideas",
+      "Avoid more novels",
+      "Creative and desk-related variety"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-24",
+    "name": "Motorcycle enthusiast",
+    "mode": "guided",
+    "input": {
+      "mode": "guided",
+      "relation": "dad",
+      "age": "50s-60s",
+      "budget": "50-100",
+      "occasion": "birthday",
+      "interests": "Motorcycles, maintaining his own bike, touring routes and garage organisation",
+      "about": "He owns his protective riding gear and tools. Avoid safety-critical parts or anything that must fit a specific motorcycle model."
+    },
+    "evaluation_focus": [
+      "Motorcycle interest specificity",
+      "Avoid fitment-critical parts and safety gear",
+      "Use garage / touring angles"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-25",
+    "name": "Very little information",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "I need a present for a neighbour I don't know very well. They're an adult. I'd like something thoughtful but neutral, around £20. I don't know their hobbies or personal preferences."
+    },
+    "evaluation_focus": [
+      "Do not invent hobbies or traits",
+      "Choose broadly suitable low-risk gifts",
+      "Avoid overconfident personalised summary"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-26",
+    "name": "History lover with clear dislikes",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 44-year-old brother loves local history, archaeology and visiting museums. He dislikes technology gifts, fragrances, clutter and gimmicks. He enjoys learning new things and making practical notes. Budget £45."
+    },
+    "evaluation_focus": [
+      "History / archaeology relevance",
+      "Respect all stated dislikes",
+      "Avoid vague generic gifts"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-27",
+    "name": "Gardening and astronomy",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My mum is 59 and enjoys gardening during the day and stargazing on clear evenings. She has basic gardening tools but no specialist astronomy equipment. She likes learning and doesn't want decorative ornaments. Around £50."
+    },
+    "evaluation_focus": [
+      "Cross-interest recommendations",
+      "Avoid basic tools and ornaments",
+      "Practical astronomy entry points"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-28",
+    "name": "Sustainable craft maker",
+    "mode": "guided",
+    "input": {
+      "mode": "guided",
+      "relation": "friend",
+      "age": "20s",
+      "budget": "15-30",
+      "occasion": "christmas",
+      "interests": "Sewing, visible mending, upcycling clothes and sustainable crafts",
+      "about": "Prefers durable supplies and useful tools over novelty eco-themed merchandise. Avoid claiming a product is sustainable unless that is clear from the item."
+    },
+    "evaluation_focus": [
+      "Mending / sewing specificity",
+      "Durability over greenwashing",
+      "£15–30 budget"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-29",
+    "name": "Ten-year-old football and science fan",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 10-year-old nephew likes football, analysing match statistics and science experiments. He already has a football and team shirt. His parents prefer products that encourage curiosity and active play. Budget £30."
+    },
+    "evaluation_focus": [
+      "Combine football and science",
+      "Avoid duplicate football and shirt",
+      "Age-safe active / learning products"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-30",
+    "name": "Chess, jazz and train commute",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My dad is 68 and enjoys chess, jazz records and long train journeys. He has a large record collection and a good chess set already. He likes compact, well-made things he can use. Budget around £40."
+    },
+    "evaluation_focus": [
+      "Compact commuter-friendly ideas",
+      "Avoid records and chess sets",
+      "Thoughtful combination of interests"
+    ],
+    "set": "v3.3-original"
+  },
+  {
+    "id": "case-31",
+    "name": "The train-mad nephew who has every train set",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My five-year-old nephew is obsessed with trains. He already has loads of train sets. He's curious, imaginative, loves building things, and I have ?40 to spend."
+    },
+    "evaluation_focus": [
+      "Look past more train sets",
+      "Find movement/engineering/building/imaginative-play adjacencies",
+      "Age 5 suitable",
+      "Max ?40"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-32",
+    "name": "Dinosaur-loving niece",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My niece is 7 and loves dinosaurs and digging in the garden. She has lots of dinosaur figures already. Budget ?25."
+    },
+    "evaluation_focus": [
+      "Avoid more figures",
+      "Palaeontology/excavation/science adjacency",
+      "Max ?25"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-33",
+    "name": "Teen who games but wants to make things",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 15-year-old son plays Minecraft constantly and has started asking how games are made. Up to ?50."
+    },
+    "evaluation_focus": [
+      "Bridge gaming to making/coding",
+      "Teen-appropriate",
+      "Max ?50"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-34",
+    "name": "Retired engineer who fixes everything",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My grandad is 78, a retired engineer who still fixes clocks and radios in his shed. He has every tool. About ?30."
+    },
+    "evaluation_focus": [
+      "Avoid generic tools",
+      "Precision/mechanics/craft adjacency",
+      "Max ?30"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-35",
+    "name": "Coffee snob with a full kit",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My brother is 34 and a total coffee snob. He already has a grinder, scales and an espresso machine. Budget ?35."
+    },
+    "evaluation_focus": [
+      "Avoid owned kit",
+      "Find genuinely new coffee angle",
+      "Max ?35"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-36",
+    "name": "New runner training for a 10k",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My sister just started running and is training for her first 10k in spring. Budget around ?30."
+    },
+    "evaluation_focus": [
+      "Running-specific, beginner",
+      "Not marathon-training confusion",
+      "Max ?30"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-37",
+    "name": "Cosy reader who hates clutter",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My mum is 58, reads every evening, loves crime novels and hates clutter and ornaments. ?20."
+    },
+    "evaluation_focus": [
+      "No clutter/ornaments",
+      "Reading ritual adjacency",
+      "Max ?20"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-38",
+    "name": "Space-obsessed 9-year-old",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 9-year-old daughter is obsessed with space and the planets and asks a million questions. Budget ?30."
+    },
+    "evaluation_focus": [
+      "Curiosity/science adjacency",
+      "Age 9",
+      "Max ?30"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-39",
+    "name": "Baker who wants to try sourdough",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My friend is 41, bakes cakes every weekend and keeps saying she wants to try sourdough. ?25."
+    },
+    "evaluation_focus": [
+      "Bridge cake baking to bread",
+      "Max ?25"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-40",
+    "name": "Birdwatcher with binoculars",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My dad is 66 and loves watching birds in the garden. He already has good binoculars. Budget ?40."
+    },
+    "evaluation_focus": [
+      "Avoid binoculars",
+      "Garden wildlife adjacency",
+      "Max ?40"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-41",
+    "name": "Lego fan teenager",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 13-year-old nephew loves Lego Technic and anything mechanical. He likes figuring out how things work. ?45."
+    },
+    "evaluation_focus": [
+      "Mechanics/engineering adjacency",
+      "Not just another Lego set",
+      "Max ?45"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-42",
+    "name": "Plant parent in a small flat",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My girlfriend is 27 and has filled her small flat with houseplants. Under ?25."
+    },
+    "evaluation_focus": [
+      "Small-space friendly",
+      "Houseplant care/propagation",
+      "Max ?25"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-43",
+    "name": "Musician dad",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My dad is 52 and plays acoustic guitar every evening. He has plenty of plectrums and straps. ?30."
+    },
+    "evaluation_focus": [
+      "Avoid owned accessories",
+      "Music practice/learning adjacency",
+      "Max ?30"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-44",
+    "name": "Camping family's youngest",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 6-year-old son loves camping with us, torches and exploring the woods. ?20."
+    },
+    "evaluation_focus": [
+      "Outdoor exploration adjacency",
+      "Age 6 safety",
+      "Max ?20"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-45",
+    "name": "Puzzle-loving grandma",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My gran is 81, does the crossword every day and loves jigsaw puzzles. She finds small print hard. ?25."
+    },
+    "evaluation_focus": [
+      "Accessibility (large print)",
+      "Puzzles/word games",
+      "Max ?25"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-46",
+    "name": "Art-curious 11-year-old",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 11-year-old niece draws constantly, mostly animals and manga characters. ?30."
+    },
+    "evaluation_focus": [
+      "Drawing skill progression",
+      "Age 11",
+      "Max ?30"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-47",
+    "name": "Football-mad 8-year-old",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My 8-year-old nephew is football mad and supports Liverpool. He has the kit already. ?25."
+    },
+    "evaluation_focus": [
+      "Avoid kit",
+      "Football skills/stats/tactics adjacency",
+      "Max ?25"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-48",
+    "name": "Home cook exploring spice",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My partner is 38, loves cooking curries from scratch and experimenting with spices. ?35."
+    },
+    "evaluation_focus": [
+      "Specific cooking adjacency",
+      "Max ?35"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-49",
+    "name": "Hiker who has the boots",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "My uncle is 55 and hikes in the Lake District most weekends. He has boots, poles and a good jacket. ?40."
+    },
+    "evaluation_focus": [
+      "Avoid owned kit",
+      "Navigation/nature/photography adjacency",
+      "Max ?40"
+    ],
+    "set": "v3.4-discovery"
+  },
+  {
+    "id": "case-50",
+    "name": "Vague brief, small budget",
+    "mode": "describe",
+    "input": {
+      "mode": "describe",
+      "description": "A gift for my colleague's secret Santa. She seems to like tea. ?10."
+    },
+    "evaluation_focus": [
+      "Honest small list",
+      "Tea-specific",
+      "Max ?10"
+    ],
+    "set": "v3.4-discovery"
+  }
+]
