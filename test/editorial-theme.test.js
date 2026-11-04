@@ -18,10 +18,13 @@ function contrast(a, b) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-test("oxblood editorial text, controls and focus tokens meet AA in both themes", async () => {
+test("the approved light palette stays fixed and its text, controls and focus tokens meet AA", async () => {
   const css = await read("theme.css");
-  const [light, dark] = css.split("@media(prefers-color-scheme:dark)");
-  for (const [theme, palette] of [["light", tokens(light)], ["dark", { ...tokens(light), ...tokens(dark) }]]) {
+  assert.match(css, /color-scheme:only light;/);
+  assert.doesNotMatch(css, /prefers-color-scheme/);
+  const root = css.match(/:root\{([\s\S]*?)\n\}/)?.[1];
+  assert.ok(root);
+  for (const [theme, palette] of [["approved light", tokens(root)]]) {
     for (const background of ["paper", "surface", "inset"]) {
       for (const foreground of ["ink", "muted", "accent", "gold-ink"]) {
         assert.ok(contrast(palette[foreground], palette[background]) >= 4.5, `${theme}: ${foreground} on ${background}`);
@@ -47,7 +50,8 @@ test("every page uses shared local fonts and theme, without inline font drift", 
     assert.match(html, /href="\/fonts\/fraunces\.woff2"/, name);
     assert.match(html, /href="\/fonts\/figtree\.woff2"/, name);
     assert.match(html, /name="theme-color" content="#FBF7F0"/, name);
-    assert.match(html, /name="theme-color" content="#1C1518"/, name);
+    assert.match(html, /name="color-scheme" content="only light"/, name);
+    assert.doesNotMatch(html, /name="theme-color"[^>]*media=|#1C1518/i, name);
     assert.doesNotMatch(html, /font-family:Arial|<canvas|linearGradient|radial-gradient/i, name);
   }
   const css = await read("theme.css");

@@ -291,8 +291,8 @@ function head(title, desc, path, extra = "") {
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Santa's Helper. A little thought. A lovely gift. Christmas gifts wrapped with burgundy ribbons.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#FBF7F0" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1C1518" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#FBF7F0">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
@@ -383,7 +383,8 @@ for (const name of ["about", "privacy"]) {
     .replace(/<link rel="icon"[^>]*>\s*/g, "")
     .replace(/<link rel="apple-touch-icon"[^>]*>\s*/g, "")
     .replace(/<meta name="theme-color"[^>]*>\s*/g, "")
-    .replace("</head>", '<meta name="theme-color" content="#FBF7F0" media="(prefers-color-scheme: light)">\n<meta name="theme-color" content="#1C1518" media="(prefers-color-scheme: dark)">\n</head>')
+    .replace(/<meta name="color-scheme"[^>]*>\s*/g, "")
+    .replace("</head>", '<meta name="color-scheme" content="only light">\n<meta name="theme-color" content="#FBF7F0">\n</head>')
     .replace("</head>", '<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="/apple-touch-icon.png">\n</head>')
     .replace("</head>", '<script type="module" src="/site-shell.js"></script>\n</head>')
     .replace('class="wrap" id="guide-content"', 'class="wrap legal-page" id="guide-content" tabindex="-1"')

@@ -2,7 +2,7 @@
 @font-face{font-family:"Figtree";src:url(/fonts/figtree.woff2) format("woff2");font-weight:300 900;font-style:normal;font-display:swap}
 
 :root{
-  color-scheme:light dark;
+  color-scheme:only light;
   --paper:#fbf7f0;
   --surface:#f7eeea;
   --inset:#f1e4df;
@@ -19,23 +19,6 @@
   --error-bg:#f9eee8;
   --display:"Fraunces",Georgia,serif;
   --body:"Figtree",sans-serif;
-}
-@media(prefers-color-scheme:dark){
-  :root{
-    --paper:#1c1518;
-    --surface:#281e22;
-    --inset:#33262b;
-    --ink:#f5eae3;
-    --muted:#cfb9bc;
-    --line:#675056;
-    --accent:#efb4bf;
-    --accent-hover:#f8ced5;
-    --on-accent:#36131e;
-    --gold-ink:#e0bb83;
-    --focus:#e0bb83;
-    --error:#ffb7a9;
-    --error-bg:#342320;
-  }
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
