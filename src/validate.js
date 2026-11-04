@@ -8,12 +8,12 @@ import { deriveRecipient } from "./recipient.js";
 import { giftTypeEnabled, normaliseGiftType } from "./engine/gift-types.js";
 import {
   AGE_RATING_CLAIM, ALWAYS_BLOCKED, BABY_BLOCKED, INJECTION_ECHO, MINOR_BLOCKED, PREFERENCE_TOPICS,
-  PREFERENCE_VERB, PRICE_OR_STOCK_CLAIM, QUERY_ACRONYMS, QUERY_FOR_PHRASE, QUERY_NOISE, SAFETY_CLAIM,
+  PREFERENCE_VERB, PRICE_OR_STOCK_CLAIM, PRODUCT_CONCEPTS, PRODUCT_CONFLICTS, QUERY_ACRONYMS, QUERY_FOR_PHRASE, QUERY_NOISE, SAFETY_CLAIM,
   SMALL_PARTS, SPECIALIST, SUPERVISION,
 } from "./rules.js";
 import { cleanText, contentStems, jaccard, sentences, stem, stemSet, words } from "./text.js";
 
-export const VALIDATOR_VERSION = "validator-v5";
+export const VALIDATOR_VERSION = "validator-v6";
 export const MAX_IDEAS = 8;
 
 const QUERY_ALLOWED = /[^\p{L}\p{N} '&-]/gu;
@@ -261,9 +261,11 @@ function evaluate(c, ctx, corpusText) {
   if (cleaned.removedBrand) issues.push({ code: "brand_or_model_removed_from_query", action: "repaired" });
   if (cleaned.truncated) issues.push({ code: "query_truncated", action: "repaired" });
   idea.query = cleaned.query;
+  if (hasProductConflict(idea)) return reject("product_concept_conflict");
   const queryStems = stemSet(cleaned.query);
   const titleStems = stemSet(`${c.title} ${c.concept}`);
-  if (![...queryStems].some((s) => titleStems.has(s))) return reject("query_title_mismatch");
+  if (![...queryStems].some((s) => titleStems.has(s))
+    && !sameProductConcept([c.title, c.concept], [cleaned.query])) return reject("query_title_mismatch");
   const whyStems = stemSet(idea.why);
   if (![...titleStems, ...queryStems].some((s) => whyStems.has(s))) issues.push({ code: "description_not_about_title", action: "warned" });
 
@@ -283,6 +285,66 @@ export function productType(c) {
   const basis = (c.concept || c.title).split(/\b(?:with|for|and|in|to|from|of|that|featuring|by)\b|[,:(–]/i)[0] || c.title;
   const stems = contentStems(basis);
   return stems[stems.length - 1] || "";
+}
+
+const CONCEPT_ADD_ON = new Set(["cover", "case", "bag", "pouch", "holder", "strap", "replacement", "refill", "book", "guide"].map(stem));
+
+function productConcepts(text) {
+  let normal = words(text).join(" ");
+  const negated = new Set();
+  const exclusions = [
+    ["kneeling_aid", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:(?:garden|gardening|foam|padded|folding|foldable)\s+)*(?:kneelers?|kneeling\s+(?:pads?|mats?|cushions?|benches|seats?)|knee\s+pads?)\b/g],
+    ["apron", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:(?:garden|tool|work)\s+)?aprons?\b/g],
+    ["moka", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:moka(?:\s+(?:coffee\s+)?(?:pots?|makers?|brewers?))?|stovetop\s+(?:coffee\s+)?espresso\s+(?:makers?|pots?|brewers?))\b/g],
+    ["enamel_coffee_pot", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?enamel\s+(?:(?:camp|camping|coffee)\s+)*(?:coffee\s+)?(?:pots?|percolators?)\b/g],
+  ];
+  for (const [id, pattern] of exclusions) {
+    if (pattern.test(normal)) {
+      negated.add(id);
+      normal = normal.replace(pattern, " ");
+    }
+    pattern.lastIndex = 0;
+  }
+  if (CONCEPT_ADD_ON.has(productType({ title: normal }))) return [];
+  return PRODUCT_CONCEPTS.filter((rule) => !negated.has(rule.id) && rule.terms.test(normal)).map((rule) => rule.id);
+}
+
+function sameProductConcept(left, right) {
+  const known = new Set(left.flatMap(productConcepts));
+  // Aprons vary in purpose; an apron alone is not a sufficiently precise freshness identity.
+  known.delete("apron");
+  return right.flatMap(productConcepts).some((id) => known.has(id));
+}
+
+function hasProductConflict(c) {
+  // Only a leading product description is evidence of identity; incidental uses/comparisons are not.
+  const whyProduct = /^(?:a|an|the|this)\b/i.test(c.why)
+    ? c.why.split(/\b(?:with|for|to|from|of|alongside|that|which|while|when|after|before|unlike|instead|keeps?|makes?|offers?|helps?|lets?|provides?|is|are)\b|[.!?;,]/i)[0]
+    : "";
+  const spec = productSpecOf(c);
+  const features = [...spec.requiredFeatures, ...spec.requiredVariants, ...spec.preferredFeatures]
+    .filter((text) => !/^(?:no|not|without)\b/i.test(text));
+  const fields = [c.title, c.concept, c.rawQuery, c.query, whyProduct,
+    ...features];
+  const identities = fields.map(productConcepts).filter((ids) => ids.length);
+  const titleIds = productConcepts(c.title);
+  const queryIds = productConcepts(c.query);
+  const comparative = (text) => /\b(?:versus|vs\.?|alternative|instead|either|or)\b/i.test(text);
+  return PRODUCT_CONFLICTS.some(([a, b]) => {
+    const titleBundle = titleIds.includes(a) && titleIds.includes(b);
+    const queryBundle = queryIds.includes(a) && queryIds.includes(b);
+    const explicitlyBundled = titleBundle && queryBundle
+      && /\b(?:bundle|set|kit|combination|combo)\b/i.test(c.title)
+      && /\b(?:bundle|set|kit|combination|combo)\b/i.test(c.query)
+      && !comparative(c.title) && !comparative(c.query);
+    if (identities.some((ids) => ids.includes(a) && ids.includes(b)) && !explicitlyBundled) return true;
+    if ((titleIds.includes(a) && queryIds.includes(b) && !queryIds.includes(a))
+      || (titleIds.includes(b) && queryIds.includes(a) && !queryIds.includes(b))) return true;
+    if (explicitlyBundled) return false;
+    return identities.some((left, index) => identities.slice(index + 1).some((right) =>
+      !left.some((id) => right.includes(id))
+      && ((left.includes(a) && right.includes(b)) || (left.includes(b) && right.includes(a)))));
+  });
 }
 
 /* ---------- summary ---------- */
@@ -386,7 +448,8 @@ export function curateIdeas(raw, input, opts = {}) {
     const idea = result.idea;
     idea.titleStems = stemSet(`${c.title} ${c.concept}`);
     idea.queryStems = stemSet(idea.query);
-    if (shownTitles.has(c.title.toLowerCase()) || shown.some((s) => jaccard(s, idea.titleStems) >= 0.8)) {
+    if (shownTitles.has(c.title.toLowerCase()) || shown.some((s) => jaccard(s, idea.titleStems) >= 0.8)
+      || sameProductConcept(exclude, [c.title, c.concept, idea.query])) {
       issues.push({ index: c.index, code: "already_shown", action: "rejected" });
       noteRejection(c, "already_shown");
       continue;
@@ -400,6 +463,7 @@ export function curateIdeas(raw, input, opts = {}) {
     const clash = unique.find((u) =>
       u.title.toLowerCase() === idea.title.toLowerCase()
       || u.query === idea.query
+      || sameProductConcept([u.title, u.concept, u.query], [idea.title, idea.concept, idea.query])
       || jaccard(u.queryStems, idea.queryStems) >= THRESHOLDS.duplicateQuery
       || jaccard(u.titleStems, idea.titleStems) >= THRESHOLDS.duplicateConcept);
     if (clash) {

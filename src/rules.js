@@ -5,6 +5,18 @@
 
 const i = (source) => new RegExp(source, "i");
 
+// Narrow product identities, not recipient interests. Unknown types retain the existing lexical checks.
+export const PRODUCT_CONCEPTS = [
+  { id: "kneeling_aid", terms: i("\\bkneelers?\\b|\\bkneeling\\s+(?:(?:garden|foam|padded|folding|foldable)\\s+)*(?:pads?|mats?|cushions?|benches|bench|seats?)\\b|\\b(?:garden|gardening)\\b.*\\bknee\\s+pads?\\b|\\bknee\\s+pads?\\b.*\\b(?:garden|gardening)\\b") },
+  { id: "apron", terms: i("\\baprons?\\b") },
+  { id: "moka", terms: i("\\bmoka\\b|\\bstove\\s*top\\s+(?:coffee\\s+)?espresso\\s+(?:makers?|pots?|brewers?)\\b") },
+  { id: "enamel_coffee_pot", terms: i("\\benamel\\b.*\\b(?:coffee|camp|camping)\\b.*\\b(?:pots?|percolators?)\\b|\\benamel\\b.*\\b(?:pots?|percolators?)\\b.*\\b(?:coffee|camp|camping)\\b") },
+];
+export const PRODUCT_CONFLICTS = [
+  ["kneeling_aid", "apron"],
+  ["moka", "enamel_coffee_pot"],
+];
+
 /** Things the site never recommends, for any recipient. Reject outright. */
 export const ALWAYS_BLOCKED = [
   ["gift_card_or_voucher", i("\\b(gift ?cards?|e-?gift|vouchers?|gift certificates?)\\b")],

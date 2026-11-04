@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { handleRequest, normaliseInput } from "../src/core.js";
+import { curateIdeas, handleRequest, normaliseInput } from "../src/core.js";
 import { catalogueFallback } from "../src/catalogue.js";
 import { PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage } from "../src/prompts/gift-curator-v3.3.js";
 
@@ -26,7 +26,7 @@ test("release configuration selects baseline and retains disabled product discov
   assert.match(config, /PRODUCT_DISCOVERY_ENABLED = "false"/);
 });
 
-test("baseline release preserves all 30 reviewed title lists and ordering without graph additions", async () => {
+test("baseline release preserves 29 reviewed lists and the explicit case-12 consistency correction", async () => {
   for (const row of baseline.results) {
     const c = cases.find((c) => c.id === row.case_id);
     let sent;
@@ -44,7 +44,25 @@ test("baseline release preserves all 30 reviewed title lists and ordering withou
     const data = await response.json();
     assert.equal(data.prompt_version, PROMPT_VERSION);
     assert.equal(data.engine_version, "baseline-v3.3");
-    assert.deepEqual(data.ideas.map((i) => i.title), row.output.ideas.map((i) => i.title), c.id);
+    if (c.id === "case-12") {
+      assert.deepEqual(data.ideas.map((i) => i.title), [
+        "Herb growing kit with indoor planter",
+        "Stainless steel reusable food wraps set",
+        "Glass meal prep container set",
+        "Garden herb snips and harvesting tool set",
+        "Compost caddy for kitchen scraps",
+        "Digital kitchen scales with bowl",
+        "Plant-based cookbook",
+        "Personalised herb garden marker set",
+      ]);
+      const reviewed = curateIdeas(row.raw_output, normaliseInput(c.input).value);
+      assert.deepEqual(reviewed.diagnostics.rejected.filter((item) => item.title === "Garden kneeling pad and tool apron"), [
+        { index: 7, title: "Garden kneeling pad and tool apron", codes: ["product_concept_conflict"] },
+      ]);
+      assert.equal(data.ideas.at(-1).title, "Personalised herb garden marker set");
+    } else {
+      assert.deepEqual(data.ideas.map((i) => i.title), row.output.ideas.map((i) => i.title), c.id);
+    }
     assert.ok(data.ideas.every((i) => i.source === "model" && !i.connection && !i.discovery), c.id);
     assert.ok(sent.system.startsWith(SYSTEM_PROMPT));
     assert.equal(sent.messages[0].content, buildUserMessage(normaliseInput(c.input).value));
