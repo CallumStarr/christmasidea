@@ -19,6 +19,9 @@ test("every page shares the brand shell and exposes a route back to the shortlis
     assert.match(html, /class="brand-mark"/, name);
     assert.match(html, /Good gifts start with a person/, name);
     assert.match(html, /src="\/site-shell\.js"/, name);
+    assert.doesNotMatch(html, /season-strip|A little help with your gift list/, name);
+    const nav = html.match(/<nav class="nav"[\s\S]*?<\/nav>/)?.[0];
+    assert.match(nav || "", /class="countdown" id="countdown" hidden/, name);
     assert.doesNotMatch(html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1] || "", /<footer/, `${name}: footer must be outside main`);
     if (name !== "index.html") assert.match(html, /href="\/\?shortlist=1"/, name);
   }
@@ -45,6 +48,56 @@ test("all eighty guide ideas include specific buying advice and descriptive affi
     assert.match(html, /href="#choosing"/);
   }
   assert.equal(artwork.size, 10, "each category needs its own editorial image");
+});
+
+test("guide searches match single gift concepts and budget wording does not promise checked offers", async () => {
+  const checks = [
+    ["gifts-for-4-year-olds.html", "Balance bike", "kids balance bike 4 year old"],
+    ["gifts-for-space-lovers.html", "Rocket display model kit", "rocket display model kit"],
+    ["gifts-for-tea-and-coffee-lovers.html", "Coffee storage canister", "coffee storage canister airtight"],
+    ["gifts-for-mum.html", "Personalised photo book", "personalised photo book"],
+    ["gifts-for-dad.html", "Whisky tasting glasses", "whisky tasting glasses"],
+    ["gifts-for-book-lovers.html", "Book-support cushion", "book support cushion"],
+    ["gifts-for-book-lovers.html", "Reading throw", "washable throw blanket"],
+  ];
+  for (const [file, title, query] of checks) {
+    const html = await read(`gifts/${file}`);
+    const article = [...html.matchAll(/<article class="idea">([\s\S]*?)<\/article>/g)]
+      .find(([, body]) => body.includes(`<h3>${title}</h3>`))?.[1];
+    assert.ok(article, `${file}: ${title}`);
+    const href = article.match(/href="([^"]+)"/)?.[1].replaceAll("&amp;", "&");
+    assert.equal(new URL(href).searchParams.get("k"), query, title);
+  }
+  const secretSanta = await read("gifts/secret-santa-gifts-under-10.html");
+  assert.match(secretSanta, /not checked offers at today's prices/);
+  assert.match(secretSanta, /including delivery/);
+  assert.match(secretSanta, /choose a different idea/);
+  assert.match(await read("gifts/index.html"), /not verified offers/);
+  assert.doesNotMatch(await read("index.html"), /ideas that stay within the agreed limit/);
+});
+
+test("editing preserves the concrete advice needed to choose gifts", async () => {
+  const checks = [
+    ["gifts-for-4-year-olds.html", "Balance bike", [/parents/, /minimum seat height/, /protective equipment/]],
+    ["gifts-for-new-babies.html", "Baby keepsake box", [/internal dimensions/, /out of the baby's reach/, /not a toy/]],
+    ["gifts-for-space-lovers.html", "Beginner telescope", [/stable mount/, /Never point a telescope at the sun/]],
+    ["gifts-for-space-lovers.html", "Planisphere", [/UK latitudes/, /dim light/]],
+    ["gifts-for-gardeners.html", "Bird feeder", [/cleaning/i, /wildlife guidance/]],
+    ["gifts-for-history-lovers.html", "Biography of a historical figure", [/original publication date/, /reissue/]],
+    ["gifts-for-tea-and-coffee-lovers.html", "Handheld milk frother", [/does not heat/, /batteries/]],
+    ["gifts-for-mum.html", "Personalised photo book", [/crop, caption and spelling/, /proof/, /returns/]],
+    ["gifts-for-dad.html", "Two-player board game", [/exactly two people/, /rules/]],
+    ["secret-santa-gifts-under-10.html", "Reusable coffee cup", [/unsuitable loose in a bag/, /£10 delivered/]],
+    ["gifts-for-book-lovers.html", "Padded book sleeve", [/internal dimensions/, /thickness/]],
+  ];
+  for (const [file, title, advice] of checks) {
+    const articles = [...(await read(`gifts/${file}`)).matchAll(/<article class="idea">([\s\S]*?)<\/article>/g)];
+    const article = articles.find(([, body]) => body.includes(`<h3>${title}</h3>`))?.[1];
+    assert.ok(article, `${file}: ${title}`);
+    const note = article.match(/<p class="buying-note"><strong>What to look for<\/strong>([^<]+)<\/p>/)?.[1];
+    assert.ok(note, title);
+    for (const detail of advice) assert.match(note, detail, `${title}: retain useful buying advice`);
+  }
 });
 
 test("guide builds are repeatable and preserve authored CSS and legal content", async () => {

@@ -6,7 +6,7 @@ import { runInNewContext } from "node:vm";
 const site = (p) => new URL(`../site/${p}`, import.meta.url);
 const read = (p) => readFile(site(p), "utf8");
 
-test("at least ten gift guides exist, each with eight ideas and tagged sponsored Amazon links", async () => {
+test("at least ten gift guides give all eight ideas equal Amazon and eBay search links", async () => {
   const files = (await readdir(site("gifts/"))).filter((f) => f.startsWith("gifts-for-") || f.startsWith("secret-santa"));
   assert.ok(files.length >= 10);
   const tag = (await read("index.html")).match(/AMAZON_TAG:\s*"([^"]+)"/)[1];
@@ -14,11 +14,14 @@ test("at least ten gift guides exist, each with eight ideas and tagged sponsored
     const html = await read(`gifts/${file}`);
     const links = html.match(/<a href="https:\/\/www\.amazon\.co\.uk\/s\?[^"]+"[^>]*>/g) || [];
     assert.equal(links.length, 8, `${file} should have 8 ideas`);
+    const ebayLinks = html.match(/<a href="https:\/\/www\.ebay\.co\.uk\/sch\/i\.html\?[^"]+"[^>]*>/g) || [];
+    assert.equal(ebayLinks.length, links.length, `${file} must give both merchants equal coverage`);
+    assert.equal((html.match(/class="merchant-links"/g) || []).length, 8);
     for (const link of links) {
       assert.match(link, /rel="sponsored noopener"/, file);
       assert.ok(link.includes(`tag=${tag}`), `${file} missing affiliate tag`);
     }
-    assert.match(html, /Ad: Some links are Amazon affiliate links/, `${file} needs a disclosure`);
+    assert.match(html, /Ad: Amazon shopping links are affiliate links/, `${file} needs a disclosure`);
     assert.match(html, /<link rel="canonical"/, file);
   }
 });
@@ -71,12 +74,18 @@ test("Worker sets CSP and HSTS headers and locks framing", async () => {
   assert.doesNotMatch(src, /images\.pexels\.com/);
 });
 
-test("product cards link the verified image and shopping button to the same Amazon listing", async () => {
+test("product cards keep eBay examples non-clickable and Amazon listing images linked", async () => {
   const html = await read("index.html");
   assert.match(await read("api.js"), /\/api\/products/);
-  assert.match(html, /link\.href = product\.affiliateUrl/);
+  assert.match(html, /photo\.href = product\.affiliateUrl/);
+  assert.match(html, /document\.createElement\(product\.provider === "ebay" \? "div" : "a"\)/);
   assert.match(html, /shop\.href = product\.affiliateUrl/);
-  assert.match(html, /heading\.textContent = product\.title/);
+  assert.match(html, /Matched \$\{merchant\} listing: \$\{product\.title\}/);
+  assert.match(html, /Example photo: eBay\. Amazon product may differ\./);
+  assert.match(html, /Photo from Amazon listing/);
+  assert.match(await read("home.css"), /\.merchant-links\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(html, /shop\[data-provider=/);
+  assert.doesNotMatch(html, /heading\.textContent = product\.title/);
   assert.match(html, /product\.price\?\.currency === "GBP"/);
   assert.match(await read("home.css"), /object-fit:contain/);
   assert.match(html, /loading = "lazy"/);
@@ -101,7 +110,8 @@ test("product enrichment updates its original cards, never a later collection wi
       apiOn: () => true,
       cardsByTitle: cards,
       fetchProducts: () => pending,
-      validAmazonProduct: () => true,
+      CFG: {},
+      validProduct: () => true,
       setVerifiedProduct: (...args) => applied.push(args),
     });
     const filling = enrich([idea]);
@@ -150,19 +160,21 @@ test("shortlist dock is contextual and never covers the finder", async () => {
   assert.equal(elements["#listbar"].hidden, true);
 });
 
-test("homepage separates gift concepts from verified products and offers accessible prompt examples", async () => {
+test("homepage separates gift concepts from matched listings and offers accessible prompt examples", async () => {
   const html = await read("index.html");
   assert.match(html, /Example descriptions/);
   assert.match(html, /class="prompt-chip"/);
-  assert.match(html, /See options on Amazon UK/);
-  assert.match(html, /not specific products unless marked as verified/);
+  assert.match(html, /a\.textContent = `Search \$\{merchant\}`/);
+  assert.match(html, /Search links open Amazon UK or eBay UK/);
   const disclosure = html.match(/<div class="recommendation-disclosure">([\s\S]*?)<\/div>/)?.[1];
   assert.ok(disclosure, "shopping links need a dedicated disclosure");
   const visibleDisclosure = disclosure.match(/<p class="disclosure">([\s\S]*?)<\/p>/)?.[1];
   assert.ok(visibleDisclosure, "the concept/product distinction must not be hidden inside details");
-  assert.match(visibleDisclosure, /Amazon affiliate links/);
-  assert.match(visibleDisclosure, /Ideas are not specific products unless marked as verified/);
+  assert.match(visibleDisclosure, /Amazon shopping links are affiliate links/);
+  assert.match(visibleDisclosure, /gift ideas, not products we have tested/);
   assert.match(visibleDisclosure, /earn a commission/);
+  assert.match(disclosure, /Matched Amazon listing/);
+  assert.match(disclosure, /Matching is not a review or an endorsement/);
   assert.ok(html.indexOf(disclosure) < html.indexOf('id="cards"'), "disclosure must precede shopping results");
   const css = await read("home.css");
   assert.match(css, /\.media\{display:none\}/, "gift concepts must not display pretend product images");
@@ -170,9 +182,11 @@ test("homepage separates gift concepts from verified products and offers accessi
   const verification = html.match(/function setVerifiedProduct\(card, idea, product\)\{([\s\S]*?)\n\}/)?.[1];
   assert.ok(verification);
   assert.match(verification, /card\.classList\.add\("verified"\)/);
-  assert.match(verification, /Matched Amazon listing/);
+  assert.match(verification, /Matched \$\{merchant\} listing/);
   assert.match(html, /id="cancel"/);
   assert.match(html, /id="loading-text" role="status" aria-live="polite"/);
+  assert.doesNotMatch(html, /const ticker|aria-current="step"/, "waiting must not pretend to report server progress");
+  assert.doesNotMatch(html, /optional anonymous feedback/);
   assert.ok(html.indexOf('id="ts"') > html.indexOf('id="go"'), "the security widget must not push the primary action below the first screen");
   assert.match(await read("api.js"), /Search cancelled\. Your description is still here\./);
   assert.doesNotMatch(html, /Checking every idea against what you told us|Reading your description/);
@@ -191,6 +205,10 @@ test("privacy notice explains feedback minimisation and scheduled retention clea
   assert.match(privacy, /daily aggregate counters/);
   assert.match(privacy, /daily scheduled cleanup prunes feedback aggregate counters once they are 90 days old/);
   assert.match(privacy, /pseudonymous processing, not a guarantee of anonymity/);
+  assert.match(privacy, /daily and minute buckets/);
+  assert.match(privacy, /hourly and second buckets/);
+  assert.match(privacy, /not the providers' own retention periods/);
+  assert.doesNotMatch(privacy, /the operator should confirm/);
   assert.match(privacy, /ASA guidance on affiliate marketing disclosures/);
 
   const worker = await readFile(new URL("../src/index.js", import.meta.url), "utf8");

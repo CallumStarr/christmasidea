@@ -3,6 +3,7 @@
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { amazonUrl, ebayUrl } from "../site/merchant-links.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = join(ROOT, "site");
@@ -11,224 +12,221 @@ const ORIGIN = "https://christmasidea.co.uk";
 // Single source of truth for the affiliate tag: the home page config.
 const home = readFileSync(join(SITE, "index.html"), "utf8");
 const TAG = (home.match(/AMAZON_TAG:\s*"([^"]*)"/) || [])[1] || "";
+const EBAY_CAMPAIGN_ID = (home.match(/EBAY_CAMPAIGN_ID:\s*"([^"]*)"/) || [])[1] || "";
 
-const amazon = (q) => {
-  const u = new URL("https://www.amazon.co.uk/s");
-  u.searchParams.set("k", q);
-  if (TAG) u.searchParams.set("tag", TAG);
-  return u.toString();
-};
+const amazon = (q) => amazonUrl(q, { AMAZON_TAG: TAG });
+const ebay = (q) => ebayUrl(q, { EBAY_CAMPAIGN_ID });
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const GUIDES = [
   {
     slug: "gifts-for-4-year-olds",
     h1: "Gift ideas for 4-year-olds",
-    desc: "Screen-free gift ideas for 4-year-olds, from pretend play to chunky puzzles, with tips on age guidance, space and noise.",
-    intro: "Four-year-olds are curious, imaginative and increasingly independent. The best gifts give them something to pretend, build, sort or make, rather than something that only does one thing when a button is pressed.",
+    desc: "Eight gift ideas for 4-year-olds, with advice on puzzle difficulty, toy storage, sizing and what to ask the parents.",
+    intro: "At four, a favourite game might be building a tower, running a pretend cafe or asking for the same story again. Choose something that joins in with their play. Here are eight ideas, with advice on finding the right level of challenge.",
     tips: [
       "Check the age label on the box. If the child has younger siblings, keep small-part toys well away from them.",
-      "If the family prefers a quiet house, look for open-ended play such as dressing up, building and drawing instead of toys with sound effects.",
-      "Pick one thing they can do with a grown-up and one they can do alone.",
+      "Ask what they already enjoy and which building blocks or characters they have. An addition to a much-used set can be more welcome than a new system.",
+      "Think about the parents too: noise, storage and how much help a toy needs all affect whether it gets used.",
     ],
     ideas: [
-      ["Chunky wooden jigsaw puzzle", "A satisfying little challenge for a child who likes finishing a job themselves.", "chunky wooden jigsaw puzzle 4 years", "Choose the piece count for their experience, not just their age. Clear pictures and a sturdy storage tray make it easier to start again."],
-      ["Dressing-up costume", "For the child whose living room is a fire station one day and a dragon's cave the next.", "kids dressing up costume 4-5 years", "Check sizing, fastening and washing instructions. A simple tabard they can put on themselves may get more use than a complicated outfit."],
-      ["Large building blocks", "Something to build, knock down and reinvent without batteries or instructions.", "large building blocks toddler preschool", "Match an existing block system if they have one. Check the age label and whether the box includes enough pieces for a satisfying build."],
-      ["Picture book set", "New characters for the bedtime rotation, with plenty to spot on every page.", "picture books age 4 bundle", "Check which titles the family already owns. A single beautifully illustrated story can be a better gift than a large mixed bundle."],
-      ["Play-dough or modelling clay kit", "For making a bakery, a dinosaur or whatever the afternoon calls for.", "play dough set kids", "Check the age label, ingredients and allergy guidance. Washable tools and resealable tubs are useful; a giant accessory set is not essential."],
-      ["Kids' watercolour paint set", "A small invitation to make something, rather than follow a screen.", "kids washable watercolour paint set", "Look for age-appropriate washable paints and add thick paper. Check the contents rather than assuming a set includes a usable brush."],
-      ["Balance bike or scooter", "For the child who would rather spend the afternoon outside.", "kids balance bike 4 year old", "Ask the parents first. Check seat or handlebar height, rider limits, storage space and suitable protective equipment."],
-      ["Simple first board game", "Short rounds and shared laughs while they get the hang of taking turns.", "first board game preschool 4 years", "Look for simple rules and a short playing time. Check the number of players and whether an adult needs to read every turn."],
+      ["Chunky wooden jigsaw puzzle", "A good choice if they enjoy matching shapes and seeing a picture come together.", "chunky wooden jigsaw puzzle 4 years", "Ask what size puzzle they can finish now, then choose a similar challenge. A clear picture and a tray help them get started without an adult sorting every piece."],
+      ["Dressing-up costume", "A firefighter, a dragon or a character of their own invention: choose a costume they can make a story around.", "kids dressing up costume 4-5 years", "A simple tabard they can put on themselves leaves more time for playing. Buy by the child's measurements, and look for easy fastenings and a washable fabric."],
+      ["Large building blocks", "For making the garage, castle or very tall tower they have in mind.", "large building blocks preschool", "Match the block system they already use: similar-looking pieces are not always compatible. Check the age label and the number of building pieces, not just the accessories."],
+      ["Picture book", "Pick a story about something they currently love, whether that is dinosaurs, trains or a mischievous dog.", "picture book age 4", "Read a few pages aloud if you can: rhythm, repetition and things to spot give you plenty to share. Ask which titles the family already has before ordering."],
+      ["Play-dough set", "They can make a bakery today and a dinosaur tomorrow, using the same tubs.", "play dough set kids", "Check the age label, ingredients and allergy guidance. Resealable tubs and a few sturdy tools are more useful than lots of small accessories to lose."],
+      ["Children's watercolour paint set", "For a child who likes choosing colours and making their own pictures.", "kids washable watercolour paint set", "Look for age-appropriate paints with clear washing guidance, and include thick paper. Check that the set has a usable brush and a lid or tray for mixing colours."],
+      ["Balance bike", "Worth considering if they enjoy being outdoors and are ready for their first bike.", "kids balance bike 4 year old", "Agree this one with the parents before buying. Fit depends on the child's height and the bike's minimum seat height, not just the age on the listing. Allow for storage and protective equipment."],
+      ["First board game", "A game to play together, with short rounds so they can ask for another go.", "first board game preschool 4 years", "Choose rules you can explain in a few sentences. Check the player count, playing time and whether every turn needs reading, counting or help from an adult."],
     ],
   },
   {
     slug: "gifts-for-new-babies",
     h1: "Gift ideas for a new baby",
-    desc: "Thoughtful newborn and new-baby gift ideas that avoid the risky or unnecessary, from soft books to keepsakes.",
-    intro: "A new baby gift should be useful, safe and easy to enjoy straight away. Avoid anything that makes health or sleep claims; parents often have strong preferences there, and safety guidance changes.",
+    desc: "New-baby gifts for shared reading, everyday use and family keepsakes, with practical advice before you buy.",
+    intro: "A spare for the changing bag, a book to read together or somewhere to keep the first photographs: a new-baby gift need not be elaborate. Ask what the parents would find useful. This guide covers everyday gifts and keepsakes, rather than sleep, feeding or medical equipment.",
     tips: [
-      "Stick to soft, washable things and keepsakes. Leave feeding, medical and sleep-positioning items to the parents.",
-      "Newborns outgrow clothes in weeks, so consider the next size up or a larger size than newborn.",
-      "Something for the parents, such as a meal voucher or a treat, is often the most appreciated gift.",
+      "Ask before buying feeding, travel or sleep equipment. Those choices need to fit the family's routine and current safety guidance.",
+      "If buying clothes, ask which sizes they need and consider the season when the baby will wear them. They may already have plenty of newborn outfits.",
+      "Books and toys are for supervised time together, not for leaving in a baby's sleep space. Keepsake boxes and photo props belong with the adults.",
     ],
     ideas: [
-      ["Soft crinkle cloth book", "A few bold pictures to explore together, even before there are words.", "soft crinkle cloth baby book high contrast", "Check the stated age suitability and washing instructions. Avoid loose accessories, long cords or detachable small parts."],
-      ["Muslin squares", "The practical extra that can go straight into the changing bag.", "muslin cloth squares baby pack", "Look for machine-washable fabric and useful dimensions. Ask whether the parents have a preferred material before buying a large pack."],
-      ["Baby keepsake memory box", "Somewhere for the hospital bracelet, first cards and other tiny mementoes.", "baby keepsake memory box", "Check internal dimensions and compartments. This is storage for an adult to keep out of the baby's reach, not a nursery toy."],
-      ["Soft rattle", "A simple first toy for supervised play with a grown-up.", "soft fabric baby rattle", "Choose a clearly age-labelled toy from a reputable seller. Check care instructions and inspect it regularly for loose stitching or parts."],
-      ["Baby bath towel with hood", "A useful addition to the bath-time routine, without guessing clothing sizes.", "hooded baby bath towel", "Check the towel's actual dimensions and care label. A soft, absorbent fabric matters more than decorative extras."],
-      ["Baby milestone cards", "A small keepsake for parents who enjoy documenting the first year.", "baby milestone cards", "Read the included milestones before ordering. Cards are photo props for adults to handle and should be kept out of the baby's reach."],
-      ["Board book for shared reading", "A story to return to as the baby grows, rather than another cuddly toy.", "baby board book high contrast", "Choose sturdy pages and a clearly stated age range. Skip electronic extras if the parents prefer a quiet home."],
-      ["Treat for the new parents", "Something for the people doing the night feeds, not just the new arrival.", "gift set new parents coffee tea", "Ask what they would actually enjoy. Dietary requirements and caffeine preferences matter; a meal voucher can be more useful than another hamper."],
+      ["Soft crinkle cloth book", "A book to hold and explore together, with pictures to talk about as the baby grows.", "soft crinkle cloth baby book high contrast", "Check the stated age suitability and how it can be washed. Avoid loose accessories, long cords or detachable small parts, and choose a size that is easy for an adult to hold open."],
+      ["Muslin squares", "An extra supply for the changing bag or laundry rotation, if the parents use them.", "muslin cloth squares baby pack", "Follow the parents' lead on fabric and size. Frequent washing is part of the job, so choose a pack whose care instructions fit their usual laundry routine."],
+      ["Baby keepsake box", "Somewhere for first cards, photographs and the small things the family wants to keep.", "baby keepsake memory box", "Check the internal dimensions rather than the size of the packaging. Leave room for cards and photographs. This is storage for adults to keep out of the baby's reach, not a toy."],
+      ["Soft rattle", "A simple toy for a grown-up to use during short play sessions with the baby.", "soft fabric baby rattle", "Choose a toy with clear age guidance and care instructions from an identifiable seller. Avoid loose parts and check stitching regularly; a soft covering alone does not establish suitability."],
+      ["Hooded baby bath towel", "A spare for bath time, without having to predict how quickly the baby will outgrow an outfit.", "hooded baby bath towel", "Use the towel's unfolded measurements, not the age range or packaging, to judge its size. Ask whether the family needs another, and choose one that fits their washing routine."],
+      ["Baby milestone cards", "For parents who enjoy taking photographs to remember the first year.", "baby milestone cards", "Read the milestones included in the pack and consider whether they suit the family. These are photo props for adults to handle, not objects to leave with the baby."],
+      ["Board book for shared reading", "A short story or book of pictures that the family can return to together.", "baby board book high contrast", "Look for sturdy pages, a manageable size and clear age guidance. A few simple pictures may be easier to share than a busy book with flaps and loose extras."],
+      ["Tea or coffee for the parents", "Something for the adults to enjoy as well as a present for the new arrival.", "tea coffee gift set", "Their usual tea or coffee is a useful clue; ask about decaf and any dietary needs. If choosing coffee, buy beans only if they have a grinder, otherwise match the grind to their brewer."],
     ],
   },
   {
     slug: "gifts-for-space-lovers",
     h1: "Gift ideas for space lovers",
-    desc: "Gift ideas for children and adults fascinated by space: telescopes, star maps, models and books.",
-    intro: "Space fans range from eight-year-olds who know every planet to adults who stargaze from the garden. Match the gift to how hands-on they like to be.",
+    desc: "Space gifts for reading, model-making and stargazing, with advice on telescope mounts, UK star maps and kit contents.",
+    intro: "Would they rather read about a mission, build a rocket model or spend a clear evening finding constellations? Start there. A telescope is one option, but a sky map or a book about the subject they keep coming back to may be the gift they use more.",
     tips: [
-      "For children, a simple kit they can build themselves is often more fun than something fragile.",
-      "For adults, a good star chart or binoculars can beat a cheap telescope.",
-      "Check recommended ages on kits that include small parts or tools.",
+      "Find out whether they want to look at the sky or learn about it indoors. Outdoor equipment also needs storage and somewhere suitable to use it.",
+      "For a telescope, ease of setup and a steady mount matter more than an impressive magnification figure. Ask an enthusiast what they need before adding equipment.",
+      "Check the age guidance on model kits and allow for adult help, tools and a place to leave a half-finished build.",
     ],
     ideas: [
-      ["Glow-in-the-dark star ceiling stickers", "For the space fan who would like a little of the night sky indoors.", "glow in the dark star stickers ceiling", "Check the quantity, sizes and wall-surface guidance. For a child's room, ask a parent before gifting anything that attaches to the ceiling."],
-      ["Beginner telescope", "For someone ready to make observing the sky a proper hobby.", "beginner telescope kids", "Prioritise a stable mount and straightforward setup over magnification claims. Never observe the sun without specialist equipment and expert guidance."],
-      ["Solar system model kit", "For a hands-on learner who would rather build the planets than just read about them.", "solar system model kit kids", "Check the age range, small parts and whether paint or glue is included. Make sure there is somewhere to display the finished model."],
-      ["Illustrated book about space", "A good choice for the endlessly curious person with one more question.", "illustrated space book children", "Match the reading level and check the publication date. Adult observers may prefer a practical sky guide to a general children's encyclopaedia."],
-      ["Planisphere or star map", "A screen-free way to work out what is overhead on a clear night.", "planisphere star finder", "Choose one suitable for UK latitudes. A readable rotating planisphere is more practical outdoors than a purely decorative constellation print."],
-      ["Rocket building kit", "An afternoon project for the person fascinated by how things fit together.", "build your own rocket kit", "Distinguish a display model from a launching kit. Check tools, consumables, recommended ages and any outdoor-space or supervision requirements."],
-      ["Space-themed jigsaw", "A night-sky project for days when the real weather is not cooperating.", "space jigsaw puzzle", "Match the piece count to their patience and available table space. A detailed reference image helps with large areas of dark sky."],
-      ["Binoculars for stargazing", "A practical alternative for someone not ready to store and set up a telescope.", "binoculars for stargazing beginners", "Consider weight and whether they can hold them comfortably; some need a tripod. Never point binoculars at the sun."],
+      ["Glow-in-the-dark star stickers", "A space-themed bedroom detail for someone who would like stars above their bed.", "glow in the dark star stickers ceiling", "Ask permission before buying anything adhesive for a child's room. Compare sticker sizes and surface guidance; choose a constellation layout if they would enjoy arranging recognisable patterns."],
+      ["Beginner telescope", "For someone who wants to spend time learning their way around the night sky.", "beginner telescope", "Look for a stable mount and clear setup instructions, and consider where it will be stored. Do not buy on magnification alone. Never point a telescope at the sun."],
+      ["Solar system model kit", "Build the planets in order, then find a place for the finished solar system.", "solar system model kit", "A hanging model needs different space from a tabletop one. Use the finished dimensions to choose, then allow for any paint, glue or tools listed separately and follow the kit's age guidance."],
+      ["Illustrated book about space", "Choose a subject they keep asking about: planets, space missions or what lies beyond our solar system.", "illustrated space book", "Read a sample to judge the level of detail, and check the publication date for recent missions. A child learning planet names and an adult interested in astronomy need different books."],
+      ["Planisphere", "Turn the discs to the date and time to see which constellations to look for.", "planisphere star finder uk", "Choose a chart for UK latitudes, with labels large enough to read in dim light. A rotating planisphere is for using outdoors; a decorative constellation print serves a different purpose."],
+      ["Rocket display model kit", "A building project for someone interested in spacecraft, with a model to keep at the end.", "rocket display model kit", "Choose a non-launching display model and match the skill level. Check the age guidance, finished height and whether glue, paint or tools must be bought separately."],
+      ["Space-themed jigsaw", "Planets, spacecraft or a crowded star field to piece together on a cloudy evening.", "space jigsaw puzzle", "The image affects difficulty as much as the piece count: a large area of dark sky can be surprisingly demanding. Allow enough table space for the finished puzzle and some room for sorting."],
+      ["Binoculars for stargazing", "An option for exploring the sky without setting up a telescope each time.", "binoculars for stargazing beginners", "Consider weight as well as magnification: they need to be comfortable to hold, or used with a suitable support. Check the return policy for fit. Never point binoculars at the sun."],
     ],
   },
   {
     slug: "gifts-for-gardeners",
     h1: "Gift ideas for gardeners",
-    desc: "Practical and pretty gift ideas for gardeners, from quality hand tools to seeds and plant-care extras.",
-    intro: "Keen gardeners usually already own the basics, so the best gifts are quality upgrades, small luxuries or things for the quiet winter months.",
+    desc: "Gifts for gardeners, from hand tools to seeds and planting journals, with advice on fit, growing space and avoiding duplicates.",
+    intro: "Before buying a gardener another tool, find out what they reach for every weekend and what they wish worked better. Someone tending balcony pots has different needs from an allotment holder. These ideas include replacements for worn favourites and things to plan next season with.",
     tips: [
-      "Quality hand tools are a safe bet; a favourite trowel is used for years.",
-      "Avoid specific plants unless you know their garden and soil.",
-      "Seasonal extras such as seed collections and bird feeders suit almost every garden.",
+      "Handle shape, weight and grip are personal. If you cannot try a tool with them, keep the receipt rather than assuming a larger set is an upgrade.",
+      "For plants or seeds, find out about light, soil and growing space. A packet suited to an allotment may be no use on a shaded windowsill.",
+      "Ask what needs replacing. A well-used pair of gloves or a full planting notebook gives you a better clue than a generic gardener's hamper.",
     ],
     ideas: [
-      ["Stainless-steel hand trowel and fork", "A worthwhile upgrade for the gardener still using the bent trowel from the back of the shed.", "stainless steel hand trowel fork set", "Look for a comfortable handle and a solid join between head and handle. A tool they enjoy holding beats a large set of flimsy extras."],
-      ["Gardening gloves", "A fresh pair for the person whose current ones have seen several winters.", "gardening gloves thorn resistant women men", "Check hand size and the kind of work they do. Fine planting and thorny pruning need different levels of protection; no glove is puncture-proof."],
-      ["Seed collection", "Next spring's project in a small envelope, especially for a cook who grows herbs.", "gardener seed collection gift", "Check sowing dates, available growing space and whether the collection suits pots. Clearly labelled individual packets are easier to plan with."],
-      ["Kneeler and seat", "A practical option for someone who spends a long time planting or weeding at ground level.", "garden kneeler seat", "Check dimensions, weight limits and stability on their garden surface. Ask first rather than assuming an aid will suit their needs."],
-      ["Hand cream for working hands", "A small end-of-day ritual after washing off the soil.", "gardener hand cream", "Check fragrance and ingredient preferences. A modest tube paired with a good nail brush can feel more considered than a generic gift basket."],
-      ["Bird feeder", "Something to watch from the kitchen window between gardening sessions.", "garden bird feeder", "Choose a feeder that opens easily for cleaning, with a suitable place to hang it. Check current wildlife guidance on hygiene and feeding."],
-      ["Gardening journal", "For the planting dates, unexpected successes and things to do differently next year.", "garden planner journal", "Look for enough free-writing space and a practical size. An undated journal works better than one that starts halfway through the growing year."],
-      ["Pruning snips", "For picking herbs and cutting flowers without reaching for the kitchen scissors.", "garden snips pruning secateurs", "Choose fine snips for soft stems, not heavy branches. Check hand fit, blade protection and the closing catch; they are not a substitute for secateurs."],
+      ["Hand trowel and fork", "A replacement for the worn hand tools they still reach for every weekend.", "stainless steel hand trowel fork set", "Use their favourite tools as a guide to handle shape and weight. A narrow trowel suits transplanting; a wider one suits digging. If possible, let them try the grip before you buy."],
+      ["Gardening gloves", "Useful to replace a tired pair, provided the size and type of work are right.", "gardening gloves", "Fine planting needs dexterity; handling thorny stems needs different protection. Check the size chart and intended use rather than relying on a one-size label or a general protection claim."],
+      ["Seed collection", "Next season's tomatoes, herbs or flowers, chosen for the space they have to grow them.", "gardener seed collection", "Individual labelled packets let them plan when and where to sow. For pots, choose varieties described for containers; for an allotment, ask which crops they want to try next year."],
+      ["Garden kneeler and seat", "Worth asking about if they spend long stretches planting and weeding at ground level.", "garden kneeler seat", "Ask whether they want a pad or a folding seat before buying. Check dimensions, weight limits and folding mechanism, and consider the paths and surfaces where they would use it."],
+      ["Hand cream", "An extra tube of a favourite cream to keep by the sink after gardening.", "gardener hand cream", "Choose a product they already use or ask about ingredients and fragrance. The 'gardener' label tells you less about whether it suits them than their existing tube does."],
+      ["Bird feeder", "A way to watch garden visitors from a favourite window, if feeding birds is something they want to take on.", "garden bird feeder", "Cleaning is part of owning a feeder, so look for one that comes apart easily. Agree a suitable place to hang it, and consult current wildlife guidance on feeding and hygiene."],
+      ["Gardening journal", "Somewhere to record sowing dates, successful varieties and what to change next year.", "garden planner journal", "Look inside before buying: planting plans, blank notes and harvest records serve different habits. An undated layout avoids wasted pages and lets them start whenever they choose."],
+      ["Fine garden snips", "A tool for picking herbs and cutting flowers without borrowing the kitchen scissors.", "fine garden snips", "Fine snips are for soft stems, not woody branches. A comfortable grip, an easy-to-use catch and a blade cover matter more here than a large tool set."],
     ],
   },
   {
     slug: "gifts-for-history-lovers",
     h1: "Gift ideas for history lovers",
-    desc: "Gift ideas for history lovers: books, models, maps and puzzles, with advice on choosing a period and checking the details.",
-    intro: "History lovers are often specific about periods and places. Start with the era they love, then pick something to read, build or display.",
+    desc: "Books, maps, models and games for history lovers, with help choosing the right period, level of detail and format.",
+    intro: "Find out which period or place has caught their attention before searching for a history gift. A reader interested in Roman Britain may have little use for a general world-history book. The same clue can guide you towards a map, model or game if their shelves are already full.",
     tips: [
-      "Check what they already own; keen readers often have the famous titles.",
-      "Pick one period rather than a general 'history' gift.",
-      "Maps, prints and models make good display gifts.",
+      "Check their shelves or wish list. A newly published title can still repeat a subject they already know well.",
+      "Match how they enjoy history: reading about it, visiting places, building models or discussing it with other people.",
+      "For a map, chart or model, check the finished dimensions and display space. A frame or extra modelling materials may need a separate budget.",
     ],
     ideas: [
-      ["Narrative history book", "An absorbing account of the period they always bring up at dinner.", "popular history book bestseller", "Start with their favourite era, then check their shelves. Read a sample: a specialist reader and a casual enthusiast may want very different levels of detail."],
-      ["Historical atlas", "For someone who likes to understand where a story happened, not just when.", "historical atlas world history", "Check the geographic focus, period covered and printed size. Clear maps with readable labels matter more than an impressive page count."],
-      ["Roman or medieval model kit", "A weekend project with a finished object for the shelf.", "historical model kit", "Match the historical period and skill level. Check the scale, display dimensions and whether paints, glue or tools are needed separately."],
-      ["History trivia game", "A chance to put all those accumulated facts to use with friends.", "history trivia board game", "Check player numbers, typical playing time and geographic bias. A very specialist quiz can leave everyone except the recipient out of the game."],
-      ["Reproduction map print", "A particular city, journey or home town made into something to keep.", "vintage historical map print", "Check the date, print dimensions and whether a frame is included. Make sure a reproduction is clearly described as such."],
-      ["Museum-inspired puzzle", "An afternoon with a favourite collection, without finding room for another ornament.", "museum art history jigsaw puzzle", "Choose a subject they recognise and a suitable piece count. Check the finished dimensions before committing their dining table to it."],
-      ["Timeline wall chart", "For someone who enjoys connecting people and events across different periods.", "history timeline wall chart", "Read the period coverage and actual dimensions. Fold-out formats suit limited wall space; tiny text can make a large timeline frustrating."],
-      ["Biography of someone they admire", "A specific choice that shows you remembered the person behind their fascination.", "biography historical figure", "Check the author and whether it is a new account or a reissue. For a serious enthusiast, a well-sourced biography is preferable to a general gift edition."],
+      ["Narrative history book", "Follow the people and decisions behind an event they want to understand better.", "narrative history book", "Read a sample from their chosen period. Some accounts tell a broad story; others follow one argument in depth. The introduction and bibliography help you judge which kind of reader the book is written for."],
+      ["Historical atlas", "A companion for following changing borders, journeys and the places mentioned in a history book.", "historical atlas", "Start with the region and period, then look at sample maps. Readable labels and an index make the book easier to use; fitting more maps into a pocket edition can come at the expense of detail."],
+      ["Historical model kit", "A project for someone who enjoys recreating a building, ship or scene from a particular era.", "historical model kit", "Match the subject and skill level before choosing a scale. Check the finished dimensions and whether paints, glue and tools are included; the box price may not cover the whole build."],
+      ["History trivia game", "Put their accumulated facts to use over a game with friends or family.", "history trivia board game", "Read some example questions: a broad world-history quiz and one centred on British monarchs will suit different groups. Choose a difficulty and playing time the other players will enjoy too."],
+      ["Reproduction map print", "Choose a place with a connection to them: a home town, a favourite city or a journey.", "reproduction historical map print", "Check the map date, area covered and print size. Make sure it is described as a reproduction, and find out whether a frame is included or needs to be bought separately."],
+      ["History or museum jigsaw", "Spend an afternoon piecing together a favourite painting, historic scene or collection.", "museum history jigsaw puzzle", "A familiar image gives this more meaning than a generic historic scene. Match the piece count and finished size to puzzles they enjoy, and look for a separate reference picture to work from."],
+      ["History timeline chart", "See which events were happening at the same time in different parts of the world.", "history timeline wall chart", "A chart with readable text is worth more than one that crams in every date. Choose the regions and period first, then a wall poster or folding format to suit how they will use it."],
+      ["Biography of a historical figure", "A closer look at someone from history they keep wanting to know more about.", "biography historical figure", "An accessible life story and an academic reassessment are different gifts. Read the introduction for the author's approach, and note the original publication date: a new cover may be a reissue."],
     ],
   },
   {
     slug: "gifts-for-tea-and-coffee-lovers",
     h1: "Gift ideas for tea and coffee lovers",
-    desc: "Gift ideas for hot-drink lovers: brewing gear, good mugs and tasting sets, with tips on what not to buy.",
-    intro: "Hot-drink lovers are often particular. Gear and accessories are safer than a bag of coffee or tea you have guessed at.",
+    desc: "Tea and coffee gifts chosen around how they brew, with checks for filters, grinders, cup sizes and tasting sets.",
+    intro: "The most useful clue is how they make their usual drink. Loose-leaf tea, filter coffee and espresso need different equipment, and an enthusiast may already have a setup they like. Check what they use before adding to it.",
     tips: [
-      "Do you know how they brew? A pour-over fan and a cafetiere fan want different things.",
-      "A good mug or travel cup is a low-risk gift.",
-      "Avoid flavoured blends unless you know their tastes.",
+      "Check the brewing method before buying filters, beans or accessories. For ground coffee, the grind needs to suit their equipment.",
+      "For mugs and travel cups, look at the size they actually use and whether they want a handle, a bag-safe lid or dishwasher cleaning.",
+      "Ask about caffeine, flavours and dietary requirements before choosing a tasting set. Decaf and unflavoured options are worth checking too.",
     ],
     ideas: [
-      ["Pour-over coffee set", "For the person who enjoys making the coffee almost as much as drinking it.", "pour over coffee dripper set", "Check filter size, whether filters are included and whether the dripper sits on their mug or needs a separate server. Match their current brewing habit."],
-      ["Insulated travel mug", "A practical gift for a slow coffee drinker or a long morning commute.", "insulated travel mug leak proof", "Check capacity, cup-holder fit and cleaning instructions. A splash-resistant lid is not necessarily safe to carry loose in a bag."],
-      ["Tea infuser teapot", "Space for loose leaves to open up, and a reason to make a proper pot.", "glass teapot infuser loose leaf", "Look for a removable basket and check the serving capacity. Make sure the care instructions suit the way they wash their everyday crockery."],
-      ["Hand coffee grinder", "For someone ready to grind just enough beans for each brew.", "manual coffee grinder", "Check adjustment range and capacity against their brewing method. Espresso needs more precision than many entry-level grinders can offer."],
-      ["Handmade ceramic mug", "A small upgrade to an everyday ritual, with no new technique to learn.", "handmade ceramic mug", "Check capacity and handle shape, not just the photograph. Confirm dishwasher and microwave suitability, and allow for handmade variations."],
-      ["Milk frother", "For a home hot chocolate or a milk-topped morning coffee.", "handheld milk frother", "Check how it is powered and whether batteries are included. A handheld whisk does not heat milk; a jug-style frother takes more cupboard space."],
-      ["Tea tasting set", "Several small discoveries rather than one large tin of the wrong blend.", "tea tasting sampler gift set", "Check caffeine preferences, flavours and whether the tea is loose-leaf or bagged. Read ingredients and allergen information before buying food or drink."],
-      ["Coffee scoop and storage tin", "An easy-to-use home for the beans that otherwise live in a folded bag.", "coffee storage canister airtight", "Check capacity and lid design. Pairing a tin with their usual beans is more personal than choosing an unfamiliar flavoured coffee."],
+      ["Pour-over coffee dripper set", "For someone who enjoys weighing, pouring and adjusting their morning brew.", "pour over coffee dripper set", "Start with the brewer they use now, so you do not duplicate it. Filter shape and size vary between drippers; choose one with readily available filters that fits their mug or server."],
+      ["Insulated travel mug", "For a slow coffee drinker or a journey that takes them away from the kettle.", "insulated travel mug", "Choose for the journey: a cup-holder mug can have a different lid from one intended for a bag. Look for a closure suited to how they carry it and a lid that comes apart for cleaning."],
+      ["Loose-leaf teapot with infuser", "Make enough loose-leaf tea for a second cup or someone else at the table.", "teapot infuser loose leaf", "Work in cups rather than the size of the pot in a photograph. A removable basket lets them take the leaves out once brewed, and a wide opening makes washing up easier."],
+      ["Hand coffee grinder", "For a coffee drinker who wants to grind a small batch of beans just before brewing.", "manual coffee grinder", "Match the adjustment range to their brewing method, especially for espresso. Check how much it holds and how it is adjusted; manual grinding also takes time and effort they may not want."],
+      ["Handmade ceramic mug", "Choose a shape and glaze they would enjoy using for their usual tea or coffee.", "handmade ceramic mug", "Compare capacity and handle shape with a mug they already like. Confirm dishwasher and microwave suitability, and check whether you are buying the pictured item or one with handmade variations."],
+      ["Handheld milk frother", "A small whisk for adding frothed milk to a home coffee or hot chocolate.", "handheld milk frother", "This type whisks milk but does not heat it. Choose a jug-style machine instead if they want both jobs done automatically; for a handheld whisk, allow for batteries if they are sold separately."],
+      ["Tea tasting set", "Small portions let a tea drinker try several blends without committing to a large tin.", "tea tasting sampler gift set", "Match bagged or loose-leaf tea to what they use, then check caffeine, flavourings and allergens. Read how many servings are included; gift-box size tells you little about the amount of tea."],
+      ["Coffee storage canister", "A dedicated home for the beans or grounds they buy regularly.", "coffee storage canister airtight", "Match the capacity to their usual bag of coffee. An easy-to-open seal is useful every morning; an oversized canister takes up cupboard space without helping someone who buys small batches."],
     ],
   },
   {
     slug: "gifts-for-mum",
     h1: "Gift ideas for mum",
-    desc: "Gift ideas for mum that show you listened, from comfort and wellbeing to hobbies and keepsakes.",
-    intro: "The best gift for mum reflects something she loves or something she never buys for herself. A thoughtful small gift often beats an expensive generic one.",
+    desc: "Gift ideas for mum based on her reading, cooking, home and downtime, with advice on fit, preferences and personalisation.",
+    intro: "Think about what your mum looks forward to doing: reading a new novel, trying a recipe or getting stuck into a puzzle. A title she has mentioned or a photograph she wants to print gives you somewhere to start. Choose around her interests, rather than a label saying 'for mum'.",
     tips: [
-      "Think about what she does in her free time and give something that makes it nicer.",
-      "A personal touch, like a photo or a handwritten note, matters more than the price.",
-      "Skip fragrance unless you know the scents she wears.",
+      "Listen for a title, hobby or worn-out favourite she mentions. Specific clues are more useful than choosing something simply because it is labelled 'for mum'.",
+      "For a personalised gift, check the spelling, photograph and order deadline yourself. Allow time to approve a proof rather than rushing the final step.",
+      "Keep a receipt for clothing or comfort items. For scented products, ask what she uses rather than guessing from the packaging.",
     ],
     ideas: [
-      ["Soft throw blanket", "For her usual spot on the sofa, in a colour that actually belongs in her home.", "soft throw blanket sofa", "Check fabric, dimensions and washing instructions. A throw that only looks good folded over an armchair may not be big enough to curl up under."],
-      ["Photo frame or personalised photo book", "A favourite memory given a life beyond the phone camera roll.", "personalised photo book family", "Check image quality, layout and the ordering deadline. Leave time to review a proof; personalisation often changes return options."],
-      ["Bath-time treats", "For someone who already enjoys taking a little time over a bath.", "bath salts gift set", "Check fragrance and ingredient preferences. Do not assume she wants scented products; a good towel is an alternative if you are unsure."],
-      ["Good-quality mug and treats", "Her usual tea or coffee, with something good to go alongside it.", "mug tea gift set", "Choose the drink she actually buys, and check dietary needs. One well-chosen mug and her favourite biscuits can beat an oversized generic hamper."],
-      ["Book by her favourite author", "An easy next chapter when you know whose books she keeps returning to.", "bestselling novel paperback", "Check the exact title against her shelves or wish list. Consider print size, format and whether a gift receipt would be useful."],
-      ["Cookbook for her cuisine", "New ideas for someone who genuinely loves trying a recipe.", "cookbook easy home cooking", "Match the cuisine, dietary preferences and available cooking time. Give it as inspiration, not an expectation that she should cook for everyone."],
-      ["Slippers", "An everyday comfort, chosen for fit rather than a novelty slogan.", "womens memory foam slippers", "Check her size, preferred open or closed back, sole and care instructions. Keep the receipt: comfort is difficult to judge from a listing."],
-      ["Jigsaw or craft kit", "Something absorbing for the quiet days between Christmas and New Year.", "jigsaw puzzle 1000 pieces", "Match the activity to an existing interest. Check skill level, included materials and whether she will need extra equipment to finish it."],
+      ["Sofa throw", "A blanket for her favourite reading or television spot, in a colour she would choose herself.", "soft throw blanket sofa", "Choose a size she can get under, not just drape over the sofa arm. A washable fabric suits everyday use; a delicate decorative throw may need more care than she wants."],
+      ["Personalised photo book", "Bring together photographs from a holiday, family occasion or another time she would enjoy looking back on.", "personalised photo book", "Use the original image files where possible and check every crop, caption and spelling. Leave time to review a proof, and read the seller's rules on corrections and returns for personalised orders."],
+      ["Bath salts", "Something to add to a bath she already enjoys taking, rather than a new routine to adopt.", "bath salts gift set", "Use a familiar product as your guide to fragrance and ingredients. Read the use instructions, and choose a different gift if scented bath products are not something she likes."],
+      ["Tea and mug gift set", "Her preferred tea and a mug she can wrap her hands around.", "mug tea gift set", "The tea matters more than the box. If no set has her usual blend and a mug of the right size, buy them separately. Read ingredients and allergen information for any added treats."],
+      ["Book by a favourite author", "A new title from a writer she already enjoys, rather than a guess based on a bestseller list.", "novel paperback", "Check her shelves, e-reader or wish list before ordering. Match her preferred format and print size, and confirm the exact title and edition rather than buying by cover alone."],
+      ["Cookbook in a cuisine she enjoys", "New recipes to explore if cooking is something she does for pleasure.", "cookbook", "Browse a few recipes: would she enjoy making them, and can she get the ingredients? Match her dietary preferences and available time, rather than choosing a book for the meals you hope she will cook."],
+      ["Slippers", "A replacement for a worn pair, in the style she already finds comfortable.", "womens slippers", "Ask about open or closed backs, size and sole preference. Check the size chart and return policy, and keep the receipt: padding and fit are difficult to judge from a photograph."],
+      ["Jigsaw puzzle", "Choose a picture she would enjoy spending time with, whether that is art, nature or a favourite place.", "jigsaw puzzle", "Match the piece count to puzzles she already enjoys and check the finished size against her table. Look for a clear reference image, particularly if she likes sorting pieces away between sessions."],
     ],
   },
   {
     slug: "gifts-for-dad",
     h1: "Gift ideas for dad",
-    desc: "Gift ideas for dad beyond socks: practical upgrades, hobby gear and fun extras.",
-    intro: "Dads are famously hard to buy for. Pick a hobby he talks about, then give something that makes it easier, tidier or more enjoyable.",
+    desc: "Gift ideas for dad, with practical checks for hobby equipment, books, storage, outdoor accessories and games.",
+    intro: "Think about how your dad spends a free afternoon. A project he is working on, a subject he keeps reading about or an everyday item that is wearing out can point you towards a gift. Here are eight options, from something to take on a walk to a game you can play together.",
     tips: [
-      "Listen for complaints; the thing he grumbles about is a gift opportunity.",
-      "Avoid gadgets he has not asked for; they get returned.",
-      "Experience gifts and good food are reliable.",
+      "Ask which part of a hobby he enjoys before buying equipment. Owning a set of tools does not mean he wants another one.",
+      "Check compatibility with what he owns: charging connections, storage sizes and existing speaker systems can rule out an otherwise useful gift.",
+      "For food, drink or an experience, check preferences, dietary needs and dates. None is automatically a safer choice than a physical gift.",
     ],
     ideas: [
-      ["Compact tool organiser", "For the person who owns the right bit somewhere, but can never find it.", "compact tool organiser small parts", "Check the tools or small parts he wants to store and measure the available space. Useful compartments matter more than a very large case."],
-      ["Insulated flask", "A proper hot drink at the end of a walk or halfway through a morning in the garden.", "insulated flask 1 litre", "Check capacity, empty weight and how easily it opens and cleans. A cup lid is useful outdoors; a large flask can be too bulky for a small bag."],
-      ["Biography or history book", "A quiet evening with the subject he always stops to watch on television.", "history book popular non fiction", "Find out which period or person interests him, then check what he owns. A specific choice beats the latest general bestseller."],
-      ["Cordless torch or head torch", "For the dark corner of the shed, an evening walk or a camping trip.", "rechargeable head torch", "Check weight, charging connection and the low-light setting as well as maximum brightness. An adjustable strap and simple controls are worth looking for."],
-      ["Craft beer or whisky tasting glasses", "For someone who already enjoys comparing a couple of favourites.", "whisky tasting glasses gift set", "Check the drink he actually likes and how the glasses should be washed. Skip alcohol-related gifts if you are not sure they would be welcome."],
-      ["Wallet or card holder", "A simple replacement for the one that has quietly started falling apart.", "mens leather wallet slim", "Check whether he carries notes, coins or just cards. Match his preferred layout rather than assuming smaller is automatically better."],
-      ["Board game for two", "A gift that includes a reason to sit down and spend an evening together.", "two player board game strategy", "Check that it is good with exactly two players, not merely playable with two. Match the rules complexity and playing time to his taste."],
-      ["Bluetooth speaker", "For music in the workshop or something to listen to while potting plants.", "portable bluetooth speaker", "Check battery life, charging connection and the stated water-resistance rating. Find out whether he already has a speaker system he likes."],
+      ["Small-parts organiser", "For the screws, fittings or spare pieces that need a better home than a mixed drawer.", "compact tool organiser small parts", "Measure what he needs to store and where the box will live. Removable dividers help with different-sized parts; check that small items cannot spill between compartments when it is carried."],
+      ["Insulated flask", "For a drink on a walk, at an outdoor match or during a day away from the kettle.", "insulated flask", "Choose capacity around the number of drinks he wants to take. Check empty weight, lid design and cleaning instructions; a large flask with a cup lid serves a different purpose from a travel mug."],
+      ["History book", "More on the period or event he stops to read about whenever it comes up.", "history book non fiction", "Ask what he wants to know more about, then look through sample pages. A readable account of one event may suit him better than a broad overview; a glance at his shelves will help avoid duplicates."],
+      ["Rechargeable head torch", "Light for a job or outdoor activity where he needs both hands free.", "rechargeable head torch", "Simple controls and a useful low setting can matter more than maximum brightness. Choose a weight he will be happy wearing, and confirm the charging connection fits the cables he uses."],
+      ["Whisky tasting glasses", "A pair of glasses for comparing whiskies he already enjoys.", "whisky tasting glasses", "Take a cue from the glasses he uses: a tasting shape and a heavy tumbler feel quite different. Confirm the quantity and washing instructions. The search is for glasses, not whisky."],
+      ["Wallet", "A replacement if his current one is worn and you know which layout he likes.", "mens wallet", "Check whether he uses notes, coins and cards, then compare dimensions with his current wallet. Keep the receipt and match his material preference rather than assuming leather or a slimmer design is better."],
+      ["Two-player board game", "A game to open and play together, with no need to gather a large group.", "two player board game", "Look for accounts of playing with exactly two people, not just a box marked 'two or more'. Choose a theme and rules both of you will enjoy, with time for a full game."],
+      ["Portable Bluetooth speaker", "For music or spoken-word audio somewhere his usual speakers do not reach.", "portable bluetooth speaker", "Ask what he uses now and whether it needs to connect to an existing system. Compare weight, charging connection and stated battery life; check any water-resistance rating for the intended location."],
     ],
   },
   {
     slug: "secret-santa-gifts-under-10",
-    h1: "Secret Santa gift ideas under £10",
-    desc: "Useful Secret Santa ideas for a £10 budget, with advice on preferences, practical details and checking the total price.",
-    intro: "Secret Santa works best when the gift is useful, light-hearted and unlikely to offend. Prices change, so check the listing against your limit before you buy.",
+    h1: "Secret Santa ideas for a £10 budget",
+    desc: "Eight Secret Santa ideas to look for within a £10 budget. These are not verified offers: check the full price, including delivery.",
+    intro: "Start with one thing you know about them: the tea they bring to work, a desk full of plants or a fondness for puzzles. These are gift types to look for, not checked offers at today's prices. Include delivery in your £10 limit, and choose a different idea if the suitable options cost too much.",
     tips: [
-      "Avoid anything very personal, such as clothing or fragrance.",
-      "A small treat plus a small useful item usually beats one gimmick.",
-      "Ask in the group chat about allergies or dietary needs before buying food.",
+      "Use one thing you know about them, such as their tea break, desk plants or favourite kind of puzzle. Avoid personal jokes unless you are certain they will enjoy them.",
+      "Spend on the gift rather than elaborate packaging. One useful item is enough; there is no need to add extras that take you over the limit.",
+      "Check allergies before buying food, and sizes before buying socks. If you cannot ask, choose something that does not depend on either.",
     ],
     ideas: [
-      ["Small plant pot", "A desk-sized home for a cutting, without guessing someone's taste in jokes.", "mini desk plant pot", "Check dimensions, drainage and whether the plant is included. If buying a live plant, consider the recipient's light conditions and pets."],
-      ["Notebook and nice pen", "A useful pair for lists, meetings or the idea that appears on the bus home.", "notebook pen gift set", "Look for a pocket-friendly size and usable paper. Check the final price: gift packaging can push a basic set over the limit."],
-      ["Tea infuser", "For the colleague who always brings their own loose-leaf tea.", "tea infuser mug lid", "Choose a basket that fits an ordinary mug and is easy to empty. This only works if they drink loose-leaf tea; otherwise pick another idea."],
-      ["Card game", "Something to open over lunch or take home for the holidays.", "pocket card game party", "Check age guidance, player count and language. Keep the content workplace-appropriate and avoid games that rely on embarrassing other players."],
-      ["Small unscented candle", "A simple option when you know they enjoy candles, but not which fragrance.", "small unscented candle gift", "Check dimensions and the actual quantity. Include safe-use instructions and avoid guessing at a fragrance; even popular scents are not universal."],
-      ["Socks with a festive pattern", "A little seasonal colour for someone who enjoys Christmas rather than novelty slogans.", "festive novelty socks", "Check the size range and fabric. Skip personal jokes and make sure the recipient would actually enjoy wearing them."],
-      ["Puzzle cube or brain teaser", "A small distraction for the person who likes solving things with their hands.", "puzzle cube brain teaser", "Check difficulty and age suitability. Look for something with a clear objective rather than a decorative desk toy with no lasting interest."],
-      ["Reusable coffee cup", "An extra cup for a regular coffee run, without a name or slogan to get wrong.", "reusable coffee cup lid", "Check the lid, capacity and washing guidance. Include delivery charges when checking the total against the agreed limit."],
+      ["Small plant pot", "Room for the next cutting on a plant lover's desk or windowsill.", "mini desk plant pot", "Choose around the pot they want to put inside it: the internal width matters more than the outside measurement. A decorative cover pot needs an inner pot with drainage. Plants are not necessarily included."],
+      ["Notebook and pen", "Somewhere for lists, meeting notes or the idea that turns up on the bus home.", "notebook pen gift set", "Pick lined, dotted or plain paper to suit how they write. A simple set avoids spending most of the budget on packaging; include delivery when comparing the total."],
+      ["Tea infuser basket", "An extra infuser for someone who likes loose-leaf tea at work as well as at home.", "tea infuser basket", "A basket that rests on the mug rim is easy to lift out after brewing. Measure the mug opening for fit, and look for a lid that doubles as somewhere to put the wet basket."],
+      ["Pocket card game", "A game to bring out over lunch or take home for the holidays.", "pocket card game", "Read sample cards to judge whether the humour and rules suit the group. A short playing time helps at lunch; enough players for their usual gathering matters more than the size of the box."],
+      ["Small unscented candle", "An option if you know they use candles but do not know their favourite fragrance.", "small unscented candle", "Confirm it is unscented and check its actual size, not the scale of the display photo. Choose one with clear safe-use instructions. A candle still needs a suitable place to burn and supervision."],
+      ["Festive socks", "A seasonal pattern for someone who gets out their Christmas jumper every year.", "festive socks", "Buy only if you know their size and would expect them to wear the pattern. Fibre content and washing instructions are worth reading: a festive pair still needs to be comfortable."],
+      ["Puzzle cube", "A hands-on challenge for someone who enjoys working out patterns and sequences.", "puzzle cube", "Check the puzzle type and difficulty against what they already enjoy. Look for clear instructions or access to a solution, and check age guidance if the gift exchange includes children."],
+      ["Reusable coffee cup", "A spare for someone who regularly takes a cup on their coffee run.", "reusable coffee cup lid", "Match the capacity to their usual order. A sip lid may be fine carried upright but unsuitable loose in a bag. If the right type costs more than £10 delivered, choose another idea."],
     ],
   },
   {
     slug: "gifts-for-book-lovers",
     h1: "Gift ideas for book lovers",
-    desc: "Gift ideas for readers that go beyond another book, from reading accessories to cosy extras.",
-    intro: "Keen readers often have a to-read pile already, so accessories and comforts are sometimes safer than guessing a title.",
+    desc: "Gifts for readers, from book lights to journals, with practical advice on book sizes, reading habits and shelf space.",
+    intro: "Think about where you usually find them with a book. A paperback tucked into a commuting bag, a hardback at the kitchen table and an e-reader at bedtime call for different extras. These ideas work best when they fit the way someone already reads.",
     tips: [
-      "If you buy a book, check their taste first; a gift receipt helps.",
-      "A good reading light or bookmark is something they will use every day.",
-      "Audiobook subscriptions are a hit if they commute.",
+      "Check whether they mostly read paper books, e-books or audiobooks before choosing an accessory.",
+      "For anything that holds or covers a book, measure the format they actually use. A large hardback can rule out a sleeve or support.",
+      "If you would rather give a book, use their wish list or ask for a recommendation in a subject they enjoy. Keep a gift receipt to avoid duplicates.",
     ],
     ideas: [
-      ["Clip-on reading light", "For the person who means it when they say just one more chapter.", "clip on book reading light rechargeable", "Look for adjustable brightness, a gentle low setting and a clip that will not damage pages. Check weight and the charging connection."],
-      ["Leather or beaded bookmark", "A useful little upgrade from the receipt currently keeping their place.", "bookmark gift set", "Choose something thin enough not to strain the spine. A specific colour or motif they like is more personal than a generic literary quote."],
-      ["Book sleeve or cover", "For the paperback that goes everywhere in the bottom of a bag.", "book sleeve padded", "Measure a book they actually carry. Hardbacks, larger paperbacks and e-readers need different sizes; check the closure and washing instructions."],
-      ["Reading cushion or lap desk", "For longer reading sessions away from a desk.", "book reading pillow", "Check dimensions, support and storage space. Ask whether they prefer a cushion or a firm surface rather than choosing a bulky accessory unprompted."],
-      ["Literary tote bag", "Room for the library haul, in a design connected to a book they love.", "literary tote bag canvas", "Check handle length, fabric weight and whether it has a useful inner pocket. Read the dimensions rather than relying on a styled photograph."],
-      ["Bookends", "For the growing stack that has started leaning into the houseplant.", "bookends decorative", "Look for enough weight and a non-marking base. Check shelf depth and book height; very light decorative pairs may not hold heavy hardbacks."],
-      ["Cosy blanket and tea set", "A reading-evening kit assembled around their usual comforts.", "blanket tea gift set", "Choose the tea they drink and a washable throw. Buying the two separately often gives you a better match than a pre-packed gift set."],
-      ["Book tracker journal", "For remembering the brilliant ending and deciding what to read next.", "reading journal book log", "Check the page layout and number of entries. Some readers want prompts and ratings; others would rather have space for their own notes."],
+      ["Clip-on reading light", "Light that can travel with a paper book from the armchair to the bedside.", "clip on book reading light rechargeable", "A light clip is kinder to paperback pages than a heavy lamp pulling on the cover. Look for an adjustable low setting for bedtime and a power source they can recharge or replace easily."],
+      ["Flat bookmark", "A favourite colour, book cover or illustration to mark their place.", "flat bookmark", "Keep it thin enough for the book to close comfortably. Thick charms and long decorations can get in the way inside a bag, even when they look attractive in the gift box."],
+      ["Padded book sleeve", "A cover for the paperback that shares a bag with keys, lunch and everything else.", "book sleeve padded", "Measure a book they carry and compare the sleeve's internal dimensions, leaving room for its thickness. 'Standard book size' varies between sellers; a closure helps keep the book inside."],
+      ["Book-support cushion", "A resting place for a heavy book during a long reading session.", "book support cushion", "Ask whether they would use a support before choosing one. The angle and page-holding design need to suit their reading position and book size, and a removable washable cover is useful."],
+      ["Literary tote bag", "Something to take to the library, with a design from a book or writer they love.", "literary tote bag canvas", "Think about the books going inside: a tall hardback needs depth, and a full bag needs sturdy stitching. Choose handles long enough for how they carry it; an inner pocket can keep keys separate."],
+      ["Bookends", "For a shelf of books that needs support at one end or room to grow.", "bookends", "Match the height and weight to their books and check shelf depth. A non-marking base is useful, but very light decorative bookends may not support a row of large hardbacks."],
+      ["Reading throw", "A blanket for reading at home when the story is good but the room is chilly.", "washable throw blanket", "Choose enough length to cover their legs rather than a small decorative square. A familiar fabric and a straightforward care label make this easier to use than a delicate throw that needs special washing."],
+      ["Reading journal", "Somewhere to remember a favourite line, record a recommendation or work out what to read next.", "reading journal book log", "Look inside: some journals are full of ratings and targets, while others leave room for notes. Choose the layout that suits them, with enough entries for the amount they read."],
     ],
   },
 ];
@@ -238,16 +236,16 @@ const FOOTER = home.match(/<footer class="site-footer">[\s\S]*?<\/footer>/)?.[0]
 if (!HEADER || !FOOTER) throw new Error("The homepage must provide the shared masthead and footer.");
 
 const EDITS = {
-  "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", description: "AI-created scene of a wooden toy train, building blocks and colouring pencils on an oak table", group: "family", tone: "clay" },
+  "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", description: "AI-created scene of a wooden toy train, building blocks and colouring pencils", group: "family", tone: "clay" },
   "gifts-for-new-babies": { art: "baby", title: "For a new arrival", label: "The first Christmas", description: "AI-created scene of a teddy bear, picture book and wooden rattle on a folded blanket", group: "family", tone: "clay" },
-  "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", description: "AI-created scene of a telescope and brass globe beside a window at dusk", group: "interests", tone: "sage" },
-  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "Out in the garden", description: "AI-created scene of garden secateurs, gloves, seed envelopes and potted rosemary on limestone", group: "interests", tone: "sage" },
+  "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", description: "AI-created scene of a cream telescope on a wooden tripod, brass globe and blue star journal", group: "interests", tone: "sage" },
+  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "Out in the garden", description: "AI-created scene of garden secateurs, gloves, seed envelopes and potted rosemary", group: "interests", tone: "sage" },
   "gifts-for-history-lovers": { art: "history", title: "For the history lover", label: "Another time & place", description: "AI-created scene of a classical temple model, old map, magnifying glass and leatherbound books", group: "interests", tone: "oat" },
   "gifts-for-tea-and-coffee-lovers": { art: "coffee", title: "For the tea & coffee lover", label: "The morning ritual", description: "AI-created scene of a cafetiere, green ceramic teapot and stoneware cup in morning light", group: "interests", tone: "oat" },
   "gifts-for-mum": { art: "mum", title: "For mum", label: "Her kind of Christmas", description: "AI-created scene of a linen journal, amber candle, cup of tea and ribbon-tied present", group: "family", tone: "clay" },
-  "gifts-for-dad": { art: "dad", title: "For dad", label: "His kind of Christmas", description: "AI-created scene of an olive coffee flask, leather headphones and binoculars on an oak table", group: "family", tone: "sage" },
-  "secret-santa-gifts-under-10": { art: "gesture", title: "Secret Santa, under £10", label: "Small budget, good idea", description: "AI-created scene of a small kraft-paper present, houseplant, mug and pocket notebook", group: "budget", tone: "clay" },
-  "gifts-for-book-lovers": { art: "books", title: "For the book lover", label: "One more chapter", description: "AI-created scene of an open book, reading glasses, linen-shaded lamp and stoneware cup", group: "interests", tone: "oat" },
+  "gifts-for-dad": { art: "dad", title: "For dad", label: "His kind of Christmas", description: "AI-created scene of an olive coffee flask, leather headphones, charcoal notebook and binoculars", group: "family", tone: "sage" },
+  "secret-santa-gifts-under-10": { art: "gesture", title: "Secret Santa on a £10 budget", label: "A £10 budget", description: "AI-created scene of a small kraft-paper present, houseplant, mug and pocket notebook", group: "budget", tone: "clay" },
+  "gifts-for-book-lovers": { art: "books", title: "For the book lover", label: "One more chapter", description: "AI-created scene of an open book, clothbound books, reading glasses and stoneware cup", group: "interests", tone: "oat" },
 };
 
 function header(path) {
@@ -263,7 +261,7 @@ function art(g, className = "guide-illustration") {
   const decorative = className === "directory-art";
   const sizes = decorative
     ? "(max-width: 760px) calc(100vw - 48px), (max-width: 1100px) 42vw, 360px"
-    : "(max-width: 760px) calc(100vw - 96px), 480px";
+    : "(max-width: 600px) calc(100vw - 48px), (max-width: 760px) 92vw, (max-width: 1100px) 40vw, 512px";
   return `<div class="${className} tone-${edit.tone}"${decorative ? ' aria-hidden="true"' : ""}><span>${esc(edit.label)}</span><img class="editorial-photo" src="/images/${edit.art}-800.webp" srcset="/images/${edit.art}-400.webp 400w, /images/${edit.art}-800.webp 800w, /images/${edit.art}-1200.webp 1200w" sizes="${sizes}" width="1200" height="840" alt="${decorative ? "" : esc(edit.description)}" loading="${decorative ? "lazy" : "eager"}" decoding="async"></div>`;
 }
 
@@ -301,7 +299,7 @@ function head(title, desc, path, extra = "") {
 <link rel="stylesheet" href="/guide.css">
 <script type="module" src="/site-shell.js"></script>
 ${extra}</head>
-<body>
+<body${path === "/gifts/" ? ' class="christmas-canvas"' : ""}>
 <a class="skip-link" href="#guide-content">Skip to content</a>
 ${header(path)}
 <main class="wrap guide-page" id="guide-content" tabindex="-1">
@@ -323,18 +321,18 @@ function guidePage(g) {
     .slice(0, 3);
   return head(title, g.desc, path, `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
 `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/gifts/">Gift guides</a><span aria-hidden="true">/</span><span aria-current="page">${esc(EDITS[g.slug].title)}</span></nav>
-<div class="guide-intro"><div><p class="eyebrow">A few thoughtful ideas</p><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Things to keep in mind</a></nav></div>${art(g)}</div>
-<section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><p class="eyebrow">A few things to keep in mind</p><h2 id="choosing-title">Choose what feels<br>right for them.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
+<div class="guide-intro"><div><p class="eyebrow">Ideas and buying advice</p><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
+<section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><p class="eyebrow">Before you choose</p><h2 id="choosing-title">Narrow down<br>the options.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section id="gift-ideas" aria-labelledby="ideas-title">
-<div class="ideas-heading"><div><p class="eyebrow">A few places to start</p><h2 id="ideas-title">Eight ideas to explore</h2></div><p>These are ideas, not product reviews.<br>Check the details before you buy.</p></div>
-<p class="disclosure">Ad: Some links are Amazon affiliate links. We may earn a commission if you buy through them. They search Amazon UK rather than linking to a specific checked product, and prices can change. The images are AI-created illustrations, not photos of products we've tested.</p>
+<div class="ideas-heading"><div><p class="eyebrow">The gift ideas</p><h2 id="ideas-title">Eight options to consider</h2></div><p>Choose by their interests,<br>not just the gift label.</p></div>
+<p class="disclosure">Ad: Amazon shopping links are affiliate links. We may earn a commission if you buy through affiliate links. eBay links ${EBAY_CAMPAIGN_ID ? "are also affiliate links" : "are ordinary search links until our Partner Network campaign is configured"}. These links search Amazon UK or eBay UK, not a specific product we have checked or tested. Check the listing and total price, including delivery. The images are AI-created illustrations, not photos of products we've tested.</p>
 <div class="idea-grid">
 ${g.ideas.map(([name, why, q, note], i) => {
     if (!note) throw new Error(`Missing buying advice: ${g.slug} / ${name}`);
-    return `<article class="idea"><span class="idea-number">${String(i + 1).padStart(2, "0")}</span><h3>${esc(name)}</h3><p class="idea-why">${esc(why)}</p><p class="buying-note"><strong>What to look for</strong>${esc(note)}</p><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search Amazon UK for ${name} (affiliate link, opens in a new tab)`)}">Search Amazon UK <span aria-hidden="true">&nearr;</span></a></article>`;
+    return `<article class="idea"><span class="idea-number">${String(i + 1).padStart(2, "0")}</span><h3>${esc(name)}</h3><p class="idea-why">${esc(why)}</p><p class="buying-note"><strong>What to look for</strong>${esc(note)}</p><div class="merchant-links"><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search Amazon UK for ${name} (affiliate link, opens in a new tab)`)}">Search Amazon UK <span aria-hidden="true">&nearr;</span></a><a href="${esc(ebay(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search eBay UK for ${name} (${EBAY_CAMPAIGN_ID ? "affiliate link, " : ""}opens in a new tab)`)}">Search eBay UK <span aria-hidden="true">&nearr;</span></a></div></article>`;
   }).join("\n")}
 </div></section>
-<aside class="finder-cta"><div><p class="eyebrow">Looking for something more personal?</p><h2>Tell us what they're like.</h2><p>Share a few interests, what they already own and your budget. We'll suggest a fresh set of ideas to explore.</p></div><a href="/#form">Find ideas for them <span aria-hidden="true">&rarr;</span></a></aside>
+<aside class="finder-cta"><div><p class="eyebrow">Need a closer match?</p><h2>Tell us what they're like.</h2><p>The gift finder uses their interests, what they already own and your budget to suggest ideas. Leave out names and sensitive details.</p></div><a href="/#form">Find ideas for them <span aria-hidden="true">&rarr;</span></a></aside>
 <section class="related-guides" aria-labelledby="more-guides"><div class="ideas-heading"><h2 id="more-guides">Still looking? Try these</h2><a href="/gifts/">Browse all the guides <span aria-hidden="true">&rarr;</span></a></div><ul class="related-shelf">${related.map(guideLink).join("")}</ul></section>
 </main>
 ${FOOTER}
@@ -344,12 +342,15 @@ ${FOOTER}
 }
 
 function indexPage() {
-  return head("Gift guides | Santa's Helper", "Original gift guides for children, new babies, hobbyists, mum, dad and Secret Santa.", "/gifts/") +
-`<div class="directory-intro"><div><p class="eyebrow">A little inspiration for your list</p><h1>Gift guides</h1><p class="standfirst">For the hobbies they love, the newest arrivals and the people who are hard to buy for. Start with what you know about them.</p></div><p class="directory-count"><strong>${GUIDES.length}</strong> guides to browse<br>Eight ideas in each.</p></div>
-<nav class="directory-jumps" aria-label="Browse guides by"><a href="#interests">Their interests <span aria-hidden="true">&darr;</span></a><a href="#family">Your people <span aria-hidden="true">&darr;</span></a><a href="#budget">A smaller budget <span aria-hidden="true">&darr;</span></a></nav>
+  return head("Gift guides | Santa's Helper", "Ten gift guides with eight ideas each, plus practical buying advice for interests, family gifts and a £10 Secret Santa budget.", "/gifts/",
+    '<link rel="preload" as="image" href="/images/guides-canvas-1000.webp" media="(max-width:1000px)" fetchpriority="high" imagesrcset="/images/guides-canvas-1000.webp 1x, /images/guides-canvas-2048.webp 2x">\n<link rel="preload" as="image" href="/images/guides-canvas-2048.webp" media="(min-width:1001px)" fetchpriority="high">\n').replace('class="wrap guide-page"', 'class="guide-page directory-page"') +
+`<div class="directory-intro wrap"><div class="directory-banner-copy"><p class="eyebrow">Ideas for your gift list</p><h1>Gift guides</h1><p class="standfirst">Thoughtful ideas for their interests, your family and a £10 Secret Santa.</p><p class="directory-count">${GUIDES.length} guides to browse <span aria-hidden="true">&middot;</span> Eight ideas in each.</p></div></div>
+<div class="wrap">
+<nav class="directory-jumps" aria-label="Browse guides by"><a href="#interests">Their interests <span aria-hidden="true">&darr;</span></a><a href="#family">Family gifts <span aria-hidden="true">&darr;</span></a><a href="#budget">A £10 budget <span aria-hidden="true">&darr;</span></a></nav>
 <p class="disclosure">The guide images are AI-created illustrations, not photos of products we've tested.</p>
-${[["interests", "Start with what they love", "From the garden to the bookshelf, find a starting point in their interests."], ["family", "For someone close to you", "A few ideas for the people who matter most. What they enjoy makes all the difference."], ["budget", "Small gifts, thoughtfully chosen", "Secret Santa ideas to browse, with the budget in mind."]].map(([group, title, description]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2><p>${description}</p></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
-<aside class="finder-cta"><div><p class="eyebrow">Shopping for someone in particular?</p><h2>Tell us a little about them.</h2><p>Share their interests, age and your budget, and we'll suggest ideas that feel more personal.</p></div><a href="/#form">Try the gift finder <span aria-hidden="true">&rarr;</span></a></aside>
+${[["interests", "Start with what they enjoy", "Books, gardening, space, history and the way they make their favourite drink."], ["family", "Gifts for the family", "Ideas for children, a new arrival, mum or dad. Use their own preferences to narrow the list."], ["budget", "Secret Santa on a £10 budget", "Gift types to look for, not verified offers. Check the price including delivery."]].map(([group, title, description]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2><p>${description}</p></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
+<aside class="finder-cta"><div><p class="eyebrow">Not seeing the right interest?</p><h2>Try the gift finder.</h2><p>Describe what they enjoy, add your budget and mention anything they already own or would rather not receive.</p></div><a href="/#form">Find gift ideas <span aria-hidden="true">&rarr;</span></a></aside>
+</div>
 </main>
 ${FOOTER}
 </body>
@@ -360,7 +361,7 @@ ${FOOTER}
 function notFoundPage() {
   return head("Page not found | Santa's Helper", "That page could not be found.", "/404.html").replace(
     '<link rel="canonical" href="https://christmasidea.co.uk/404.html">\n', "<meta name=\"robots\" content=\"noindex\">\n") +
-`<div class="not-found"><p class="eyebrow">Page not found</p><h1>We can't find<br>that page.</h1><p>The link may be out of date, or the page may have moved. There are still plenty of good places to start.</p><div class="guide-jumps"><a href="/#form">Find a gift <span aria-hidden="true">&rarr;</span></a><a href="/gifts/">Browse the gift guides</a></div></div>
+`<div class="not-found"><p class="eyebrow">Page not found</p><h1>We can't find<br>that page.</h1><p>The link may be out of date or the address may be mistyped. Use the gift finder or browse the guides below.</p><div class="guide-jumps"><a href="/#form">Find a gift <span aria-hidden="true">&rarr;</span></a><a href="/gifts/">Browse the gift guides</a></div></div>
 </main>
 ${FOOTER}
 </body>

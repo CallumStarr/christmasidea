@@ -22,6 +22,7 @@ export const ANTHROPIC_VERSION = "2026-10-21";
 // thinking tokens as output, so a limit sized only for the visible JSON truncates real responses.
 export const DEFAULT_MAX_OUTPUT_TOKENS = 4500;
 export const DEFAULT_EFFORT = "low";
+export const EDITORIAL_VERSION = "plain-language-v1";
 const EFFORTS = ["low", "medium", "high"];
 
 /** Effort is validated, never passed through blindly; an unknown value falls back to the default. */
@@ -46,7 +47,7 @@ export function generationParams({ maxTokens, effort } = {}) {
 /** Everything that changes what the model returns for the same input, for cache keys and metadata. */
 export function generationFingerprint(env = {}) {
   const p = generationParams({ maxTokens: env.MAX_OUTPUT_TOKENS, effort: env.CLAUDE_EFFORT });
-  return `${p.thinking.type}:${p.output_config.effort}:${p.max_tokens}:forced-strict-tool`;
+  return `${p.thinking.type}:${p.output_config.effort}:${p.max_tokens}:forced-strict-tool:${EDITORIAL_VERSION}`;
 }
 
 const MAX = { description: 1200, interests: 200, about: 500, exclude: 24, excludeItem: 80, token: 2048 };
@@ -164,6 +165,16 @@ const BASELINE_TOOL = { ...baselinePrompt.GIFT_TOOL, strict: true, input_schema:
 
 const STRICT_OUTPUT_NOTE = "\n\nOUTPUT REQUIREMENT\n- Include every field in the tool schema. Use an empty string for note when no additional note is needed.";
 const AUTO_TOOL_NOTE = "\n- You must return the result by calling the gift_ideas tool exactly once. Do not answer with plain text instead.";
+const EDITORIAL_NOTE = `
+
+WRITING STANDARD (${EDITORIAL_VERSION})
+- Apply this to recipient_summary, why and note without changing the schema, selection rules or word limits.
+- Use natural British English: clear, warm and specific, not a sales pitch. Explain the useful connection to the stated interests, rather than calling a gift thoughtful, perfect, curated or a must-have.
+- A why should give a concrete reason to consider the idea. Where relevant, include one useful check or trade-off, not a repeated generic disclaimer.
+- Do not invent habits, feelings, skill levels or family roles. State an uncertain fit conditionally; do not stereotype by age, gender or relationship.
+- These are shopping-search ideas, not tested products. Do not promise quality, safety, health benefits, compatibility, current prices, availability or bundle contents without evidence.
+- Keep each title, explanation and search query about the same gift. If a listing must include an accessory or feature, tell the shopper to check it rather than implying it is included.
+- Avoid filler such as 'elevate their everyday', 'something for everyone', 'guaranteed smiles' and 'a gift they will treasure'. Do not repeat the same opening across the list.`;
 
 /**
  * The one request builder used by the Worker and by the Haiku benchmark. Haiku 5.5 accepts a forced
@@ -176,7 +187,7 @@ export function buildClaudeRequest({ model, userMessage, maxTokens, effort, forc
   return {
     model,
     ...generationParams({ maxTokens, effort }),
-    system: forceTool ? `${system}${STRICT_OUTPUT_NOTE}` : `${system}${STRICT_OUTPUT_NOTE}${AUTO_TOOL_NOTE}`,
+    system: `${system}${STRICT_OUTPUT_NOTE}${EDITORIAL_NOTE}${forceTool ? "" : AUTO_TOOL_NOTE}`,
     tools: [tool],
     tool_choice: forceTool ? { type: "tool", name: tool.name } : { type: "auto" },
     messages: [{ role: "user", content: userMessage }],
@@ -313,7 +324,7 @@ function fallbackResponse(input, message, status, origin, env) {
     engine_version: baseline ? "baseline-v3.3" : ENGINE_VERSION,
     shortfall: result.diagnostics.shortfall,
     product_discovery_enabled: productDiscoveryAvailable(env),
-    note: result.ideas.length ? "" : "We couldn't find enough suitable ideas this time. Try adding a little more detail or adjusting the budget.",
+    note: result.ideas.length ? "" : "We couldn't find suitable catalogue ideas for these details. Try another interest or a different budget.",
   }, status, origin);
 }
 
@@ -369,7 +380,7 @@ export async function handleRequest(request, env, deps) {
   const promptVersion = baseline ? baselinePrompt.PROMPT_VERSION : PROMPT_VERSION;
   const engineVersion = baseline ? "baseline-v3.3" : ENGINE_VERSION;
   if (!env.ANTHROPIC_API_KEY) {
-    return fallbackResponse(input, "AI recommendations are temporarily unavailable. Here are catalogue suggestions checked against your answers.", 503, origin, env);
+    return fallbackResponse(input, "The AI finder is unavailable. These ideas come from our catalogue, filtered using your answers.", 503, origin, env);
   }
 
   const human = await verifyTurnstile(parsed.token, ip, env, deps.fetch);
@@ -392,9 +403,9 @@ export async function handleRequest(request, env, deps) {
   const allowance = await deps.budget.consume(ipHash);
   if (!allowance.ok) {
     if (allowance.reason === "burst") {
-      return json({ error: "That's a lot of requests in a row. Give it a minute and try again.", fallback: false, reason: allowance.reason }, 429, origin);
+      return json({ error: "Too many searches in a short time. Wait a minute, then try again.", fallback: false, reason: allowance.reason }, 429, origin);
     }
-    return fallbackResponse(input, "Our AI helper has reached today's limit. Here are catalogue suggestions checked against your answers.", 429, origin, env);
+    return fallbackResponse(input, "The AI search limit for today has been reached. These ideas come from our catalogue, filtered using your answers.", 429, origin, env);
   }
 
   let result;
@@ -409,11 +420,11 @@ export async function handleRequest(request, env, deps) {
     logCuration(result.diagnostics, call.stopReason, baseline);
   } catch (err) {
     console.error("Claude call failed", err && err.status, err && err.detail, String(err));
-    return fallbackResponse(input, "Our AI helper is busy right now. Here are catalogue suggestions checked against your answers.", 502, origin, env);
+    return fallbackResponse(input, "We couldn't get a response from the AI finder. These ideas come from our catalogue, filtered using your answers.", 502, origin, env);
   }
   // A cut-off response with no surviving model ideas is a failure, even if graph backups could pad it.
   if (truncated && (baseline ? !result.ideas.length : !result.ideas.some((i) => i.source === "model"))) {
-    return fallbackResponse(input, "Our AI response was incomplete. Here are catalogue suggestions checked against your answers.", 502, origin, env);
+    return fallbackResponse(input, "The AI response was incomplete. These ideas come from our catalogue, filtered using your answers.", 502, origin, env);
   }
 
   const payload = {

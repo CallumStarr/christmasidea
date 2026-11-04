@@ -96,7 +96,7 @@ const SECURITY_HEADERS = {
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https://m.media-amazon.com https://images-eu.ssl-images-amazon.com",
+    "img-src 'self' data: https://m.media-amazon.com https://images-eu.ssl-images-amazon.com https://i.ebayimg.com",
     "font-src 'self'",
     "connect-src 'self' https://cloudflareinsights.com",
     "frame-src https://challenges.cloudflare.com",

@@ -20,7 +20,7 @@ export const CATALOGUE = [
       "barista",
       "cafe"
     ],
-    "w": "A tour of roasts they wouldn't pick up themselves, perfect for a coffee lover who already has the kit."
+    "w": "Small batches to compare at home. Match beans or ground coffee to the equipment they use, and check roast and caffeine preferences."
   },
   {
     "p": "pour over coffee",
@@ -39,7 +39,7 @@ export const CATALOGUE = [
       "barista",
       "slow mornings"
     ],
-    "w": "Turns the morning brew into a small ritual and makes a noticeably better cup."
+    "w": "Make filter coffee by hand, adjusting the pour between brews. Choose a dripper that fits their mug or server, with filters they can easily replace."
   },
   {
     "p": "loose leaf tea",
@@ -58,7 +58,7 @@ export const CATALOGUE = [
       "reading",
       "cosy"
     ],
-    "w": "A curated mix of teas to try, ideal for someone who unwinds with a pot on the go."
+    "w": "Several teas to compare rather than a large supply of one blend. Check loose-leaf or bagged format, caffeine and any added flavourings."
   },
   {
     "p": "hot sauce",
@@ -80,7 +80,7 @@ export const CATALOGUE = [
       "cooking",
       "food"
     ],
-    "w": "Several heat levels to work through, great for anyone who puts chilli on everything."
+    "w": "Compare different chillies and styles of sauce. Pick around the flavours and heat they enjoy, and read the ingredients for dietary requirements."
   },
   {
     "p": "sourdough bread",
@@ -101,7 +101,7 @@ export const CATALOGUE = [
       "cooking",
       "bake off"
     ],
-    "w": "Everything they need to get going with proper bread, with a banneton for that bakery look."
+    "w": "A project for a cook interested in sourdough. A proving basket alone is not a full starter kit, so read the contents for starter, tools and instructions."
   },
   {
     "p": "cast iron skillet",
@@ -122,7 +122,7 @@ export const CATALOGUE = [
       "chef",
       "food"
     ],
-    "w": "A pan that lasts a lifetime and gets better with use, loved by keen home cooks."
+    "w": "A cast iron pan for someone who wants to cook with one. Weight and seasoning care are part of the choice, alongside size and hob compatibility."
   },
   {
     "p": "fresh pasta",
@@ -143,7 +143,7 @@ export const CATALOGUE = [
       "italy",
       "food"
     ],
-    "w": "Fresh pasta from scratch is a fun weekend project and a real step up from dried."
+    "w": "Make pasta from scratch as a weekend cooking project. Rolling, cutting and shaping need different tools; choose the part they want to try."
   },
   {
     "p": "cocktail shaker",
@@ -164,7 +164,7 @@ export const CATALOGUE = [
       "gin",
       "mixology"
     ],
-    "w": "Bar tools for the friend who loves hosting, ready for mocktails or cocktails."
+    "w": "Tools for mixing cocktails or alcohol-free drinks at home. Start with what they lack: a shaker, measuring jigger and strainer each do a different job."
   },
   {
     "p": "homemade pizza",
@@ -184,11 +184,11 @@ export const CATALOGUE = [
       "bbq",
       "garden"
     ],
-    "w": "Crisp-based pizza in a normal oven or on the barbecue, an easy upgrade for pizza fans."
+    "w": "A pizza-making addition to a home kitchen. The stone needs to fit their oven and its temperatures; use it on a barbecue only if the manufacturer permits it."
   },
   {
     "p": "sea swimming",
-    "t": "Dry robe style changing poncho",
+    "t": "Outdoor changing poncho",
     "q": "waterproof changing robe swimming",
     "c": "Outdoors & sport",
     "a": [
@@ -209,7 +209,7 @@ export const CATALOGUE = [
       "paddleboard",
       "cold water"
     ],
-    "w": "Keeps them warm and covered when getting changed on a windy beach after a swim."
+    "w": "Space to change after an outdoor swim. Towelling ponchos and weather-resistant robes serve different purposes, so ask which type and fit they want."
   },
   {
     "p": "thermos flask",
@@ -232,7 +232,7 @@ export const CATALOGUE = [
       "outdoors",
       "commute"
     ],
-    "w": "Hot drinks for hours on cold walks, swims or early starts. A gift that gets used every week."
+    "w": "Take a drink on a walk or a day out. Choose a capacity they will carry; a cup lid is useful outdoors but adds bulk compared with a travel mug."
   },
   {
     "p": "headlamp night",
@@ -254,7 +254,7 @@ export const CATALOGUE = [
       "outdoors",
       "night"
     ],
-    "w": "Hands-free light for winter runs, camping and finding things in the dark."
+    "w": "Hands-free light for outdoor activities or practical jobs. Match weight, beam settings and power source to where they will use it."
   },
   {
     "p": "hiking backpack",
@@ -276,7 +276,7 @@ export const CATALOGUE = [
       "mountains",
       "travel"
     ],
-    "w": "A comfortable, well-organised bag for long days on the trails."
+    "w": "Carry the essentials for a day walk. Capacity matters, but back length and straps determine the fit: trying it with some weight inside is worth doing."
   },
   {
     "p": "night running",
@@ -297,7 +297,7 @@ export const CATALOGUE = [
       "jogging",
       "fitness"
     ],
-    "w": "Keeps phone and keys secure and makes them visible on dark winter runs."
+    "w": "Somewhere for a runner's phone and keys. Match the pocket and belt to their phone and waist; reflective extras do not replace lights or other precautions."
   },
   {
     "p": "foam roller",
@@ -319,7 +319,7 @@ export const CATALOGUE = [
       "yoga",
       "football"
     ],
-    "w": "Helps sore muscles recover after training. Useful for anyone who exercises a lot."
+    "w": "Only if they already use or have asked for this type of exercise accessory. Check firmness and dimensions; do not buy it on promises to treat pain or injuries."
   },
   {
     "p": "yoga mat",
@@ -341,7 +341,7 @@ export const CATALOGUE = [
       "fitness",
       "wellness"
     ],
-    "w": "A good grippy mat makes practice at home far more comfortable."
+    "w": "For someone building a home yoga setup. Ask about mat thickness, surface and block preference rather than assuming a starter set is an upgrade."
   },
   {
     "p": "bicycle repair",
@@ -361,7 +361,7 @@ export const CATALOGUE = [
       "mountain biking",
       "commute"
     ],
-    "w": "Fixes most roadside problems so they're never stranded mid ride."
+    "w": "Portable tools for a cyclist who wants to do their own basic repairs. Match fittings and tyre type to their bike; no small kit covers every roadside problem."
   },
   {
     "p": "garden bird feeder",
@@ -381,7 +381,7 @@ export const CATALOGUE = [
       "wildlife",
       "garden"
     ],
-    "w": "Captures close-up photos of garden visitors, a delight for any bird lover."
+    "w": "Watch garden birds through a feeder camera. Choose around its power and connection needs, ongoing subscription costs and how easily the feeder comes apart for cleaning."
   },
   {
     "p": "binoculars nature",
@@ -403,7 +403,7 @@ export const CATALOGUE = [
       "wildlife",
       "hiking"
     ],
-    "w": "Brings wildlife and views up close on walks and holidays."
+    "w": "Get a closer view of wildlife on walks. Weight and fit matter alongside magnification, especially for someone who wears glasses."
   },
   {
     "p": "gardening tools",
@@ -424,7 +424,7 @@ export const CATALOGUE = [
       "allotment",
       "growing"
     ],
-    "w": "Sturdy hand tools and a kneeler to save their knees in the garden."
+    "w": "Tools and a kneeler for planting at ground level. Ask what needs replacing first: one comfortable tool can be more useful than a large set."
   },
   {
     "p": "herb pots",
@@ -446,7 +446,7 @@ export const CATALOGUE = [
       "growing",
       "nature"
     ],
-    "w": "Fresh herbs on the windowsill, satisfying to grow and handy in the kitchen."
+    "w": "Grow herbs to use in the kitchen. Choose varieties for their available light and space, and read the contents to see whether pots and compost are included."
   },
   {
     "p": "fishing tackle",
@@ -466,7 +466,7 @@ export const CATALOGUE = [
       "carp",
       "sea fishing"
     ],
-    "w": "Keeps lures and hooks sorted so less time is spent untangling and more time fishing."
+    "w": "Give fishing tackle a place rather than another tangled pocket. The compartments need to suit their equipment, with catches that stay closed while carrying it."
   },
   {
     "p": "football training",
@@ -486,7 +486,7 @@ export const CATALOGUE = [
       "sport",
       "training"
     ],
-    "w": "Cones and an agility ladder for practising skills in the garden or park."
+    "w": "Set up football drills at home or in a suitable outdoor space. Choose around the skills they want to practise and the equipment actually included."
   },
   {
     "p": "wireless earbuds",
@@ -509,7 +509,7 @@ export const CATALOGUE = [
       "commute",
       "tech"
     ],
-    "w": "Freedom from tangled cables for music, podcasts and calls on the go."
+    "w": "Listen without a cable to the phone. Device compatibility comes first; keep the receipt because ear fit and controls are difficult to judge from a listing."
   },
   {
     "p": "bluetooth speaker",
@@ -531,7 +531,7 @@ export const CATALOGUE = [
       "camping",
       "festivals"
     ],
-    "w": "Good sound anywhere, from the kitchen to the beach."
+    "w": "Take music or spoken-word audio away from the usual speakers. Choose for the location: weight, charging and any stated water-resistance rating all affect where it is useful."
   },
   {
     "p": "mechanical keyboard",
@@ -555,7 +555,7 @@ export const CATALOGUE = [
       "writing",
       "tech"
     ],
-    "w": "Satisfying to type on, a favourite upgrade for gamers, coders and writers."
+    "w": "A keyboard change for someone who wants one. Ask about UK layout and switch feel first: the sound and resistance of mechanical keys are personal preferences."
   },
   {
     "p": "gaming headset",
@@ -579,7 +579,7 @@ export const CATALOGUE = [
       "fortnite",
       "minecraft"
     ],
-    "w": "Clear chat and immersive sound for online games with friends."
+    "w": "Audio and voice chat for games with friends. Match the connection to their console or computer, then consider microphone controls and fit rather than appearance alone."
   },
   {
     "p": "game controller",
@@ -600,7 +600,7 @@ export const CATALOGUE = [
       "ps5",
       "console"
     ],
-    "w": "No more flat controllers mid game, and a tidier setup."
+    "w": "A dedicated place to charge compatible controllers. Match the exact controller model and check whether rechargeable batteries or extra cables are needed."
   },
   {
     "p": "smart home",
@@ -620,7 +620,7 @@ export const CATALOGUE = [
       "alexa",
       "home"
     ],
-    "w": "An easy first step into a smart home, controlling lamps and gadgets from their phone."
+    "w": "Control suitable lamps or appliances remotely. The plugs must work with their Wi-Fi and smart-home system, and stay within the manufacturer's electrical limits."
   },
   {
     "p": "arduino electronics",
@@ -645,7 +645,7 @@ export const CATALOGUE = [
       "maker",
       "robotics"
     ],
-    "w": "Hands-on projects with lights, sensors and motors, a brilliant way to learn by building."
+    "w": "Learn electronics by assembling small projects. Choose a kit at their level, noting age guidance and whether it needs a computer, soldering or extra components."
   },
   {
     "p": "smartphone tripod",
@@ -667,7 +667,7 @@ export const CATALOGUE = [
       "vlogging",
       "travel"
     ],
-    "w": "Steady shots and group photos without asking strangers, handy for creators."
+    "w": "Support a phone for group photos or filming. Match the clamp width and remote to their device, and choose a height suited to what they photograph."
   },
   {
     "p": "instant camera",
@@ -690,7 +690,7 @@ export const CATALOGUE = [
       "parties",
       "scrapbook"
     ],
-    "w": "Prints photos on the spot, a fun way to capture nights out and trips."
+    "w": "For someone who likes keeping a physical photograph. Check the film format and cost per picture, and whether the camera comes with any film."
   },
   {
     "p": "ereader reading",
@@ -711,7 +711,7 @@ export const CATALOGUE = [
       "travel",
       "commute"
     ],
-    "w": "A whole library in one light device, easy on the eyes and perfect for travel."
+    "w": "Carry digital books in a dedicated reader. Choose around the bookshop or library service they use; not every device supports the same sources."
   },
   {
     "p": "handheld game console",
@@ -733,7 +733,7 @@ export const CATALOGUE = [
       "arcade",
       "nostalgia"
     ],
-    "w": "Classic-style gaming they can play anywhere, a nostalgic treat."
+    "w": "Older-style games in a handheld format. The included licensed games matter more than the advertised game count; look at the controls and any extra purchase requirements."
   },
   {
     "p": "watercolour painting",
@@ -757,7 +757,7 @@ export const CATALOGUE = [
       "creative",
       "sketching"
     ],
-    "w": "Quality paints, brushes and paper for someone who'd love to try painting properly."
+    "w": "Try watercolour painting with a manageable set of colours. Suitable paper and a usable brush matter more than a box filled with accessories."
   },
   {
     "p": "calligraphy pen",
@@ -779,7 +779,7 @@ export const CATALOGUE = [
       "stationery",
       "bullet journal"
     ],
-    "w": "A relaxing hobby with instant results, lovely for cards and journals."
+    "w": "Practise lettering for cards or journals. Flexible brush tips need a different technique from ordinary pens, so clear exercises and suitable practice paper are useful."
   },
   {
     "p": "embroidery hoop",
@@ -801,7 +801,7 @@ export const CATALOGUE = [
       "knitting",
       "creative"
     ],
-    "w": "A calming project with everything included, ending in something they can hang or gift."
+    "w": "Stitch a design to keep or give away. Choose a pattern at their level, with the fabric, thread, needle and hoop included or clearly listed separately."
   },
   {
     "p": "knitting yarn",
@@ -823,7 +823,7 @@ export const CATALOGUE = [
       "crafts",
       "cosy"
     ],
-    "w": "Needles, yarn and a pattern so they can make their first scarf or hat."
+    "w": "Work towards a first knitted project. A beginner kit needs instructions for the stitches used, the right needles and enough yarn to finish, not just an attractive pattern."
   },
   {
     "p": "pottery clay",
@@ -846,7 +846,7 @@ export const CATALOGUE = [
       "crafts",
       "creative"
     ],
-    "w": "Pottery-style making without a kiln, great for trinket dishes and small figures."
+    "w": "For making small decorative objects without a kiln. Check drying and finishing instructions; do not assume air-dry clay is waterproof or suitable for food."
   },
   {
     "p": "wooden model",
@@ -870,7 +870,7 @@ export const CATALOGUE = [
       "trains",
       "history"
     ],
-    "w": "A detailed build that keeps hands busy for hours and looks great finished."
+    "w": "Build a model of a subject they enjoy. Match the difficulty to their experience and leave room in the budget for any separately listed glue, paint or tools."
   },
   {
     "p": "jigsaw puzzle",
@@ -891,11 +891,11 @@ export const CATALOGUE = [
       "calm",
       "art"
     ],
-    "w": "A slow, satisfying project for winter evenings."
+    "w": "A longer puzzle to return to over several sittings. Choose the image as carefully as the piece count, and allow space for sorting as well as the finished picture."
   },
   {
     "p": "film camera",
-    "t": "Film camera starter kit",
+    "t": "Reusable film camera",
     "q": "35mm film camera reusable",
     "c": "Hobbies & crafts",
     "a": [
@@ -912,7 +912,7 @@ export const CATALOGUE = [
       "retro",
       "analogue"
     ],
-    "w": "Brings back the anticipation of developing film, a fun creative challenge."
+    "w": "Try taking photographs on film. Allow for film, developing and scans as well as the camera: those ongoing costs are part of the gift."
   },
   {
     "p": "ukulele",
@@ -935,7 +935,7 @@ export const CATALOGUE = [
       "instruments",
       "ukulele"
     ],
-    "w": "The friendliest instrument to learn, with a tuner and bag included."
+    "w": "A first ukulele for someone who wants to learn. Choose the instrument size and read the bundle contents; a tuner, bag and lessons are not automatically included."
   },
   {
     "p": "acoustic guitar",
@@ -956,7 +956,7 @@ export const CATALOGUE = [
       "gigs",
       "bass"
     ],
-    "w": "Capo, tuner and picks, the bits every guitarist loses and is glad to have."
+    "w": "Replace the guitar accessories they actually need. Ask what is missing, then match the capo, strings or other included pieces to their instrument."
   },
   {
     "p": "vinyl records",
@@ -976,7 +976,7 @@ export const CATALOGUE = [
       "turntable",
       "hi fi"
     ],
-    "w": "Keeps their records sounding their best, a thoughtful pick for collectors."
+    "w": "An addition to a vinyl collector's cleaning setup. Find out what they already use so the brush or fluid complements their routine rather than duplicating it."
   },
   {
     "p": "cookbook kitchen",
@@ -997,7 +997,7 @@ export const CATALOGUE = [
       "recipes",
       "chef"
     ],
-    "w": "New recipes to try, and a lovely book to flick through on the sofa."
+    "w": "New recipes for someone who enjoys cooking. Sample pages tell you more than the cover: look for food they want to make with ingredients and time they have."
   },
   {
     "p": "wrapped book",
@@ -1017,7 +1017,7 @@ export const CATALOGUE = [
       "novels",
       "book club"
     ],
-    "w": "A surprise read wrapped up so they choose by the clues, not the cover."
+    "w": "A wrapped surprise for a reader who enjoys taking a chance on a title. Use the genre clues, but bear in mind that duplicates are harder to rule out."
   },
   {
     "p": "board game",
@@ -1040,7 +1040,7 @@ export const CATALOGUE = [
       "family",
       "game night"
     ],
-    "w": "A great reason to get everyone round the table on a quiet evening."
+    "w": "Plan moves and try a new strategy around the table. Choose a player count, rules complexity and playing time that fit their usual group."
   },
   {
     "p": "card game friends",
@@ -1060,7 +1060,7 @@ export const CATALOGUE = [
       "hosting",
       "funny"
     ],
-    "w": "Easy to learn and guaranteed laughs at gatherings."
+    "w": "A game to bring to a gathering. Read sample cards first: the humour, language and number of players need to suit the people at the table."
   },
   {
     "p": "board game couple",
@@ -1081,7 +1081,7 @@ export const CATALOGUE = [
       "date night",
       "partner"
     ],
-    "w": "Designed for two, a nice way to spend an evening together without screens."
+    "w": "A game for an evening as a pair. Look for reviews of playing with exactly two people rather than relying on a box marked 'two or more'."
   },
   {
     "p": "escape room puzzle",
@@ -1103,7 +1103,7 @@ export const CATALOGUE = [
       "escape room",
       "games"
     ],
-    "w": "A ready-made mystery to solve at home with friends or family."
+    "w": "Solve a boxed mystery together at home. Choose the difficulty for the group, and find out whether the puzzles can be reset or used only once."
   },
   {
     "p": "cozy blanket",
@@ -1126,7 +1126,7 @@ export const CATALOGUE = [
       "relaxing",
       "wellbeing"
     ],
-    "w": "A comforting, cosy blanket many people find helps them settle in the evenings."
+    "w": "Only if they have asked for a weighted blanket. Check the manufacturer's suitability guidance, size, weight and care instructions; do not choose it as a treatment for sleep or anxiety."
   },
   {
     "p": "essential oil diffuser",
@@ -1148,11 +1148,11 @@ export const CATALOGUE = [
       "yoga",
       "spa"
     ],
-    "w": "Fills a room with a calming scent, a nice wind-down touch."
+    "w": "A home-fragrance option for someone who already uses oils. Choose a familiar scent and follow safe-use guidance, including household considerations around children or pets."
   },
   {
     "p": "bath products",
-    "t": "Luxury bath and body set",
+    "t": "Bath and body set",
     "q": "bath and body gift set",
     "c": "Beauty & wellbeing",
     "a": [
@@ -1171,7 +1171,7 @@ export const CATALOGUE = [
       "beauty",
       "relaxing"
     ],
-    "w": "A proper pamper night in a box."
+    "w": "Bath and body products in scents they already enjoy. Use their current favourites as a guide to ingredients and fragrance rather than buying on gift packaging."
   },
   {
     "p": "cozy throw blanket",
@@ -1192,11 +1192,11 @@ export const CATALOGUE = [
       "tv",
       "reading"
     ],
-    "w": "Instant warmth on the sofa without heating the whole house."
+    "w": "A heated throw for someone who has asked for one. Choose a useful size with controls they can operate, and follow the manufacturer's suitability and safety instructions."
   },
   {
     "p": "houseplant pot",
-    "t": "Plant care kit and stylish planter",
+    "t": "Plant pot with saucer",
     "q": "ceramic plant pot with saucer set",
     "c": "Home",
     "a": [
@@ -1212,7 +1212,7 @@ export const CATALOGUE = [
       "home",
       "gardening"
     ],
-    "w": "For the person whose windowsill is a jungle, a smart new home for a favourite plant."
+    "w": "A new home for a houseplant. Match internal dimensions and drainage to the plant: a decorative cover pot is different from the pot it grows in."
   },
   {
     "p": "night sky stars",
@@ -1234,7 +1234,7 @@ export const CATALOGUE = [
       "astronomy",
       "stars"
     ],
-    "w": "Shows the night sky from a date that matters to you both, a keepsake with meaning."
+    "w": "A print based on a date and place they want to remember. Check the location, time, spelling and proof, plus whether a frame is included."
   },
   {
     "p": "scented candle",
@@ -1254,7 +1254,7 @@ export const CATALOGUE = [
       "relaxing",
       "interiors"
     ],
-    "w": "Instant cosiness for winter evenings."
+    "w": "A candle in a fragrance they already like. Compare the candle's actual size rather than the box, and look for clear safe-use instructions."
   },
   {
     "p": "wool beanie",
@@ -1275,7 +1275,7 @@ export const CATALOGUE = [
       "cold",
       "fashion"
     ],
-    "w": "Warm without being itchy, a winter staple they'll actually wear."
+    "w": "A wool hat for winter outings. Follow their preference on fit and fabric; merino still needs a care routine and texture they are happy with."
   },
   {
     "p": "leather wallet",
@@ -1295,7 +1295,7 @@ export const CATALOGUE = [
       "work",
       "office"
     ],
-    "w": "A slim, smart upgrade from a bulky wallet."
+    "w": "Carry cards without a full wallet, if that is how they prefer to pay. Count the slots they need and ask whether they still carry notes or coins."
   },
   {
     "p": "cozy slippers",
@@ -1317,7 +1317,7 @@ export const CATALOGUE = [
       "cold",
       "comfort"
     ],
-    "w": "Warm feet all winter, a reliable crowd pleaser."
+    "w": "An indoor boot-style slipper for someone who likes a higher fit. Match their size and preferred sole, and keep the receipt so they can try them on."
   },
   {
     "p": "silk pillow",
@@ -1339,11 +1339,11 @@ export const CATALOGUE = [
       "sleep",
       "self care"
     ],
-    "w": "Gentler on hair and skin overnight, a small touch of luxury."
+    "w": "A change of bedding texture for someone who likes silk. Match their pillow size and laundry routine rather than choosing it for unverified hair or skincare promises."
   },
   {
     "p": "notebook pen",
-    "t": "Dotted notebook and pen set",
+    "t": "Dotted notebook",
     "q": "a5 dotted notebook hardcover",
     "c": "Stationery",
     "a": [
@@ -1361,7 +1361,7 @@ export const CATALOGUE = [
       "planning",
       "notes"
     ],
-    "w": "A good notebook is always welcome for lists, ideas or journaling."
+    "w": "Dotted pages leave room for lists, diagrams or journal layouts. Choose their preferred notebook size and binding; a pen is not necessarily included."
   },
   {
     "p": "desk organiser",
@@ -1382,7 +1382,7 @@ export const CATALOGUE = [
       "organised",
       "tidy"
     ],
-    "w": "A tidy, good-looking home for the bits that clutter a desk."
+    "w": "Give everyday desk items a place. Choose compartments for the things they actually use, measured against the space beside their keyboard or notebook."
   },
   {
     "p": "desk setup light",
@@ -1404,7 +1404,7 @@ export const CATALOGUE = [
       "computers",
       "desk"
     ],
-    "w": "Lights the desk without screen glare, great for late working or gaming."
+    "w": "Add light above a desk without a separate lamp base. Match the mount to their monitor's shape; reflections depend on the light and its position."
   },
   {
     "p": "magnetic tiles",
@@ -1425,7 +1425,7 @@ export const CATALOGUE = [
       "creative",
       "stem"
     ],
-    "w": "Open-ended building that grows with them, from simple shapes to big structures."
+    "w": "Build shapes, towers or a garage for favourite toy cars. Choose age-appropriate tiles compatible with any existing set, counting building pieces rather than accessories."
   },
   {
     "p": "kids science",
@@ -1447,7 +1447,7 @@ export const CATALOGUE = [
       "chemistry",
       "learning"
     ],
-    "w": "Fizzing, glowing experiments that make science feel like magic."
+    "w": "Try experiments together with instructions to follow. Pick activities at the child's level, and read the age and supervision guidance plus any household supplies needed."
   },
   {
     "p": "dinosaur fossil",
@@ -1467,7 +1467,7 @@ export const CATALOGUE = [
       "nature",
       "history"
     ],
-    "w": "Chip away to uncover dinosaur skeletons, a hit with young dinosaur fans."
+    "w": "Dig through a block to uncover a dinosaur-themed find. Read what is buried inside, the age guidance and whether tools are included before choosing the kit."
   },
   {
     "p": "children picture book",
@@ -1487,7 +1487,7 @@ export const CATALOGUE = [
       "bedtime",
       "stories"
     ],
-    "w": "A stack of new bedtime stories to share together."
+    "w": "Stories to read together. Check the titles, reading level and format, and ask which books the child already owns."
   },
   {
     "p": "wooden toys",
@@ -1507,7 +1507,7 @@ export const CATALOGUE = [
       "montessori",
       "development"
     ],
-    "w": "Lots to twist, slide and explore, building fine motor skills through play."
+    "w": "Moving parts and activities to explore during play. Choose the activities and size for the child, following the age label rather than relying on developmental promises."
   },
   {
     "p": "walkie talkie",
@@ -1527,7 +1527,7 @@ export const CATALOGUE = [
       "camping",
       "pretend"
     ],
-    "w": "Hours of garden adventures and secret missions."
+    "w": "Talk across the garden during make-believe missions. Simple controls help younger users; follow the age guidance and expect range to vary around buildings."
   },
   {
     "p": "kids scooter",
@@ -1547,7 +1547,7 @@ export const CATALOGUE = [
       "park",
       "sport"
     ],
-    "w": "Gets them outside and zooming to the park."
+    "w": "Ask a parent before buying a scooter. Check rider height, weight limits, storage and suitable protective equipment rather than choosing by age alone."
   },
   {
     "p": "kids drawing",
@@ -1568,7 +1568,7 @@ export const CATALOGUE = [
       "creative",
       "crafts"
     ],
-    "w": "Pens, pencils and paints in one case, for budding artists."
+    "w": "Keep a child's art materials together between projects. Choose space for the supplies they own, and read the contents: an empty caddy and a filled art set are different gifts."
   },
   {
     "p": "star projector",
@@ -1591,7 +1591,7 @@ export const CATALOGUE = [
       "sleep",
       "astronomy"
     ],
-    "w": "Turns the bedroom ceiling into a starry sky at bedtime."
+    "w": "Space-themed light patterns for a room. Choose brightness and controls suited to the user, follow age guidance and treat it as decoration rather than an accurate sky map."
   },
   {
     "p": "toy robot",
@@ -1613,7 +1613,7 @@ export const CATALOGUE = [
       "technology",
       "science"
     ],
-    "w": "Teaches the basics of coding through play, no screen required for younger ones."
+    "w": "Give a robot instructions and see how it moves. Choose activities at the child's level, with age guidance and any phone, tablet or computer requirements made clear."
   },
   {
     "p": "led lights bedroom",
@@ -1633,35 +1633,35 @@ export const CATALOGUE = [
       "aesthetic",
       "decor"
     ],
-    "w": "Colour-changing lights to make their room feel like their own space."
+    "w": "Decorative lighting for a teenager who wants to change their room. Measure the length and power route first, and get permission before attaching adhesive strips."
   }
 ];
 
 const BABY_CATALOGUE = [
-  { p: "soft cloth book", t: "Soft cloth book for babies", q: "soft cloth baby book", c: "Books", a: ["baby"], b: ["lo"], k: ["books", "reading", "new baby"], w: "A simple book to share together." },
-  { p: "high contrast board book", t: "High-contrast baby board book", q: "high contrast baby board book", c: "Books", a: ["baby"], b: ["lo"], k: ["books", "reading", "new baby"], w: "A book to look through together." },
-  { p: "baby keepsake album", t: "Baby keepsake photo album", q: "baby keepsake photo album", c: "Home", a: ["baby"], b: ["lo"], k: ["new baby", "keepsake", "family"], w: "A place for the family to keep photographs and memories." },
-  { p: "baby name storybook", t: "Personalised baby storybook", q: "personalised baby name storybook", c: "Books", a: ["baby"], b: ["lo"], k: ["books", "reading", "new baby", "personalised"], w: "A storybook made to mark a new arrival." },
+  { p: "soft cloth book", t: "Soft cloth book for babies", q: "soft cloth baby book", c: "Books", a: ["baby"], b: ["lo"], k: ["books", "reading", "new baby"], w: "A book to explore together during supervised play. Check the age label, washing instructions and any attached parts." },
+  { p: "high contrast board book", t: "High-contrast baby board book", q: "high contrast baby board book", c: "Books", a: ["baby"], b: ["lo"], k: ["books", "reading", "new baby"], w: "Pictures to look at and talk about together. Check page size, age guidance and whether the family already has the title." },
+  { p: "baby keepsake album", t: "Baby keepsake photo album", q: "baby keepsake photo album", c: "Home", a: ["baby"], b: ["lo"], k: ["new baby", "keepsake", "family"], w: "For the adults to keep photographs of a new arrival. Check print sizes and whether they want pockets or pages for sticking photos in." },
+  { p: "baby name storybook", t: "Personalised baby storybook", q: "personalised baby name storybook", c: "Books", a: ["baby"], b: ["lo"], k: ["books", "reading", "new baby", "personalised"], w: "A storybook to mark a new arrival. Confirm the name with the parents and check the preview, delivery deadline and personalisation terms." },
 ];
 const PRICE_BAND_MAX = { xs: 10, lo: 30, mid: 50, hi: 100 };
 
 // Items that are reliably inexpensive, so small budgets (£10 and up) still get a recipient-aware fallback.
 const BUDGET_CATALOGUE = [
-  { p: "notebook and pen", t: "Notebook and pen set", q: "notebook and pen gift set", c: "Stationery", a: ["teen", "adult"], b: ["xs"], k: ["writing", "journal", "notes", "stationery", "work", "planning"], w: "A well-made notebook is used every day and suits almost anyone who likes to jot things down." },
-  { p: "tea infuser", t: "Tea infuser mug", q: "tea infuser mug with lid", c: "Kitchen", a: ["teen", "adult"], b: ["xs"], k: ["tea", "cosy", "calm", "office"], w: "A simple way to enjoy proper loose-leaf tea at home or at work." },
-  { p: "cactus pot", t: "Mini desk plant", q: "mini desk plant in pot", c: "Home", a: ["teen", "adult"], b: ["xs"], k: ["plants", "garden", "office", "desk", "home"], w: "A cheerful, low-effort bit of greenery for a desk or windowsill." },
-  { p: "puzzle cube", t: "Brain-teaser puzzle cube", q: "puzzle cube brain teaser", c: "Games & toys", a: ["kid", "teen", "adult"], b: ["xs"], k: ["puzzles", "games", "logic", "fidget"], w: "A pocket-sized challenge that keeps hands and minds busy." },
-  { p: "pack of playing cards", t: "Card game for friends or family", q: "family card game pocket", c: "Games & toys", a: ["kid", "teen", "adult"], b: ["xs"], k: ["games", "cards", "family", "party"], w: "Quick to learn and easy to take anywhere for a sociable evening." },
-  { p: "reading light", t: "Clip-on book light", q: "clip on book reading light", c: "Books", a: ["teen", "adult"], b: ["xs"], k: ["books", "reading", "bed", "novel"], w: "Lets a keen reader enjoy a book in bed without disturbing anyone." },
-  { p: "bookmark", t: "Pretty bookmark set", q: "bookmark gift set", c: "Books", a: ["kid", "teen", "adult"], b: ["xs"], k: ["books", "reading", "library", "novel"], w: "A small, thoughtful extra for someone who always has a book on the go." },
-  { p: "colouring pencils", t: "Colouring pencils and pad", q: "colouring pencils and drawing pad", c: "Hobbies & crafts", a: ["kid", "teen", "adult"], b: ["xs"], k: ["drawing", "art", "colouring", "creative", "craft"], w: "Everything needed to start drawing or colouring, whatever their age." },
-  { p: "kids sticker book", t: "Reusable sticker activity book", q: "reusable sticker activity book kids", c: "Games & toys", a: ["kid"], b: ["xs"], k: ["stickers", "creative", "quiet", "art", "craft"], w: "Quiet, tidy creative play that suits long car journeys and rainy days." },
+  { p: "notebook and pen", t: "Notebook and pen set", q: "notebook and pen gift set", c: "Stationery", a: ["teen", "adult"], b: ["xs"], k: ["writing", "journal", "notes", "stationery", "work", "planning"], w: "For someone who likes writing notes on paper. Check the ruling, page size and pen type rather than choosing by gift packaging." },
+  { p: "tea infuser", t: "Tea infuser mug", q: "tea infuser mug with lid", c: "Kitchen", a: ["teen", "adult"], b: ["xs"], k: ["tea", "cosy", "calm", "office"], w: "For brewing loose-leaf tea one mug at a time. Check capacity and whether the infuser lifts out easily for emptying and cleaning." },
+  { p: "cactus pot", t: "Mini desk plant", q: "mini desk plant in pot", c: "Home", a: ["teen", "adult"], b: ["xs"], k: ["plants", "garden", "office", "desk", "home"], w: "For someone who wants a small plant. Check the species, light requirements and household suitability, including pets, before choosing one for their desk." },
+  { p: "puzzle cube", t: "Brain-teaser puzzle cube", q: "puzzle cube brain teaser", c: "Games & toys", a: ["kid", "teen", "adult"], b: ["xs"], k: ["puzzles", "games", "logic", "fidget"], w: "For someone who enjoys working out patterns by hand. Check difficulty and age guidance, and whether instructions or a solution are available." },
+  { p: "pack of playing cards", t: "Card game for friends or family", q: "family card game pocket", c: "Games & toys", a: ["kid", "teen", "adult"], b: ["xs"], k: ["games", "cards", "family", "party"], w: "A game to take to a gathering. Read sample rules and check the player count, playing time and age guidance before choosing." },
+  { p: "reading light", t: "Clip-on book light", q: "clip on book reading light", c: "Books", a: ["teen", "adult"], b: ["xs"], k: ["books", "reading", "bed", "novel"], w: "For a reader who wants a light attached to the book. Check clip weight, brightness settings and the power source." },
+  { p: "bookmark", t: "Bookmark set", q: "bookmark gift set", c: "Books", a: ["kid", "teen", "adult"], b: ["xs"], k: ["books", "reading", "library", "novel"], w: "For someone who reads paper books. Choose a thin design that sits comfortably between pages, in a colour or motif they like." },
+  { p: "colouring pencils", t: "Colouring pencils and pad", q: "colouring pencils and drawing pad", c: "Hobbies & crafts", a: ["kid", "teen", "adult"], b: ["xs"], k: ["drawing", "art", "colouring", "creative", "craft"], w: "For drawing or colouring on paper. Check age suitability, pencil colours and pad size, plus whether a sharpener is needed separately." },
+  { p: "kids sticker book", t: "Reusable sticker activity book", q: "reusable sticker activity book kids", c: "Games & toys", a: ["kid"], b: ["xs"], k: ["stickers", "creative", "quiet", "art", "craft"], w: "For a child who enjoys arranging pictures and telling stories. Check the theme, age label and how the reusable stickers are stored." },
   { p: "picture book", t: "Illustrated picture book", q: "illustrated picture book children", c: "Books", a: ["kid"], b: ["xs"], k: ["books", "stories", "reading", "bedtime"], w: "A story to share together at bedtime." },
-  { p: "bubble wand", t: "Bubble mixture and wands", q: "bubble mixture wands kids", c: "Outdoors & sport", a: ["kid"], b: ["xs"], k: ["outdoors", "garden", "play", "park"], w: "Simple outdoor fun that needs no batteries and makes no noise." },
-  { p: "chalk", t: "Giant pavement chalk set", q: "jumbo pavement chalk set", c: "Hobbies & crafts", a: ["kid"], b: ["xs"], k: ["art", "outdoors", "creative", "drawing"], w: "A big, open-ended drawing project for the driveway or park." },
-  { p: "festive socks", t: "Cosy patterned socks", q: "cosy patterned socks gift", c: "Fashion & accessories", a: ["teen", "adult"], b: ["xs"], k: ["cosy", "winter", "comfort"], w: "A practical, low-risk gift that is nice to receive." },
-  { p: "baby muslin", t: "Baby muslin squares", q: "baby muslin squares pack", c: "Home", a: ["baby"], b: ["xs"], k: ["new baby", "baby"], w: "Soft, washable and endlessly useful for new parents." },
-  { p: "hand cream", t: "Hand cream gift", q: "hand cream gift unscented", c: "Beauty & wellbeing", a: ["teen", "adult"], b: ["xs"], k: ["gardening", "kitchen", "cold", "self-care", "wellbeing"], w: "A small treat for hard-working hands; the unscented kind suits almost everyone." },
+  { p: "bubble wand", t: "Bubble mixture and wands", q: "bubble mixture wands kids", c: "Outdoors & sport", a: ["kid"], b: ["xs"], k: ["outdoors", "garden", "play", "park"], w: "For supervised outdoor play. Check the age label, bottle size and included wands, and follow the instructions for use and storage." },
+  { p: "chalk", t: "Giant pavement chalk set", q: "jumbo pavement chalk set", c: "Hobbies & crafts", a: ["kid"], b: ["xs"], k: ["art", "outdoors", "creative", "drawing"], w: "For drawing outdoors on a suitable, permitted surface. Check age guidance, chalk size and washing instructions, and ask a parent about where it can be used." },
+  { p: "festive socks", t: "Cosy patterned socks", q: "cosy patterned socks gift", c: "Fashion & accessories", a: ["teen", "adult"], b: ["xs"], k: ["cosy", "winter", "comfort"], w: "For someone who likes patterned socks, if you know their size. Check fibre content and washing instructions rather than relying on a one-size label." },
+  { p: "baby muslin", t: "Baby muslin squares", q: "baby muslin squares pack", c: "Home", a: ["baby"], b: ["xs"], k: ["new baby", "baby"], w: "A practical extra if the parents use muslins. Ask which fabric and size they prefer, and check washing instructions before buying a pack." },
+  { p: "hand cream", t: "Hand cream gift", q: "hand cream gift unscented", c: "Beauty & wellbeing", a: ["teen", "adult"], b: ["xs"], k: ["gardening", "kitchen", "cold", "self-care", "wellbeing"], w: "For someone who already uses hand cream. Check ingredients and fragrance preferences; an unscented label does not mean a product suits everyone's skin." },
 ];
 
 
@@ -1709,7 +1709,7 @@ export function catalogueCandidates(input, recipient = deriveRecipient(input)) {
     .map(({ item, matched }) => ({
       title: item.t,
       concept: item.t,
-      why: matched.length ? item.w : "A versatile gift idea that may suit someone with varied interests.",
+      why: item.w,
       based_on: matched.join(" "),
       search_query: item.q,
       photo_query: item.p,

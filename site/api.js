@@ -100,7 +100,12 @@ export async function fetchProducts(ideas, { fetchImpl = fetch, enabled = true }
     if (!response.ok) return { products: [], unavailable: true };
     const data = await response.json();
     return Array.isArray(data?.products)
-      ? { products: data.products, unavailable: false }
+      ? {
+        products: data.products,
+        ...(Array.isArray(data.offers) ? { offers: data.offers } : {}),
+        unavailable: data.unavailable === true,
+        limited: data.limited === true,
+      }
       : { products: [], unavailable: true };
   } catch {
     return { products: [], unavailable: true };

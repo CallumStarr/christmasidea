@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Christmas Gift Ideas for Anyone on Your List | Santa's Helper</title>
-<meta name="description" content="Stuck for a gift? Tell us a little about someone you love and get thoughtful ideas to help you choose.">
+<meta name="description" content="Find gift ideas for family, friends or Secret Santa. Share their interests and your budget, or browse guides with practical buying advice.">
 <link rel="canonical" href="https://christmasidea.co.uk/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Santa's Helper">
 <meta property="og:url" content="https://christmasidea.co.uk/">
 <meta property="og:title" content="Christmas gift ideas for anyone on your list | Santa's Helper">
-<meta property="og:description" content="Tell us a little about someone you love and get thoughtful ideas to help you choose.">
+<meta property="og:description" content="Share their interests and your budget for gift ideas, or browse guides with practical buying advice.">
 <meta property="og:image" content="https://christmasidea.co.uk/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -24,6 +24,8 @@
 <link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/home.css">
+<link rel="preload" as="image" href="/images/finder-canvas-1000.webp" media="(max-width:1000px)" fetchpriority="high" imagesrcset="/images/finder-canvas-1000.webp 1x, /images/finder-canvas-2048.webp 2x">
+<link rel="preload" as="image" href="/images/finder-canvas-2048.webp" media="(min-width:1001px)" fetchpriority="high">
 <script type="module" src="/site-shell.js"></script>
 <script>
 /* =====================  SETTINGS  ===================== */
@@ -33,21 +35,18 @@ window.GIFT_CONFIG = {
   // Your Amazon Associates UK tracking ID.
   AMAZON_TAG: "mcstarrstud0c-21",
   AMAZON_HOST: "www.amazon.co.uk",
+  // Public Partner Network campaign ID. Leave empty until eBay approves your account.
+  EBAY_CAMPAIGN_ID: "",
   // Optional: Cloudflare Turnstile site key (bot protection). Leave empty to skip.
   TURNSTILE_SITE_KEY: "0x4AAAAAAFyTaguvuOpUKQOd"
 };
 </script>
 </head>
-<body>
+<body class="christmas-canvas">
 <a class="skip-link" href="#form">Skip to the gift finder</a>
 <noscript><p class="wrap">The gift finder needs JavaScript. You can still browse our <a href="/gifts/">gift guides</a>.</p></noscript>
 
 <header class="masthead">
-  <div class="season-strip">
-    <span>A little help with your gift list</span>
-    <a class="season-guides" href="/gifts/">The gift guides &rarr;</a>
-    <span class="countdown" id="countdown" hidden></span>
-  </div>
   <div class="wrap">
     <nav class="nav" aria-label="Site">
       <a class="brand" href="/">
@@ -57,6 +56,7 @@ window.GIFT_CONFIG = {
         <span>Santa's Helper<span class="sr-only"> — Good gifts start with a person</span></span>
       </a>
       <div class="nav-links"><a href="#form" aria-current="page">The gift finder</a><a href="/gifts/">The gift guides</a></div>
+      <span class="countdown" id="countdown" hidden></span>
       <button class="nav-shortlist" id="nav-shortlist" type="button" aria-label="Open your shortlist, 0 saved ideas">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg>
         <span>Shortlist</span><span class="saved-count" id="nav-count">0</span>
@@ -67,7 +67,6 @@ window.GIFT_CONFIG = {
 
 <main>
 <section class="seasonal-hero" aria-labelledby="hero-title">
-  <img class="hero-photo" src="/images/christmas-1400.webp" srcset="/images/christmas-800.webp 800w, /images/christmas-1400.webp 1400w, /images/christmas-2000.webp 2000w" sizes="100vw" width="2000" height="889" alt="" fetchpriority="high" decoding="async">
   <div class="hero-copy wrap">
     <p class="eyebrow">Thoughtful gifts start with knowing them</p>
     <h1 id="hero-title">A little thought.<br>A lovely gift.</h1>
@@ -78,7 +77,7 @@ window.GIFT_CONFIG = {
     <div class="panel-heading">
       <h2 id="finder-title">Who are you shopping for?</h2>
     </div>
-    <p class="deck">Tell us a little about them and we’ll help you find ideas that feel personal.</p>
+    <p class="deck">What do they enjoy, and what would you like to spend? Perhaps tell us what they already own, too.</p>
     <div class="mode-switch">
       <fieldset>
         <legend class="sr-only">How would you like to describe them?</legend>
@@ -181,13 +180,8 @@ window.GIFT_CONFIG = {
       <p class="eyebrow">Looking for ideas that fit</p>
       <button type="button" class="cancel-search" id="cancel">Cancel search</button>
     </div>
-    <ol class="curation-steps" aria-label="How we're finding ideas">
-      <li aria-current="step">Getting to know them</li>
-      <li>Connecting the dots</li>
-      <li>Putting a few ideas together</li>
-    </ol>
-    <span class="sr-only" id="loading-text" role="status" aria-live="polite" aria-atomic="true">Getting to know them...</span>
-    <p class="loading-note">This usually takes 10&ndash;20 seconds. <span>The steps above are a guide, not live progress updates.</span></p>
+    <p id="loading-text" role="status" aria-live="polite" aria-atomic="true">Finding gift ideas from the details you shared...</p>
+    <p class="loading-note">You can cancel without losing your description.</p>
   </div>
 </section>
 
@@ -195,7 +189,7 @@ window.GIFT_CONFIG = {
   <section class="results" id="results" hidden aria-labelledby="results-title">
     <div class="results-head">
       <div>
-        <p class="eyebrow">A few ideas for your person</p>
+        <p class="eyebrow">Your gift ideas</p>
         <h2 id="results-title" tabindex="-1">See what might suit them</h2>
       </div>
       <button type="button" class="btn btn-quiet" id="restart">Start again</button>
@@ -209,8 +203,8 @@ window.GIFT_CONFIG = {
       </details>
     </div>
     <div class="recommendation-disclosure">
-      <p class="disclosure"><strong>Ad &middot; Some links are Amazon affiliate links.</strong> We may earn a commission if you buy through them, at no extra cost to you. Ideas are not specific products unless marked as verified.</p>
-      <details class="affiliate-details"><summary>How to use these ideas</summary><p>As an Amazon Associate I earn from qualifying purchases. Search links show possible matches, not a confirmed product, price or availability. When an idea is marked as a verified listing, its photo and link are for that product. Check the listing, age guidance, current price and reviews before buying.</p></details>
+      <p class="disclosure"><strong>Ad &middot; Shopping links.</strong> Amazon shopping links are affiliate links. <span id="ebay-disclosure">eBay links are ordinary search links until our Partner Network campaign is configured.</span> We may earn a commission if you buy through affiliate links, at no extra cost to you. These are gift ideas, not products we have tested.</p>
+      <details class="affiliate-details"><summary>How to use these ideas</summary><p>As an Amazon Associate I earn from qualifying purchases. Search links open Amazon UK or eBay UK; they do not confirm a product, price or availability. A &ldquo;Matched Amazon listing&rdquo; or &ldquo;Matched eBay listing&rdquo; label applies only to that retailer's offer. An eBay-sourced example photo illustrates the gift idea and is not clickable; choose either shop below it. It does not confirm the same product is available on Amazon. When available, Amazon listing photos take priority and link to their Amazon listing. Matching is not a review or an endorsement. Check the seller, contents, age guidance, current price and delivery cost before buying. eBay search links are not affiliate links until our Partner Network campaign is configured.</p></details>
     </div>
     <ul class="cards" id="cards"></ul>
     <p class="feedback-toast" id="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -229,16 +223,11 @@ window.GIFT_CONFIG = {
     <ul class="guide-shelf">
       <li class="guide-garden"><a href="/gifts/gifts-for-gardeners"><div class="guide-art"><img class="editorial-photo" src="/images/garden-800.webp" srcset="/images/garden-400.webp 400w, /images/garden-800.webp 800w, /images/garden-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="guide-index" aria-hidden="true">01</span>For the gardener</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Useful tools, seeds for spring and a few small comforts for time outdoors.</p></a></li>
       <li class="guide-books"><a href="/gifts/gifts-for-book-lovers"><div class="guide-art"><img class="editorial-photo" src="/images/books-800.webp" srcset="/images/books-400.webp 400w, /images/books-800.webp 800w, /images/books-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="guide-index" aria-hidden="true">02</span>For the book lover</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Little things to make reading more comfortable, wherever they settle in.</p></a></li>
-      <li class="guide-gesture"><a href="/gifts/secret-santa-gifts-under-10"><div class="guide-art"><img class="editorial-photo" src="/images/gesture-800.webp" srcset="/images/gesture-400.webp 400w, /images/gesture-800.webp 800w, /images/gesture-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="guide-index" aria-hidden="true">03</span>For Secret Santa</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Small, useful ideas that stay within the agreed limit and feel good to give.</p></a></li>
+      <li class="guide-gesture"><a href="/gifts/secret-santa-gifts-under-10"><div class="guide-art"><img class="editorial-photo" src="/images/gesture-800.webp" srcset="/images/gesture-400.webp 400w, /images/gesture-800.webp 800w, /images/gesture-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="guide-index" aria-hidden="true">03</span>For Secret Santa</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Ideas to look for within a £10 budget, with reminders to check the full price.</p></a></li>
     </ul>
     <p class="source">The guide images are AI-created illustrations, not photos of products we've tested.</p>
   </section>
 </div>
-  <section class="approach wrap" aria-labelledby="approach-title">
-    <p class="eyebrow">How it works</p>
-    <h2 id="approach-title">A thoughtful place to start.<br>You make the final choice.</h2>
-    <div class="approach-notes"><p><span>01</span>Tell us what they're like.<small>Share their interests, age, budget and anything they already own. No names or sensitive details needed.</small></p><p><span>02</span>Get a few ideas to explore.<small>Our AI suggests gift ideas and explains why they might fit. They are starting points, not products we've tested.</small></p><p><span>03</span>Save the ones that feel right.<small>Keep a shortlist on this device, set aside the misses, then check Amazon UK listings and prices before you buy.</small></p></div>
-  </section>
 </main>
 
 <div class="listbar" id="listbar" hidden>
@@ -248,7 +237,7 @@ window.GIFT_CONFIG = {
 <dialog id="dlg" aria-labelledby="dlg-title">
   <div class="dlg">
     <h2 id="dlg-title">Your shortlist</h2>
-    <p class="disclosure" style="margin:0"><span id="shortlist-storage">Saved on this device only.</span> We may earn a commission if you buy through an Amazon link.</p>
+    <p class="disclosure" style="margin:0"><span id="shortlist-storage">Saved on this device only.</span> We may earn a commission if you buy through an affiliate link.</p>
     <ul id="dlg-list"></ul>
     <div class="dlg-actions">
       <button type="button" class="btn btn-outline" id="copylist">Copy list</button>
@@ -260,18 +249,20 @@ window.GIFT_CONFIG = {
 <footer class="site-footer">
   <div class="wrap">
     <div class="footer-top"><a class="brand" href="/">Santa's Helper<svg class="brand-mark" width="18" height="24" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="m16 0 2.5 11 8.8-6.3-6.3 8.8L32 16l-11 2.5 6.3 8.8-8.8-6.3L16 32l-2.5-11-8.8 6.3 6.3-8.8L0 16l11-2.5-6.3-8.8 8.8 6.3Z"/></svg></a><nav aria-label="Footer"><a href="/#form">Find a gift</a><a href="/gifts/">Gift guides</a><a href="/about">About and contact</a><a href="/privacy">Privacy</a></nav></div>
-    <div class="footer-bottom"><p>As an Amazon Associate I earn from qualifying purchases. Our suggestions are a starting point, so check the product details, age guidance and current price before you buy.</p><span>Independent gift ideas &middot; UK</span></div>
+    <div class="footer-bottom"><p>As an Amazon Associate I earn from qualifying purchases. We have not tested the products in these searches. Check the seller, product details, age guidance and total price before buying.</p><span>Gift ideas &middot; UK</span></div>
   </div>
 </footer>
 
 <script type="module">
 import { fetchIdeas, fetchProducts, sendFeedback as postFeedback } from "/api.js";
 import { createTurnstileTokenGate, TurnstileTokenError } from "/turnstile-token.js";
+import { amazonUrl as amazonSearchUrl, ebayUrl as ebaySearchUrl, validProduct, validProductImage } from "/merchant-links.js";
 (() => {
 "use strict";
 const CFG = window.GIFT_CONFIG || {};
 const $ = (s) => document.querySelector(s);
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (/^\d+$/.test(CFG.EBAY_CAMPAIGN_ID || "")) $("#ebay-disclosure").textContent = "eBay shopping links are affiliate links too.";
 
 /* ---------- options ---------- */
 const RELATIONS = [
@@ -351,11 +342,10 @@ let shortlist = store.get().filter((x) => x && typeof x.title === "string" && ty
 
 /* ---------- links ---------- */
 function amazonUrl(query){
-  const u = new URL(`https://${CFG.AMAZON_HOST || "www.amazon.co.uk"}/s`);
-  u.searchParams.set("k", query);
-  const tag = (CFG.AMAZON_TAG || "").trim();
-  if (tag) u.searchParams.set("tag", tag);
-  return u.toString();
+  return amazonSearchUrl(query, CFG);
+}
+function ebayUrl(query){
+  return ebaySearchUrl(query, CFG);
 }
 
 /* ---------- Turnstile (optional) ---------- */
@@ -410,37 +400,26 @@ if (CFG.USE_API && CFG.TURNSTILE_SITE_KEY){
 /* ---------- API ---------- */
 const apiOn = () => CFG.USE_API && location.protocol.startsWith("http");
 
-function validAmazonProduct(product){
-  if (!product || product.provider !== "amazon" || !/^[A-Z0-9]{10}$/.test(product.asin || "")) return false;
-  if (product.productId !== product.asin || product.affiliateUrl !== product.productUrl) return false;
-  const retrieved = Date.parse(product.retrievedAt), expires = Date.parse(product.expiresAt), now = Date.now();
-  if (!Number.isFinite(retrieved) || !Number.isFinite(expires) || retrieved > now || now - retrieved > 3600000 || expires <= now) return false;
-  try {
-    const url = new URL(product.affiliateUrl);
-    const id = url.pathname.match(/^\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:\/|$)/i)?.[1];
-    return url.protocol === "https:" && ["amazon.co.uk","www.amazon.co.uk"].includes(url.hostname)
-      && id?.toUpperCase() === product.asin && url.searchParams.get("tag") === CFG.AMAZON_TAG;
-  } catch { return false; }
-}
-
-function validProductImage(url){
-  try {
-    const image = new URL(url);
-    return image.protocol === "https:" && ["m.media-amazon.com","images-eu.ssl-images-amazon.com"].includes(image.hostname);
-  } catch { return false; }
-}
-
 async function fillProducts(ideas){
   if (!ideas.length || !apiOn()) return;
   const request = ideas.map((idea) => ({
     title: idea.title, query: idea.query, concept: idea.concept || idea.title, productSpec: idea.productSpec || {}
   }));
   const cards = ideas.map((idea) => cardsByTitle.get(idea.title));
-  const { products } = await fetchProducts(request, { enabled: apiOn() });
-  for (const [index, product] of products.entries()){
-    if (!validAmazonProduct(product)) continue;
+  const { products, offers, unavailable, limited } = await fetchProducts(request, { enabled: apiOn() });
+  if ((unavailable || limited) && cards.some((card) => card?.isConnected)){
+    showFeedback(unavailable
+      ? "Some product listings couldn't load. You can still search both shops."
+      : "Some product lookups reached their limit. You can still search both shops.");
+  }
+  const matches = offers || products.map((product) => product ? [product] : []);
+  for (const [index, listings] of matches.entries()){
+    if (!Array.isArray(listings)) continue;
     const card = cards[index];
-    if (card?.isConnected) setVerifiedProduct(card, ideas[index], product);
+    if (!card?.isConnected) continue;
+    for (const product of listings){
+      if (validProduct(product, CFG)) setVerifiedProduct(card, ideas[index], product);
+    }
   }
 }
 
@@ -456,48 +435,73 @@ function showFeedback(message){
 }
 
 function setVerifiedProduct(card, idea, product){
-  card.classList.add("verified");
+  const merchant = product.provider === "ebay" ? "eBay" : "Amazon";
   const media = card.querySelector(".media");
-  const heading = card.querySelector("h3");
-  const shop = card.querySelector(".shop");
+  const shop = card.querySelector(`.shop[data-provider="${product.provider}"]`);
+  if (!shop) return;
   const disclosure = card.querySelector(".aff");
   const note = media.querySelector(".image-note");
-  const badge = document.createElement("span"); badge.className = "product-badge"; badge.textContent = "Matched Amazon listing";
-  media.append(badge);
-  heading.textContent = product.title;
-  const concept = document.createElement("p"); concept.className = "concept-label";
-  concept.textContent = `Gift idea: ${idea.title}`;
-  heading.before(concept);
   shop.href = product.affiliateUrl;
-  shop.textContent = "View product on Amazon";
-  shop.setAttribute("aria-label", `View ${product.title} on Amazon (affiliate link, opens in new tab)`);
-  disclosure.textContent = "Ad · Matched Amazon listing";
+  shop.textContent = `View on ${merchant}`;
+  shop.setAttribute("aria-label", `View ${product.title} on ${merchant} (affiliate link, opens in new tab)`);
+  const listing = document.createElement("p"); listing.className = "offer-detail";
+  listing.textContent = `Matched ${merchant} listing: ${product.title}`;
+  shop.after(listing);
+  disclosure.textContent = "Ad · Matched offers are retailer-specific; other buttons remain searches.";
 
   const retrieved = Date.parse(product.retrievedAt), expires = Date.parse(product.expiresAt);
+  let price = null;
+  let photo = null;
   if (product.price?.currency === "GBP" && Number.isFinite(Number(product.price.amount))
       && Number.isFinite(retrieved) && Number.isFinite(expires) && retrieved <= Date.now() && expires > Date.now()) {
-    const price = document.createElement("p"); price.className = "product-price";
-    price.textContent = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(product.price.amount);
-    card.querySelector(".why").after(price);
+    price = document.createElement("p"); price.className = "product-price";
+    price.textContent = `${merchant}: ${new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(product.price.amount)}${product.provider === "ebay" ? " incl. listed delivery" : ""}`;
+    listing.after(price);
   }
+  setTimeout(() => {
+    if (!card.isConnected || shop.href !== product.affiliateUrl) return;
+    shop.href = product.provider === "ebay" ? ebayUrl(idea.query) : amazonUrl(idea.query);
+    shop.textContent = `Search ${merchant}`;
+    shop.setAttribute("aria-label", `Search ${merchant} for ${idea.title} (affiliate link, opens in new tab)`);
+    listing.remove(); price?.remove();
+    if (photo && media.querySelector(".product-image") === photo){
+      photo.remove(); media.querySelector(".product-badge")?.remove();
+      card.classList.remove("verified"); note.textContent = "Product photo unavailable";
+    }
+    disclosure.textContent = "Ad · Check both shops for current listings and prices.";
+  }, Math.max(0, expires - Date.now()));
 
-  if (!validProductImage(product.imageUrl)){
-    note.textContent = "Product photo unavailable";
-    return;
+  if (!validProductImage(product.imageUrl, product.provider)) return;
+  const previous = media.querySelector(".product-image");
+  if (previous && (product.provider !== "amazon" || previous.dataset.provider === "amazon")) return;
+  previous?.remove();
+  media.querySelector(".product-badge")?.remove();
+  card.classList.add("verified");
+  const badge = document.createElement("span"); badge.className = "product-badge";
+  badge.textContent = product.provider === "ebay" ? "Example product" : "Matched Amazon listing";
+  media.append(badge);
+  photo = document.createElement(product.provider === "ebay" ? "div" : "a");
+  photo.className = "product-image"; photo.dataset.provider = product.provider;
+  if (product.provider === "amazon"){
+    photo.href = product.affiliateUrl; photo.target = "_blank"; photo.rel = "sponsored noopener";
+    photo.setAttribute("aria-label", `View ${product.title} on Amazon (affiliate link, opens in new tab)`);
   }
-  const link = document.createElement("a"); link.className = "product-image-link";
-  link.href = product.affiliateUrl; link.target = "_blank"; link.rel = "sponsored noopener";
-  link.setAttribute("aria-label", `View ${product.title} on Amazon (affiliate link, opens in new tab)`);
   const image = document.createElement("img"); image.className = "image-loading";
-  image.alt = product.title; image.loading = "lazy"; image.decoding = "async";
+  image.alt = product.provider === "ebay" ? `Example of ${idea.title}: ${product.title}` : product.title;
+  image.loading = "lazy"; image.decoding = "async";
   image.src = product.imageUrl; image.sizes = "(max-width:760px) 100vw, 360px";
   image.addEventListener("load", () => image.classList.remove("image-loading"));
-  image.addEventListener("error", () => { link.remove(); note.textContent = "Product photo unavailable"; });
-  link.append(image); media.prepend(link);
-  note.textContent = "Image from this Amazon listing";
+  image.addEventListener("error", () => {
+    if (media.querySelector(".product-image") !== photo) return;
+    photo.remove(); badge.remove(); card.classList.remove("verified");
+    note.textContent = "Product photo unavailable";
+    showFeedback(`The ${merchant} photo couldn't load. The shop links are still available.`);
+  });
+  photo.append(image); media.prepend(photo);
+  note.textContent = product.provider === "ebay" ? "Example photo: eBay. Amazon product may differ." : "Photo from Amazon listing";
 }
 
-/* ---------- anonymous feedback (enumerated fields only, never titles or text) ---------- */
+/* ---------- feedback (enumerated fields only, never titles or text) ---------- */
 const fbItem = (idea, position) => ({ strategy: idea.strategy, source: idea.source, discovery: idea.discovery === true, position });
 function sendFeedback(body){
   return postFeedback(body, { enabled: apiOn() });
@@ -528,7 +532,7 @@ function renderCards(ideas){
     media.append(cat, imageNote);
     const body = document.createElement("div"); body.className = "card-body";
     const kicker = document.createElement("p"); kicker.className = "card-kicker";
-    kicker.textContent = `${String(idx + 1).padStart(2, "0")} / ${idea.category || "A considered idea"}`;
+    kicker.textContent = `${String(idx + 1).padStart(2, "0")} / ${idea.category || "Gift idea"}`;
     if (idea.discovery === true){ const tag = document.createElement("span"); tag.className = "discovery-tag"; tag.textContent = "A new direction"; kicker.append(tag); }
     const h = document.createElement("h3"); h.textContent = idea.title;
     const why = document.createElement("p"); why.className = "why"; why.textContent = idea.why;
@@ -539,10 +543,16 @@ function renderCards(ideas){
       connection.append(label, document.createTextNode(idea.connection.text));
     }
     const row = document.createElement("div"); row.className = "row";
-    const a = document.createElement("a"); a.className = "shop"; a.href = amazonUrl(idea.query);
-    a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = "See options on Amazon UK";
-    a.setAttribute("aria-label", `Search Amazon for ${idea.title} (affiliate link, opens in new tab)`);
-    a.addEventListener("click", () => { void sendFeedback({ event: "click", item: fbItem(idea, idx) }); });
+    const shops = document.createElement("div"); shops.className = "merchant-links";
+    for (const [provider, merchant, url] of [["amazon", "Amazon", amazonUrl(idea.query)], ["ebay", "eBay", ebayUrl(idea.query)]]){
+      const offer = document.createElement("div"); offer.className = "merchant-offer";
+      const a = document.createElement("a"); a.className = "shop"; a.href = url; a.dataset.provider = provider;
+      a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = `Search ${merchant}`;
+      const affiliate = provider === "amazon" || /^\d+$/.test(CFG.EBAY_CAMPAIGN_ID || "");
+      a.setAttribute("aria-label", `Search ${merchant} for ${idea.title} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
+      a.addEventListener("click", () => { void sendFeedback({ event: "click", item: fbItem(idea, idx) }); });
+      offer.append(a); shops.append(offer);
+    }
     const save = document.createElement("button"); save.type = "button"; save.className = "save"; save.innerHTML = HEART;
     const sync = () => { const on = isSaved(idea.title); save.setAttribute("aria-pressed", String(on)); save.setAttribute("aria-label", on ? `Remove ${idea.title} from shortlist` : `Save ${idea.title} to shortlist`); };
     save.addEventListener("click", () => { const adding = !isSaved(idea.title); toggleSave(idea); sync(); if (adding) void sendFeedback({ event: "save", item: fbItem(idea, idx) }); });
@@ -564,13 +574,13 @@ function renderCards(ideas){
       const revision = statusRevision;
       void sendFeedback({ event: "dismiss", item: fbItem(idea, idx) }).then((recorded) => {
         if (apiOn() && !recorded && statusRevision === revision){
-          const message = "Idea hidden, but we couldn't send the optional anonymous feedback.";
+          const message = "Idea hidden. We couldn't send feedback about it, but you can keep browsing.";
           setStatus(message, false);
           showFeedback(message);
         }
       });
     });
-    row.append(a, save);
+    row.append(shops, save);
     body.append(kicker, h, why);
     if (connection) body.append(connection);
     body.append(row, aff, dismiss);
@@ -623,9 +633,15 @@ function renderDialog(){
   for (const item of shortlist){
     const li = document.createElement("li");
     const div = document.createElement("div");
-    const a = document.createElement("a"); a.href = amazonUrl(item.query); a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = item.title;
+    const title = document.createElement("strong"); title.textContent = item.title;
     const small = document.createElement("small"); small.textContent = item.category;
-    div.append(a, small);
+    const shops = document.createElement("div"); shops.className = "merchant-links";
+    for (const [merchant, url] of [["Amazon", amazonUrl(item.query)], ["eBay", ebayUrl(item.query)]]){
+      const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = `Search ${merchant}`;
+      a.setAttribute("aria-label", `Search ${merchant} for ${item.title} (opens in new tab)`);
+      shops.append(a);
+    }
+    div.append(title, small, shops);
     const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "Remove";
     x.addEventListener("click", () => {
       shortlist = shortlist.filter((s) => s.title !== item.title);
@@ -661,7 +677,10 @@ $("#dlg").addEventListener("close", () => {
 });
 $("#copylist").addEventListener("click", async (e) => {
   const text = "My gift shortlist\n" + shortlist.map((s) => `- ${s.title}`).join("\n");
-  try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied"; } catch { e.target.textContent = "Couldn't copy"; }
+  try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied"; } catch {
+    e.target.textContent = "Couldn't copy";
+    $("#shortlist-storage").textContent = "Couldn't copy automatically. Select and copy the idea names above.";
+  }
   setTimeout(() => { e.target.textContent = "Copy list"; }, 1800);
 });
 
@@ -717,19 +736,6 @@ async function run(input){
   $("#form").setAttribute("aria-busy", "true");
   setStatus(""); $("#loading").hidden = false;
   $("#loading").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
-  const messages = ["Getting to know them...", "Connecting the dots...", "Putting a few ideas together..."];
-  const label = $("#loading-text"); let messageIndex = 0; label.textContent = messages[0];
-  const stages = [...document.querySelectorAll(".curation-steps li")];
-  const showStage = () => stages.forEach((stage, index) => {
-    stage.classList.toggle("complete", index < messageIndex);
-    if (index === messageIndex) stage.setAttribute("aria-current", "step");
-    else stage.removeAttribute("aria-current");
-  });
-  showStage();
-  const ticker = setInterval(() => {
-    if (messageIndex === messages.length - 1) return;
-    messageIndex += 1; label.textContent = messages[messageIndex]; showStage();
-  }, 5000);
   try {
     if (turnstileEnabled && tsGate.failed) resetTurnstile();
     const fetch = (turnstileToken = "") => fetchIdeas(input, { enabled: apiOn(), turnstileToken, signal: controller.signal });
@@ -769,7 +775,7 @@ async function run(input){
       const cancelled = controller.signal.reason === "cancelled";
       setStatus(
         cancelled
-          ? "No problem, the search has stopped. Your description is still here."
+          ? "Search cancelled. Your description is still here."
           : "This is taking longer than usual. Your description is still here; please try again.",
         !cancelled,
         !cancelled,
@@ -778,7 +784,6 @@ async function run(input){
       setStatus("We couldn't load gift ideas just now. Your description is still here; please try again.", true, true);
     }
   } finally {
-    clearInterval(ticker);
     clearTimeout(timer);
     activeController = null;
     $("#form").removeAttribute("aria-busy");
@@ -795,7 +800,7 @@ $("#form").addEventListener("submit", (e) => {
   if (activeController) return;
   const input = readForm();
   if (input.mode === "describe" && !input.description){
-    setStatus("Tell us a little about who you're shopping for so we can find ideas that feel personal.", true);
+    setStatus("Add an interest, hobby or something they enjoy. Include your budget if you have one.", true);
     $("#description").focus(); return;
   }
   if (input.mode === "guided" && !input.interests && !input.about){

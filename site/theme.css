@@ -24,6 +24,20 @@
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:24px}
 body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.6 var(--body)}
+.christmas-canvas{background-color:#f0e8dd;--muted:#503d43;--gold-ink:#53381f}
+.christmas-canvas{background-image:var(--canvas),var(--linen);background-position:center top;background-size:clamp(960px,100%,2048px) auto;background-repeat:no-repeat,repeat}
+.christmas-canvas{--canvas:url(/images/finder-canvas-2048.webp);--linen:url(/images/finder-canvas-linen.webp)}
+.christmas-canvas:has(.directory-page){--canvas:url(/images/guides-canvas-2048.webp);--linen:url(/images/guides-canvas-linen.webp)}
+.christmas-canvas .masthead,.christmas-canvas .site-footer{background:transparent}
+.christmas-canvas .masthead{border-bottom:0}
+@media(max-width:1000px){
+  .christmas-canvas{--canvas:image-set(url(/images/finder-canvas-1000.webp) 1x,url(/images/finder-canvas-2048.webp) 2x)}
+  .christmas-canvas:has(.directory-page){--canvas:image-set(url(/images/guides-canvas-1000.webp) 1x,url(/images/guides-canvas-2048.webp) 2x)}
+  .christmas-canvas:has(.directory-page){background-size:100% auto}
+}
+@media(max-width:760px){
+  .christmas-canvas{background-position:center top}
+}
 a{color:inherit;text-underline-offset:4px;text-decoration-thickness:1px}
 button,input,select,textarea{font:inherit}
 button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
@@ -37,9 +51,7 @@ p{overflow-wrap:break-word}
 .skip-link:focus{transform:none}
 .wrap{width:min(1320px,100%);margin-inline:auto;padding-inline:clamp(24px,4vw,56px)}
 .masthead{border-bottom:1px solid var(--accent)}
-.season-strip{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:4px max(24px,calc((100vw - 1208px)/2));background:var(--surface);color:var(--accent);font-size:11px;letter-spacing:.04em;min-height:28px}
-.season-guides{display:none}
-.countdown{font-variant-numeric:tabular-nums;white-space:nowrap}
+.countdown{font-size:11px;color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
 .countdown .short{display:none}
 .nav{display:flex;align-items:center;gap:32px;min-height:88px}
 .brand{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--accent);font:400 36px/1 var(--display);font-variation-settings:"SOFT" 0,"WONK" 0,"opsz" 72;letter-spacing:-.055em;white-space:nowrap}
@@ -59,30 +71,30 @@ p{overflow-wrap:break-word}
 .footer-bottom p{max-width:76ch;margin:0}
 .footer-bottom>span{white-space:nowrap}
 .object-scene{display:block;width:100%;height:auto;fill:none}
-.editorial-photo{display:block;width:100%;height:auto;aspect-ratio:10/7;object-fit:cover}
+.editorial-photo{display:block;width:100%;height:auto;aspect-ratio:10/7;object-fit:contain}
 @media(max-width:1000px){
   .nav-links{gap:20px}
   .brand{font-size:30px}
   .nav-shortlist>span:not(.saved-count){display:none}
 }
 @media(max-width:760px){
-  .season-strip{padding:0 24px;font-size:11px;min-height:34px}
-  .season-strip>span:first-child{display:none}
-  .season-guides{display:flex;align-items:center;min-height:34px;text-decoration:none}
   .countdown .long{display:none}
   .countdown .short{display:inline}
-  .nav{min-height:72px;justify-content:space-between;gap:12px}
-  .brand{font-size:28px;gap:5px}
+  .nav{display:grid;grid-template-columns:max-content 1fr auto;min-height:104px;column-gap:12px;row-gap:0;padding-block:12px 4px}
+  .brand{grid-column:1/3;font-size:28px;gap:5px}
   .brand-mark{width:17px;height:22px}
-  .nav-links{display:none}
-  .nav-shortlist{gap:7px}
+  .nav-links{grid-column:1;grid-row:2;margin-left:0;font-size:12px}
+  .nav-links a{padding:9px 0}
+  .nav-links a:first-child{display:none}
+  .nav-links a::after{bottom:4px}
+  .nav-shortlist{grid-column:3;grid-row:1;gap:7px}
+  .countdown{grid-column:2;grid-row:2;justify-self:start}
   .footer-top{align-items:flex-start;flex-direction:column;gap:24px}
   .footer-bottom{flex-direction:column;gap:16px}
   .footer-bottom>span{white-space:normal}
 }
 @media(max-width:359px){
   .wrap{padding-inline:20px}
-  .season-strip{padding-inline:20px}
   .brand{font-size:25px}
   .nav-shortlist{padding-left:0;gap:5px}
   .saved-count{min-width:22px;height:22px}

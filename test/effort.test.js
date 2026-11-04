@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   handleRequest, normaliseInput, curateIdeas, GIFT_TOOL, STRICT_GIFT_TOOL, SYSTEM_PROMPT, buildUserMessage,
   DEFAULT_MAX_OUTPUT_TOKENS, DEFAULT_EFFORT, generationParams, generationFingerprint, resolveEffort,
+  buildClaudeRequest, EDITORIAL_VERSION,
 } from "../src/core.js";
 import { CANDIDATE_COUNT } from "../src/prompt.js";
 import { verifyKnownFacts } from "../src/validate.js";
@@ -73,6 +74,23 @@ test("effort is validated: unknown values fall back to low, known values pass th
 test("effort and output limit are part of the cache fingerprint", () => {
   assert.notEqual(generationFingerprint({ CLAUDE_EFFORT: "low" }), generationFingerprint({ CLAUDE_EFFORT: "medium" }));
   assert.notEqual(generationFingerprint({ MAX_OUTPUT_TOKENS: "3000" }), generationFingerprint({}));
+});
+
+test("both prompt modes share versioned writing guidance without replacing their selection rules", () => {
+  for (const baseline of [false, true]) {
+    for (const forceTool of [false, true]) {
+      const request = buildClaudeRequest({ model: "test-model", userMessage: "test", baseline, forceTool });
+      assert.match(request.system, new RegExp(`WRITING STANDARD \\(${EDITORIAL_VERSION}\\)`));
+      assert.match(request.system, /natural British English/);
+      assert.match(request.system, /Do not invent habits/);
+      assert.match(request.system, /not tested products/);
+      assert.match(request.system, /same gift/);
+      assert.equal(request.tool_choice.type, forceTool ? "tool" : "auto");
+      if (!baseline) assert.ok(request.system.startsWith(SYSTEM_PROMPT));
+    }
+  }
+  assert.ok(generationFingerprint().endsWith(`:${EDITORIAL_VERSION}`), "new writing guidance must not reuse cached responses from the previous request");
+  assert.notEqual(generationFingerprint(), "adaptive:low:4500:forced-strict-tool");
 });
 
 test("responses generated under different effort settings never share a cache entry", async () => {

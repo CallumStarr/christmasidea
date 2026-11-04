@@ -1,0 +1,62 @@
+export function amazonUrl(query, config = {}) {
+  const url = new URL("https://www.amazon.co.uk/s");
+  url.searchParams.set("k", query);
+  if (config.AMAZON_TAG) url.searchParams.set("tag", config.AMAZON_TAG.trim());
+  return url.toString();
+}
+
+export function ebayUrl(query, config = {}) {
+  const url = new URL("https://www.ebay.co.uk/sch/i.html");
+  url.searchParams.set("_nkw", query);
+  url.searchParams.set("LH_ItemCondition", "1000");
+  url.searchParams.set("LH_BIN", "1");
+  if (/^\d+$/.test(config.EBAY_CAMPAIGN_ID || "")) {
+    url.searchParams.set("campid", config.EBAY_CAMPAIGN_ID);
+    url.searchParams.set("mkcid", "1");
+    url.searchParams.set("mkevt", "1");
+    url.searchParams.set("toolid", "10001");
+  }
+  return url.toString();
+}
+
+export function validProduct(product, config = {}, now = Date.now()) {
+  if (!product || !["amazon", "ebay"].includes(product.provider)
+      || product.affiliateUrl !== product.productUrl || !product.title
+      || product.condition !== "NEW" || !["IN_STOCK", "IN_STOCK_SCARCE"].includes(product.availability)) return false;
+  const retrieved = Date.parse(product.retrievedAt), expires = Date.parse(product.expiresAt);
+  if (!Number.isFinite(retrieved) || !Number.isFinite(expires) || retrieved > now
+      || now - retrieved >= 3600000 || expires <= now || expires > retrieved + 3600000) return false;
+  try {
+    const url = new URL(product.affiliateUrl);
+    if (url.protocol !== "https:" || url.username || url.password || url.port) return false;
+    if (product.provider === "amazon") {
+      const id = url.pathname.match(/^\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:\/|$)/i)?.[1];
+      return /^[A-Z0-9]{10}$/.test(product.asin || "") && product.productId === product.asin
+        && ["amazon.co.uk", "www.amazon.co.uk"].includes(url.hostname)
+        && id?.toUpperCase() === product.asin && Boolean(config.AMAZON_TAG)
+        && url.searchParams.get("tag") === config.AMAZON_TAG;
+    }
+    const identity = /^v1\|(\d{9,15})\|(\d{1,15})$/.exec(product.productId || "");
+    const listing = url.pathname.match(/^\/itm\/(?:[^/]+\/)?(\d{9,15})\/?$/);
+    return Boolean(identity && /^\d+$/.test(config.EBAY_CAMPAIGN_ID || "")
+      && ["www.ebay.co.uk", "www.ebay.com"].includes(url.hostname)
+      && listing?.[1] === identity[1]
+      && (identity[2] === "0" || url.searchParams.get("var") === identity[2])
+      && url.searchParams.get("campid") === config.EBAY_CAMPAIGN_ID
+      && url.searchParams.get("mkevt") === "1" && url.searchParams.get("mkcid") === "1");
+  } catch {
+    return false;
+  }
+}
+
+export function validProductImage(value, provider) {
+  const hosts = provider === "ebay" ? ["i.ebayimg.com"]
+    : provider === "amazon" ? ["m.media-amazon.com", "images-eu.ssl-images-amazon.com"] : [];
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && hosts.includes(url.hostname)
+      && !url.username && !url.password && !url.port;
+  } catch {
+    return false;
+  }
+}

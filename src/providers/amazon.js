@@ -64,6 +64,7 @@ export class AmazonProviderError extends Error {
 
 function configured(env) {
   return Boolean(env.PRODUCT_DISCOVERY_ENABLED === "true"
+    && env.AMAZON_PRODUCT_DISCOVERY_ENABLED !== "false"
     && env.AMAZON_CREATORS_CLIENT_ID
     && env.AMAZON_CREATORS_CLIENT_SECRET
     && env.AMAZON_PARTNER_TAG);

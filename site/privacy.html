@@ -18,11 +18,6 @@
 <body>
   <a class="skip-link" href="#guide-content">Skip to content</a>
   <header class="masthead">
-  <div class="season-strip">
-    <span>A little help with your gift list</span>
-    <a class="season-guides" href="/gifts/">The gift guides &rarr;</a>
-    <span class="countdown" id="countdown" hidden></span>
-  </div>
   <div class="wrap">
     <nav class="nav" aria-label="Site">
       <a class="brand" href="/">
@@ -32,6 +27,7 @@
         <span>Santa's Helper<span class="sr-only"> — Good gifts start with a person</span></span>
       </a>
       <div class="nav-links"><a href="/#form">The gift finder</a><a href="/gifts/">The gift guides</a></div>
+      <span class="countdown" id="countdown" hidden></span>
       <a class="nav-shortlist" id="nav-shortlist" href="/?shortlist=1" aria-label="Open your shortlist">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg>
         <span>Shortlist</span><span class="saved-count" id="nav-count">0</span>
@@ -41,7 +37,7 @@
 </header>
   <main class="wrap legal-page" id="guide-content" tabindex="-1">
     <h1>Privacy notice</h1>
-    <p>Last updated 3 November 2026.</p>
+    <p>Last updated 4 November 2026.</p>
     <p>This notice explains how Santa's Helper handles the information you share. Please leave names, addresses, health information and other sensitive details out of gift requests.</p>
 
     <h2>Who runs the site</h2>
@@ -50,38 +46,45 @@
 
     <h2>What we use, and why</h2>
     <ul>
-      <li><strong>Gift requests:</strong> the description or questionnaire answers you submit are sent to Anthropic to generate gift suggestions. Anthropic's API processes the request; Anthropic is based in the United States.</li>
+      <li><strong>Gift requests:</strong> the description or questionnaire answers you submit are sent to Anthropic's AI service to generate suggestions. This can include titles of previously shown ideas when you ask for a different set, so they are not suggested again. Anthropic is based in the United States. Please describe interests and preferences without identifying the recipient.</li>
       <li><strong>Rate limits and abuse prevention:</strong> the Worker receives the connection IP address. Santa's Helper uses a salted, daily-changing hash for rate-limit counters rather than intentionally storing the raw address in its own rate-limit state. Cloudflare processes network and request data to host and secure the service.</li>
-      <li><strong>Optional product discovery:</strong> only when Amazon product discovery is enabled, sanitized gift concepts and product-matching criteria are sent to Amazon's Creators API. The original recipient description and explanation are not sent to Amazon by this lookup. Amazon product details and image URLs may be cached by the Worker for up to one hour; image files are loaded directly from Amazon and are not stored by Santa's Helper.</li>
+      <li><strong>Optional product discovery:</strong> if a retailer's integration is enabled, we send gift-concept search terms, rather than your original recipient description or explanation, to Amazon's Creators API or eBay's Browse API to look for products. These terms may reflect interests and preferences in your request. Product details and image URLs may be cached by our server for up to one hour. If a product image is shown, your browser loads it directly from that retailer's image servers, which receive your connection information; Santa's Helper does not store the image file.</li>
       <li><strong>Repeated requests:</strong> generated results may be cached by Cloudflare for up to 24 hours (one hour for a short result) so identical requests do not need another AI call.</li>
-      <li><strong>Shortlist:</strong> items you save are kept in local storage in your browser on this device. Santa's Helper does not receive the shortlist unless you choose to send it to us.</li>
-      <li><strong>Gift-finder feedback:</strong> the browser may send one of five event categories: ideas shown, clicked, saved, dismissed, or a request for different ideas. For an idea, the limited labels are its strategy, source (model, graph or catalogue), discovery flag and position in the list. The feedback endpoint does not receive your recipient description, generated idea text or a session identifier. It stores daily aggregate counters rather than individual events or those text details, and the counters are pruned after 90 days. Separately, a daily-changing pseudonymous value derived from the connection IP is used for short-lived, per-visitor rate limiting; it is not included in the aggregate feedback counters. The raw IP is not stored in the feedback counters. This is pseudonymous processing, not a guarantee of anonymity. Feedback supports offline evaluation and does not change live recommendations.</li>
-      <li><strong>Affiliate links:</strong> when you follow an Amazon link, Amazon receives the request and may use cookies or similar technologies under its own privacy notice.</li>
+      <li><strong>Shortlist:</strong> saved idea names, search terms and categories are kept in local storage in your browser on this device. The shortlist itself is not uploaded to Santa's Helper. Saving an idea can send a limited feedback event, described below. If browser storage is unavailable, the list lasts only for the current visit.</li>
+      <li><strong>Gift-finder feedback:</strong> the browser may report that ideas were shown, clicked, saved or dismissed, or that you requested different ideas. For each idea, it sends only the strategy, source (model, graph or catalogue), discovery flag and position in the list. The feedback endpoint does not receive your recipient description, generated idea text or a session identifier. It stores daily aggregate counters, not a record of each event. These help evaluate the finder and do not change live recommendations.</li>
+      <li><strong>Feedback rate limits:</strong> a daily-changing value derived from the connection IP limits how much feedback a visitor can send per minute. It is not included in the aggregate feedback counters, and the raw IP is not stored in those counters. This is pseudonymous processing, not a guarantee of anonymity.</li>
+      <li><strong>Shopping and affiliate links:</strong> when you follow an Amazon or eBay link, that retailer receives the request and may use cookies or similar technologies under its own privacy notice. Approved affiliate links include a campaign or tracking ID identifying Santa's Helper, not the recipient.</li>
     </ul>
 
     <h2>Cookies and site analytics</h2>
-    <p>The site does not set advertising cookies. If enabled, Cloudflare Web Analytics measures aggregate page views without cookies or fingerprinting. Cloudflare Turnstile, if enabled, checks that a request comes from a real browser. Cloudflare also processes network and request data to host and secure the service. Amazon may set its own technologies after you leave Santa's Helper. This statement will be updated if features or providers change.</p>
+    <p>Santa's Helper does not set advertising cookies. The shortlist uses browser local storage rather than a cookie. If enabled, Cloudflare Web Analytics measures aggregate page views without cookies or fingerprinting, and Cloudflare Turnstile checks requests to help prevent automated abuse. Cloudflare also processes network and request data to host and secure the service. Amazon's or eBay's own privacy and cookie notices apply after you follow their links.</p>
 
     <h2>International processing</h2>
-    <p>Anthropic is based in the United States. Cloudflare and Amazon may process data outside the United Kingdom as part of providing their services. Before enabling product discovery, the operator should confirm the providers' current terms and the applicable safeguards for international transfers.</p>
+    <p>Using the finder involves sending your request to Anthropic, which is based in the United States. Cloudflare, Amazon and eBay may also process information outside the United Kingdom. Their notices below explain their handling of information; this page does not mean your request stays in the UK. For questions about these providers or international processing, contact the site operator using the details above.</p>
 
     <h2>How long we keep information, and your choices</h2>
-    <p>AI results are cached for no longer than 24 hours. If enabled, product details and image URLs are cached for no longer than one hour; Amazon image files are not stored. A daily scheduled cleanup prunes feedback aggregate counters once they are 90 days old. The separate rate-limit counters use a short-lived minute bucket, and their pseudonymous IP-derived value changes daily. You can avoid sending a gift request by not using the finder, and you can clear a saved shortlist by clearing this site's browser storage.</p>
+    <p>Our server caches AI results for up to 24 hours, or one hour for a short result. If product discovery is enabled, product details and image URLs are cached for up to one hour; retailer image files are not stored. A daily scheduled cleanup prunes feedback aggregate counters once they are 90 days old.</p>
+    <p>Service-usage and rate-limit counters use daily and minute buckets; product discovery also uses hourly and second buckets. Old buckets are removed during scheduled cleanup. The IP-derived value used for per-visitor limits changes daily. These are separate from the 90-day feedback totals. Cache and counter limits describe Santa's Helper's storage, not the providers' own retention periods.</p>
+    <p>You can browse the fixed <a href="/gifts/">gift guides</a> without submitting a gift request to the AI service. Clear a shortlist by removing its entries or clearing this site's browser storage. For questions about your information, including access or deletion requests, use the contact details below.</p>
     <p>For privacy questions or requests about your information, email <a href="mailto:callumstarrwork@gmail.com">callumstarrwork@gmail.com</a> or use the details on the <a href="/about">About and contact page</a>.</p>
 
     <h2>Third-party notices</h2>
     <ul>
+      <li><a href="https://www.cloudflare.com/privacypolicy/">Cloudflare privacy notice</a></li>
       <li><a href="https://www.anthropic.com/legal/privacy">Anthropic privacy information</a></li>
       <li><a href="https://affiliate-program.amazon.co.uk/creatorsapi/docs/en-us/get-started/using-curl">Amazon Creators API documentation</a></li>
       <li><a href="https://www.amazon.co.uk/gp/help/customer/display.html?nodeId=201909010">Amazon privacy notice</a></li>
+      <li><a href="https://www.ebay.co.uk/help/policies/member-behaviour-policies/user-privacy-notice-privacy-policy?id=4260">eBay privacy notice</a></li>
       <li><a href="https://www.asa.org.uk/advice-online/affiliate-marketing.html">ASA guidance on affiliate marketing disclosures</a></li>
     </ul>
   </main>
 
+
+
 <footer class="site-footer">
   <div class="wrap">
     <div class="footer-top"><a class="brand" href="/">Santa's Helper<svg class="brand-mark" width="18" height="24" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="m16 0 2.5 11 8.8-6.3-6.3 8.8L32 16l-11 2.5 6.3 8.8-8.8-6.3L16 32l-2.5-11-8.8 6.3 6.3-8.8L0 16l11-2.5-6.3-8.8 8.8 6.3Z"/></svg></a><nav aria-label="Footer"><a href="/#form">Find a gift</a><a href="/gifts/">Gift guides</a><a href="/about">About and contact</a><a href="/privacy">Privacy</a></nav></div>
-    <div class="footer-bottom"><p>As an Amazon Associate I earn from qualifying purchases. Our suggestions are a starting point, so check the product details, age guidance and current price before you buy.</p><span>Independent gift ideas &middot; UK</span></div>
+    <div class="footer-bottom"><p>As an Amazon Associate I earn from qualifying purchases. We have not tested the products in these searches. Check the seller, product details, age guidance and total price before buying.</p><span>Gift ideas &middot; UK</span></div>
   </div>
 </footer>
 </body>

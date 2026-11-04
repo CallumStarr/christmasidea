@@ -11,10 +11,10 @@ const NEGATIVE_ANCHOR = /\b(?:already|has (?:every|all|lots|loads|plenty)|owns?|
 const usable = (anchor, ctx) => Boolean(anchor) && !NEGATIVE_ANCHOR.test(anchor) && verifyAnchor(anchor, ctx);
 
 function template(kind, anchor, via) {
-  if (kind === "adjacent" && via) return `You mentioned ${quote(anchor)} \u2014 this follows the ${via} side of that.`;
+  if (kind === "adjacent" && via) return `You mentioned ${quote(anchor)}. If ${via} is part of the appeal, this could be worth considering.`;
   if (kind === "cross" && via) return `Brings together ${quote(anchor)} and ${via}.`;
   if (kind === "adjacent" || kind === "cross") return `A step sideways from ${quote(anchor)}.`;
-  return `Built on what you said: ${quote(anchor)}.`;
+  return `Suggested because you mentioned ${quote(anchor)}.`;
 }
 
 /**

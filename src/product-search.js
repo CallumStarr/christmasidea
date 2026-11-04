@@ -1,7 +1,8 @@
 import { scoreProductMatch, productMatchThresholds } from "./product-matcher.js";
 import { normaliseProductIdea } from "./product-validation.js";
-import { createProvider, configuredProviderId } from "./providers/index.js";
+import { createProviders, configuredProviderId } from "./providers/index.js";
 import { AmazonProviderError } from "./providers/amazon.js";
+import { EbayProviderError } from "./providers/ebay.js";
 import { assignUniqueProducts } from "./engine/product-identity.js";
 
 const CACHE_TTL = 3600;
@@ -75,17 +76,31 @@ function cacheProductResults(key, products, deps) {
 }
 
 function logProviderError(provider, error) {
-  const code = error instanceof AmazonProviderError ? error.code : "unexpected_provider_error";
-  const status = error instanceof AmazonProviderError ? error.status : 0;
+  const known = error instanceof AmazonProviderError || error instanceof EbayProviderError;
+  const code = known ? error.code : "unexpected_provider_error";
+  const status = known ? error.status : 0;
   console.warn(`${provider.name} product search failed`, code, status);
 }
 
 export async function searchProductsForIdeas(values, env, deps, ipHash) {
+  const providers = deps.productProvider ? [deps.productProvider] : createProviders(env, deps.fetch);
+  if (providers.length <= 1) return searchProvider(values, env, deps, ipHash, providers[0]);
+  const found = await Promise.all(providers.map((provider) => searchProvider(values, env, deps, ipHash, provider)));
+  const offers = found[0].products.map((_, index) => found.map((result) => result.products[index]).filter(Boolean));
+  return {
+    enabled: found.some((result) => result.enabled),
+    limited: found.some((result) => result.limited),
+    unavailable: found.some((result) => result.unavailable),
+    products: offers.map((items) => items[0] || null),
+    offers,
+  };
+}
+
+async function searchProvider(values, env, deps, ipHash, provider) {
   const source = Array.isArray(values) ? values.slice(0, MAX_IDEAS) : [];
   const ideas = source.map((value, index) => ({ index, value: normaliseProductIdea(value) })).filter((entry) => entry.value);
   const results = new Array(source.length).fill(null);
-  const provider = deps.productProvider || createProvider(env, deps.fetch);
-  if (!productDiscoveryAvailable(env, provider) || !ideas.length) {
+  if (!provider || !productDiscoveryAvailable(env, provider) || !ideas.length) {
     return { enabled: false, limited: false, products: results };
   }
 
@@ -98,6 +113,7 @@ export async function searchProductsForIdeas(values, env, deps, ipHash) {
   }
 
   let limited = false;
+  let unavailable = false;
   const limit = createLimiter(SEARCH_CONCURRENCY);
   const fetchQueries = async (queries) => {
     const missing = [...new Set(queries)].filter((query) => !queryResults.has(query));
@@ -119,6 +135,7 @@ export async function searchProductsForIdeas(values, env, deps, ipHash) {
         cacheProductResults(cacheKey(query, provider), products, deps);
       } catch (error) {
         logProviderError(provider, error);
+        unavailable = true;
         queryResults.set(query, []);
       }
     }));
@@ -148,7 +165,7 @@ export async function searchProductsForIdeas(values, env, deps, ipHash) {
   });
   const unique = assignUniqueProducts(matched);
   unique.products.forEach((product, index) => { results[ideas[index].index] = product; });
-  return { enabled: true, limited, products: results, ...(unique.duplicates ? { duplicates_removed: unique.duplicates } : {}) };
+  return { enabled: true, limited, products: results, ...(unavailable ? { unavailable: true } : {}), ...(unique.duplicates ? { duplicates_removed: unique.duplicates } : {}) };
 }
 
 export async function getCachedProduct(provider, productId, env, deps) {

@@ -34,9 +34,10 @@
 .idea-why{font-size:16px;line-height:1.65;margin:14px 0 20px;max-width:48ch;color:var(--ink)}
 .buying-note{font-size:14px;line-height:1.7;color:var(--muted);max-width:54ch;margin:0 0 18px}
 .buying-note strong{display:block;font-size:12px;font-weight:600;color:var(--gold-ink);margin-bottom:6px}
-.idea>a{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:44px;padding:9px 0;margin-top:auto;border-bottom:1px solid var(--muted);font-size:14px;text-decoration:none}
-.idea>a span{font-size:20px;transition:transform .2s}
-.idea>a:hover span{transform:translate(2px,-2px)}
+.idea .merchant-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;width:100%;margin-top:auto}
+.idea .merchant-links a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:9px 0;border-bottom:1px solid var(--muted);font-size:14px;text-decoration:none}
+.idea .merchant-links a span{font-size:20px;transition:transform .2s}
+.idea .merchant-links a:hover span{transform:translate(2px,-2px)}
 .idea:first-child,.idea:nth-child(2){padding:28px;margin-bottom:24px;border:0;background:var(--surface)}
 .idea:first-child{background:#591125;--ink:#fbf7f0;--muted:#edd5d6;--accent:#fbf0df;--gold-ink:#ebc99a;--focus:#ebc99a;color:var(--ink)}
 .finder-cta{display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px;padding:32px 36px;background:var(--surface);border-block:3px double var(--accent);margin:48px 0}
@@ -61,12 +62,15 @@
 .related-shelf .directory-copy h3{font-size:25px}
 .related-shelf .directory-copy p{display:none}
 .related-shelf .directory-meta{display:block;margin-top:12px}
-.directory-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:48px;padding:32px 0}
+.directory-page{padding-top:0}
+.directory-intro{display:flex;align-items:center;min-height:max(240px,20vw);margin-bottom:28px}
+.directory-banner-copy{width:43%;padding-block:28px}
 .directory-intro .eyebrow{font-size:11px;margin:0}
-.directory-intro h1{margin-top:18px}
-.directory-count{font-size:13px;line-height:1.6;color:var(--muted);border-left:1px solid var(--line);padding-left:28px;margin:0 0 4px;flex:none}
-.directory-count strong{display:block;font:450 70px/1 var(--display);letter-spacing:-.05em;color:var(--accent);margin-bottom:12px}
-.directory-jumps{display:flex;flex-wrap:wrap;gap:12px 32px;padding:12px 0;border-block:1px solid var(--line);margin:12px 0 48px}
+.directory-intro h1{margin:16px 0 18px;font-size:clamp(42px,4.5vw,64px)}
+.directory-intro .standfirst{font-size:17px;color:var(--ink);max-width:32ch}
+.directory-count{font-size:12px;line-height:1.6;color:var(--accent);margin:22px 0 0}
+.directory-count span{padding-inline:6px}
+.directory-jumps{display:flex;flex-wrap:wrap;gap:12px 32px;padding:12px 0;border-block:1px solid var(--line);margin:12px 0 48px;max-width:620px}
 .directory-jumps a{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:44px;font-size:14px;text-decoration:none}
 .directory-jumps a:hover{text-decoration:underline}
 .directory-section{scroll-margin-top:24px;margin-top:48px}
@@ -89,6 +93,14 @@
 .notice{padding:20px;border-left:2px solid var(--gold);background:var(--surface)}
 .not-found{max-width:700px;padding-block:64px 80px;min-height:55vh}
 .not-found>p:not(.eyebrow){max-width:44ch;color:var(--muted)}
+@media(min-width:761px){
+  .directory-jumps{width:min(100%,52vw)}
+}
+@media(max-width:900px){
+  .directory-intro{min-height:300px}
+  .directory-banner-copy{width:48%}
+  .directory-intro .standfirst{font-size:15px}
+}
 @media(max-width:1100px){
   .guide-intro{gap:36px}
   .guide-intro h1{font-size:54px}
@@ -101,6 +113,7 @@
 }
 @media(max-width:760px){
   .guide-page{padding-top:20px;padding-bottom:24px}
+  .directory-page{padding-top:0}
   .crumb{font-size:11px;gap:6px}
   .crumb>span[aria-current]{display:none}
   .crumb>span:nth-last-child(2){display:none}
@@ -134,9 +147,8 @@
   .related-shelf .directory-copy h3{font-size:23px}
   .related-shelf .directory-arrow{top:0}
   .related-shelf .directory-meta{font-size:11px;margin-top:8px}
-  .directory-intro{padding:24px 0;gap:24px;align-items:flex-start}
   .directory-intro h1{font-size:48px}
-  .directory-count{display:none}
+  .directory-banner-copy{width:100%;max-width:36ch}
   .directory-jumps{gap:4px 20px;margin:0 0 32px;padding:10px 0}
   .directory-jumps a{font-size:13px;gap:8px}
   .directory-section{margin-top:36px}

@@ -1,16 +1,27 @@
 import { amazonPolicy, createAmazonProvider } from "./amazon.js";
+import { ebayPolicy, createEbayProvider, ebayConfigured } from "./ebay.js";
 
-// Only Amazon exists today; a new provider is added here and nowhere else in the product pipeline.
 const PROVIDERS = {
   amazon: {
     create: createAmazonProvider,
     policy: (env) => amazonPolicy(env.AMAZON_PARTNER_TAG),
-    configured: (env) => Boolean(env.AMAZON_CREATORS_CLIENT_ID && env.AMAZON_CREATORS_CLIENT_SECRET && env.AMAZON_PARTNER_TAG),
+    configured: (env) => env.AMAZON_PRODUCT_DISCOVERY_ENABLED !== "false"
+      && Boolean(env.AMAZON_CREATORS_CLIENT_ID && env.AMAZON_CREATORS_CLIENT_SECRET && env.AMAZON_PARTNER_TAG),
+  },
+  ebay: {
+    create: createEbayProvider,
+    policy: (env) => ebayPolicy(env.EBAY_CAMPAIGN_ID),
+    configured: ebayConfigured,
   },
 };
 
 export function providerIds() {
   return Object.keys(PROVIDERS);
+}
+
+export function createProviders(env, fetchImpl) {
+  return providerIds().filter((id) => PROVIDERS[id].configured(env))
+    .map((id) => PROVIDERS[id].create(env, fetchImpl));
 }
 
 export function configuredProviderId(env = {}) {

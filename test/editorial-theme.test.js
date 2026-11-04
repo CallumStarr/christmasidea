@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { gzipSync } from "node:zlib";
+import sharp from "sharp";
 
 const site = new URL("../site/", import.meta.url);
 const read = (name) => readFile(new URL(name, site), "utf8");
@@ -60,6 +61,33 @@ test("every page uses shared local fonts and theme, without inline font drift", 
   assert.match(css, /prefers-reduced-motion:reduce/);
 });
 
+test("canvas text remains readable over the photographic linen reading area", async () => {
+  const css = await read("theme.css");
+  assert.match(css, /\.christmas-canvas\{background-image:var\(--canvas\),var\(--linen\)/);
+  assert.doesNotMatch(css, /\.christmas-canvas>main/);
+  assert.match(css, /\.christmas-canvas \.masthead\{border-bottom:0\}/);
+  const palette = {
+    ...tokens(css.match(/:root\{([\s\S]*?)\n\}/)[1]),
+    ...tokens(css.match(/\.christmas-canvas\{([^}]+)\}/)[1]),
+  };
+  for (const name of ["finder", "guides"]) {
+    const canvas = await sharp(await readFile(new URL(`images/${name}-canvas-2048.webp`, site)))
+      .resize(100, 150).removeAlpha().raw().toBuffer();
+    // The finder keeps its reading column left of the full-height still life.
+    const regions = name === "finder"
+      ? [{ left: 5, top: 0, width: 43, height: 50 }, { left: 5, top: 50, width: 90, height: 100 }]
+      : [{ left: 5, top: 0, width: 90, height: 12 }, { left: 5, top: 12, width: 48, height: 31 }, { left: 5, top: 43, width: 90, height: 107 }];
+    const pixels = Buffer.concat(await Promise.all(regions.map((region) =>
+      sharp(canvas, { raw: { width: 100, height: 150, channels: 3 } }).extract(region).raw().toBuffer())));
+    for (let i = 0; i < pixels.length; i += 3) {
+      const background = `#${pixels.subarray(i, i + 3).toString("hex")}`;
+      for (const foreground of ["ink", "muted", "accent", "gold-ink"]) {
+        assert.ok(contrast(palette[foreground], background) >= 4.5, `${name}: ${foreground} on ${background}`);
+      }
+    }
+  }
+});
+
 test("editorial styles stay lightweight and avoid gradients, shadows and uniform three-column cards", async () => {
   const styles = await Promise.all(["theme.css", "home.css", "guide.css"].map(read));
   const css = styles.join("\n");
@@ -85,7 +113,8 @@ test("the homepage keeps a focused finder without an example sidebar or fake pro
   assert.match(html, /class="recommendation-disclosure"/);
   assert.doesNotMatch(html, /GIFT_SVG|Illustrative placeholder/);
   const styles = await read("home.css");
-  assert.match(styles, /\.atelier\{max-width:840px;/);
+  assert.match(styles, /\.atelier>\.panel,\.atelier>\.loading\{width:50%;max-width:600px\}/);
+  assert.match(styles, /@media\(max-width:1000px\)\{[\s\S]*?\.atelier>\.panel,\.atelier>\.loading\{width:100%\}/);
   assert.match(html, /class="seasonal-hero"/);
   assert.match(html, /class="browse-band"/);
   assert.match(styles, /\.browse-band\{[^}]*border-block:3px double var\(--accent\)/);

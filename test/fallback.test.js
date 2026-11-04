@@ -1,10 +1,31 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { catalogueFallback, BUDGET_TITLES } from "../src/catalogue.js";
+import { CATALOGUE, catalogueCandidates, catalogueFallback, BUDGET_TITLES } from "../src/catalogue.js";
 import { handleRequest, normaliseInput } from "../src/core.js";
 
 const describe = (description) => normaliseInput({ mode: "describe", description }).value;
 const titles = (result) => result.ideas.map((idea) => idea.title);
+
+test("authored catalogue explanations fit the API without losing their final sentence", () => {
+  for (const item of CATALOGUE) {
+    assert.ok(item.w.length <= 260, `${item.t}: normalisation must not truncate the buying advice`);
+    assert.ok(item.w.trim().split(/\s+/).length <= 35, `${item.t}: keep explanations within the shared writing limit`);
+    assert.match(item.w, /[.!?]$/, `${item.t}: explanation must end with a complete sentence`);
+  }
+});
+
+test("catalogue explanations stay item-specific without inventing a keyword match", () => {
+  const { candidates } = catalogueCandidates(describe("My aunt is 40. Budget £100. No other details."));
+  assert.ok(candidates.length > 20);
+  const unmatched = candidates.filter((idea) => idea.matched === 0);
+  assert.ok(unmatched.length > 20);
+  assert.equal(new Set(unmatched.map((idea) => idea.why)).size, unmatched.length);
+  assert.ok(unmatched.every((idea) => idea.based_on === ""));
+  const camera = candidates.find((idea) => idea.title === "Instant camera");
+  assert.ok(camera);
+  assert.match(camera.why, /film format and cost per picture/);
+  assert.doesNotMatch(candidates.map((idea) => idea.why).join(" "), /guaranteed laughs|lasts a lifetime|noticeably better cup|versatile gift idea/);
+});
 
 test("fallback for a four-year-old honours age and the no-small-parts constraint", () => {
   const result = catalogueFallback(describe("My nephew is 4 and obsessed with dinosaurs and diggers. Nothing with small pieces please."));
@@ -61,6 +82,7 @@ test("missing Anthropic key returns recipient-aware catalogue ideas with an hone
   assert.equal(response.status, 503);
   assert.equal(data.fallback, true);
   assert.equal(data.source, "catalogue");
+  assert.match(data.error, /come from our catalogue, filtered using your answers/);
   assert.ok(data.ideas.length >= 4 && data.ideas.length <= 8);
   assert.ok(data.ideas.every((idea) => /baby|babies/i.test(idea.title)));
 });

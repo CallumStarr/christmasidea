@@ -1,10 +1,15 @@
 /* A photographic opening, with the finder kept in the first screen. */
-.seasonal-hero{position:relative;isolation:isolate;overflow:hidden;background:#ece2d4;color:#6d1028}
-.hero-photo{position:absolute;inset:0;z-index:-1;width:100%;height:100%;object-fit:cover;object-position:center 52%}
-.hero-copy{display:flex;flex-direction:column;justify-content:center;min-height:clamp(240px,20vw,360px);padding-block:28px}
+.seasonal-hero{position:relative;color:#6d1028}
+.hero-copy{display:flex;flex-direction:column;justify-content:center;min-height:240px;padding-block:36px 16px}
 .hero-copy .eyebrow{margin:0 0 14px;font-size:11px;color:#6d1028}
 .hero-copy h1{font-size:clamp(42px,4.4vw,64px);line-height:1.06;font-weight:400;letter-spacing:-.05em;color:#6d1028;margin:0;max-width:12ch;text-wrap:initial}
-.atelier{max-width:840px;padding-top:30px;padding-bottom:40px}
+.atelier{padding-top:12px;padding-bottom:40px}
+.atelier>.panel,.atelier>.loading{width:50%;max-width:600px}
+@media(max-width:1000px){
+  .christmas-canvas{background-size:100% auto}
+  .hero-copy{min-height:max(210px,37.5vw)}
+  .atelier>.panel,.atelier>.loading{width:100%}
+}
 h1 em,h2 em{font-weight:400;font-style:italic;font-synthesis:style}
 .deck{font-size:14px;line-height:1.6;color:var(--muted);margin:8px 0 12px}
 .panel{scroll-margin-top:24px}
@@ -109,7 +114,13 @@ legend,label.q{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
 .card p.connection{margin:0 0 28px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;line-height:1.6;color:var(--muted)}
 .connection strong{display:flex;align-items:center;gap:8px;color:var(--gold-ink);font:400 17px/1.4 var(--display);letter-spacing:-.01em;margin-bottom:8px}
 .connection strong::before{content:"";width:12px;height:1px;background:currentColor}
-.row{display:flex;align-items:stretch;gap:16px}
+.row{display:flex;align-items:stretch;flex-wrap:wrap;gap:12px}
+.row .save{align-self:flex-start;margin-left:auto}
+.row .merchant-links{flex-basis:100%}
+.merchant-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;flex:1;min-width:0}
+.merchant-offer{min-width:0}
+.merchant-offer .shop{min-height:64px}
+.offer-detail{font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere;margin:10px 0}
 .shop{display:flex;flex:1;align-items:center;justify-content:space-between;gap:14px;min-height:48px;padding:12px 0;color:var(--accent);border-bottom:1px solid var(--muted);font-size:14px;font-weight:500;line-height:1.4;text-decoration:none}
 .shop::after{content:"\2197";font-size:20px;transition:transform .18s}
 .shop:hover::after{transform:translate(2px,-2px)}
@@ -123,12 +134,12 @@ legend,label.q{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
 .verified .media{display:block;position:relative;aspect-ratio:16/9;min-height:190px;background:var(--surface);border-bottom:1px solid var(--line);overflow:hidden}
 .media img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:32px 24px;background:var(--surface);transition:opacity .2s}
 .media img.image-loading{opacity:0}
-.product-image-link{position:absolute;inset:0;z-index:1}
+.product-image{position:absolute;inset:0;z-index:1}
 .cat,.image-note,.product-badge{position:absolute;z-index:2;background:var(--surface);color:var(--muted);font-size:10px;max-width:calc(100% - 24px);padding:4px 8px;pointer-events:none}
 .cat{left:12px;top:10px}
 .image-note{right:12px;bottom:8px}
 .product-badge{left:12px;top:38px;color:var(--accent)}
-.product-price{font-size:17px;color:var(--accent);font-weight:500;margin:0 0 20px}
+.product-price{font-size:13px;color:var(--accent);font-weight:500;margin:8px 0}
 .concept-label{font-size:11px;color:var(--muted);margin:0 0 12px}
 .more{display:flex;align-items:center;flex-wrap:wrap;gap:24px;margin-top:40px}
 .source{font-size:12px;color:var(--muted);margin:0}
@@ -199,10 +210,10 @@ dialog::backdrop{background:rgb(28 14 20 / .65)}
   .guide-copy h3{font-size:24px}
 }
 @media(max-width:760px){
-  .hero-copy{min-height:210px;padding-block:24px}
+  .christmas-canvas{background-position:center top}
+  .hero-copy{min-height:max(210px,37.5vw);padding-block:24px}
   .hero-copy .eyebrow{font-size:9px;margin-bottom:12px;letter-spacing:.08em;max-width:17ch}
   .hero-copy h1{font-size:clamp(32px,7vw,48px);max-width:10ch}
-  .hero-photo{object-position:left center}
   .atelier{padding-top:24px;padding-bottom:28px}
   .panel-heading h2{font-size:28px}
   .deck{font-size:13px}
