@@ -9,11 +9,34 @@
   <link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/theme.css">
   <link rel="stylesheet" href="/guide.css">
+<script type="module" src="/site-shell.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#guide-content">Skip to content</a>
-  <header class="guide-masthead"><div class="guide-nav"><a class="guide-brand" href="/">Santa's Helper<small>The thought before the gift</small></a><nav aria-label="Site"><a href="/">The gift finder</a><a href="/gifts/">The gift guides</a></nav></div></header>
-  <main class="wrap" id="guide-content">
+  <header class="masthead">
+  <div class="season-strip">
+    <span>The Christmas gift edit</span>
+    <a class="season-guides" href="/gifts/">The gift guides &rarr;</a>
+    <span class="countdown" id="countdown" hidden></span>
+  </div>
+  <div class="wrap">
+    <nav class="nav" aria-label="Site">
+      <a class="brand" href="/">
+        <svg class="brand-mark" width="38" height="44" viewBox="0 0 38 44" fill="none" aria-hidden="true">
+          <path d="M19 39V7m0 23C7 29 4 22 4 22c10-1 15 8 15 8Zm0-10C8 18 7 11 7 11c8 0 12 9 12 9Zm0 5c12-2 15-10 15-10-10 0-15 10-15 10Zm0-12c7-4 8-11 8-11-8 2-8 11-8 11Z" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="7" cy="33" r="2" fill="currentColor"/><circle cx="29" cy="31" r="2" fill="currentColor"/>
+        </svg>
+        <span>Santa's Helper<small>Good gifts start with a person</small></span>
+      </a>
+      <div class="nav-links"><a href="/#form">The gift finder</a><a href="/gifts/">The gift guides</a></div>
+      <a class="nav-shortlist" id="nav-shortlist" href="/?shortlist=1" aria-label="Open your shortlist">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg>
+        <span>Shortlist</span><span class="saved-count" id="nav-count">0</span>
+      </a>
+    </nav>
+  </div>
+</header>
+  <main class="wrap legal-page" id="guide-content" tabindex="-1">
     <h1>About Santa's Helper</h1>
     <p>Santa's Helper helps people discover gift ideas for the people they care about. Suggestions are generated from the details a shopper chooses to provide and are ideas to research, not verified products, prices or safety advice.</p>
     <h2>Contact and operator details</h2>
@@ -22,5 +45,11 @@
     <p>Santa's Helper participates in the Amazon Associates Programme. We earn from qualifying purchases.</p>
     <p><a href="/privacy">Read the privacy notice</a>.</p>
   </main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-top"><a class="brand" href="/">Santa's Helper</a><p>For the people<br>on your list.</p><nav aria-label="Footer"><a href="/#form">Find a gift</a><a href="/gifts/">Gift guides</a><a href="/about">About and contact</a><a href="/privacy">Privacy</a></nav></div>
+    <div class="footer-bottom"><p>As an Amazon Associate I earn from qualifying purchases. Gift suggestions are ideas to research; always check product details, age guidance and current prices before buying.</p><span>Independent gift inspiration &middot; UK</span></div>
+  </div>
+</footer>
 </body>
 </html>

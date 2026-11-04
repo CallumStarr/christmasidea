@@ -1,0 +1,164 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile, readdir } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { runInNewContext } from "node:vm";
+
+const root = new URL("../", import.meta.url);
+const read = (name) => readFile(new URL(`site/${name}`, root), "utf8");
+
+test("every page shares the brand shell and exposes a route back to the shortlist", async () => {
+  const files = [
+    "index.html", "about.html", "privacy.html", "404.html",
+    ...(await readdir(new URL("site/gifts/", root))).filter((name) => name.endsWith(".html")).map((name) => `gifts/${name}`),
+  ];
+  for (const name of files) {
+    const html = await read(name);
+    assert.equal((html.match(/<header class="masthead">/g) || []).length, 1, name);
+    assert.equal((html.match(/<footer class="site-footer">/g) || []).length, 1, name);
+    assert.match(html, /class="brand-mark"/, name);
+    assert.match(html, /Good gifts start with a person/, name);
+    assert.match(html, /src="\/site-shell\.js"/, name);
+    assert.doesNotMatch(html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)?.[1] || "", /<footer/, `${name}: footer must be outside main`);
+    if (name !== "index.html") assert.match(html, /href="\/\?shortlist=1"/, name);
+  }
+});
+
+test("all eighty guide ideas include specific buying advice and descriptive affiliate actions", async () => {
+  const guides = (await readdir(new URL("site/gifts/", root))).filter((name) => name !== "index.html");
+  assert.equal(guides.length, 10);
+  const sprite = await read("gift-objects.svg");
+  const artwork = new Set();
+  for (const name of guides) {
+    const html = await read(`gifts/${name}`);
+    const ideas = [...html.matchAll(/<article class="idea">([\s\S]*?)<\/article>/g)];
+    assert.equal(ideas.length, 8, name);
+    for (const [, idea] of ideas) {
+      const note = idea.match(/<p class="buying-note"><strong>What to look for<\/strong>([^<]+)<\/p>/)?.[1];
+      assert.ok(note && note.length > 80, `${name}: missing substantive buying note`);
+      assert.match(idea, /aria-label="Search Amazon UK for [^"]+affiliate link, opens in a new tab/);
+    }
+    const symbol = html.match(/class="guide-illustration[^"]*"[\s\S]*?gift-objects\.svg#([^"]+)/)?.[1];
+    assert.ok(symbol && sprite.includes(`<symbol id="${symbol}"`), name);
+    artwork.add(symbol);
+    assert.match(html, /href="#gift-ideas"/);
+    assert.match(html, /href="#choosing"/);
+  }
+  assert.equal(artwork.size, 10, "each category needs its own illustration");
+});
+
+test("guide builds are repeatable and preserve authored CSS and legal content", async () => {
+  const names = ["theme.css", "home.css", "guide.css", "about.html", "privacy.html", "gifts/index.html", "gifts/gifts-for-gardeners.html"];
+  const before = await Promise.all(names.map(read));
+  execFileSync(process.execPath, ["scripts/build-site-pages.mjs"], { cwd: root, stdio: "pipe" });
+  const after = await Promise.all(names.map(read));
+  assert.deepEqual(after, before);
+});
+
+test("example descriptions restore quick mode, update the field and focus the caret", async () => {
+  const html = await read("index.html");
+  const source = html.slice(
+    html.indexOf('document.querySelectorAll(".prompt-chip")'),
+    html.indexOf("/* ---------- shortlist storage"),
+  );
+  const elements = new Map([
+    ["#quick-fields", { hidden: true }],
+    ["#guided-fields", { hidden: false }],
+    ["#description", {
+      value: "",
+      dispatchEvent(event) { this.event = event.type; },
+      focus() { this.focused = true; },
+      setSelectionRange(start, end) { this.selection = [start, end]; },
+    }],
+  ]);
+  const radio = { checked: false };
+  let click;
+  const example = {
+    dataset: { description: "For a keen gardener, around £40." },
+    addEventListener(_name, listener) { click = listener; },
+  };
+  runInNewContext(source, {
+    $: (selector) => elements.get(selector),
+    Event,
+    document: {
+      querySelector: () => radio,
+      querySelectorAll: (selector) => selector === ".prompt-chip" ? [example] : [],
+    },
+  });
+  elements.get("#quick-fields").hidden = true;
+  elements.get("#guided-fields").hidden = false;
+  click();
+  const field = elements.get("#description");
+  assert.equal(radio.checked, true);
+  assert.equal(elements.get("#quick-fields").hidden, false);
+  assert.equal(elements.get("#guided-fields").hidden, true);
+  assert.equal(field.value, example.dataset.description);
+  assert.equal(field.event, "input");
+  assert.equal(field.focused, true);
+  assert.deepEqual(field.selection, [field.value.length, field.value.length]);
+});
+
+test("secondary-page shortlist links open at startup and preserve unrelated URL state", async () => {
+  const html = await read("index.html");
+  const start = html.lastIndexOf("renderBar();");
+  const source = html.slice(start, html.indexOf("\n})();", start));
+  for (const search of ["?shortlist=1&campaign=gift#form", "?shortlist=0", ""]) {
+    let opened = 0;
+    let rewritten;
+    runInNewContext(source, {
+      URL,
+      location: { href: `https://christmasidea.co.uk/${search}` },
+      history: { replaceState(_state, _unused, url) { rewritten = url.href; } },
+      renderBar() {},
+      $: () => ({ click() { opened++; } }),
+    });
+    assert.equal(opened, search.startsWith("?shortlist=1") ? 1 : 0);
+    assert.equal(rewritten, opened ? "https://christmasidea.co.uk/?campaign=gift#form" : undefined);
+  }
+});
+
+function shell({ now, saved = "[]" }) {
+  const elements = new Map(["#countdown", "#nav-count", "a#nav-shortlist"].map((id) => [id, {
+    hidden: true, attrs: {}, children: [],
+    setAttribute(name, value) { this.attrs[name] = value; },
+    replaceChildren(...children) { this.children = children; },
+  }]));
+  const warnings = [];
+  return read("site-shell.js").then((source) => {
+    runInNewContext(source, {
+      Date: class extends Date { constructor(...args) { super(...(args.length ? args : [now])); } },
+      document: {
+        querySelector: (selector) => elements.get(selector),
+        createElement: () => ({}),
+      },
+      localStorage: { getItem: () => saved },
+      console: { warn: (...args) => warnings.push(args) },
+    });
+    return { elements, warnings };
+  });
+}
+
+test("the shared countdown handles Christmas Day and the following year without DST drift", async () => {
+  for (const [now, text] of [
+    ["2026-11-04T12:00:00Z", "51 days until Christmas"],
+    ["2026-12-24T12:00:00Z", "1 day until Christmas"],
+    ["2026-12-25T12:00:00Z", "It's Christmas Day!"],
+    ["2026-12-26T12:00:00Z", "364 days until Christmas"],
+  ]) {
+    const { elements } = await shell({ now });
+    assert.equal(elements.get("#countdown").children[0].textContent, text);
+  }
+});
+
+test("secondary-page shortlist counts use the same validated storage shape as the finder", async () => {
+  const { elements } = await shell({
+    now: "2026-11-04",
+    saved: JSON.stringify([{ title: "Notebook", query: "garden notebook" }, null, { title: "Invalid" }]),
+  });
+  assert.equal(elements.get("#nav-count").textContent, 1);
+  assert.equal(elements.get("a#nav-shortlist").attrs["aria-label"], "Open your shortlist, 1 saved idea");
+  const invalid = await shell({ now: "2026-11-04", saved: "invalid" });
+  assert.equal(invalid.warnings.length, 1);
+  assert.equal(invalid.elements.get("#nav-count").hidden, true);
+  assert.equal(invalid.elements.get("a#nav-shortlist").attrs["aria-label"], "Open your shortlist");
+});

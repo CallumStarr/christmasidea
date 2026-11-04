@@ -52,6 +52,66 @@ p{overflow-wrap:break-word}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .skip-link{position:absolute;top:8px;left:8px;z-index:30;padding:12px 20px;background:var(--accent);color:var(--on-accent);transform:translateY(-150%)}
 .skip-link:focus{transform:none}
+.wrap{width:min(1320px,100%);margin-inline:auto;padding-inline:clamp(24px,4vw,56px)}
+.season-strip{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:8px max(24px,calc((100vw - 1208px)/2));background:#1b3b2b;color:#f5efdf;font-size:12px;letter-spacing:.03em;min-height:36px}
+.season-guides{display:none}
+.season-strip :focus-visible{outline-color:#e0c58b}
+.countdown{font-variant-numeric:tabular-nums;white-space:nowrap}
+.countdown .short{display:none}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:24px;min-height:96px;border-bottom:1px solid var(--line)}
+.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--accent);font:500 28px/1 var(--display);letter-spacing:-.045em;white-space:nowrap}
+.brand small{display:block;font:400 9px/1.5 var(--body);letter-spacing:.09em;text-transform:uppercase;margin-top:8px}
+.brand-mark{color:var(--gold-ink);flex:none}
+.nav-links{display:flex;align-items:center;gap:28px;font-size:14px}
+.nav-links a{position:relative;text-decoration:none;padding:17px 0}
+.nav-links a::after{content:"";position:absolute;left:0;right:0;bottom:9px;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .2s}
+.nav-links a:hover::after,.nav-links a[aria-current]::after{transform:scaleX(1)}
+.nav-shortlist{display:flex;align-items:center;gap:9px;background:transparent;border:0;padding:12px 0 12px 12px;min-height:44px;font-size:14px;cursor:pointer;color:var(--accent);text-decoration:none}
+.saved-count{display:grid;place-items:center;min-width:24px;height:24px;border:1px solid var(--line);border-radius:50%;font-size:12px;font-variant-numeric:tabular-nums}
+.site-footer{margin-top:24px;padding:48px 0 28px;background:#1b3b2b;color:#eee8d8}
+.site-footer .brand{color:#f4ead5;font-size:30px}
+.footer-top{display:grid;grid-template-columns:1fr 1fr auto;gap:40px;align-items:start;padding-bottom:40px}
+.footer-top>p{font:400 30px/1.2 var(--display);letter-spacing:-.025em;margin:0}
+.footer-top nav{display:flex;flex-direction:column;gap:4px;font-size:14px}
+.footer-top nav a{padding:7px 0}
+.footer-bottom{display:flex;justify-content:space-between;gap:40px;border-top:1px solid #60715d;padding-top:24px;font-size:12px;line-height:1.6;color:#cbd2c2}
+.footer-bottom p{max-width:76ch;margin:0}
+.footer-bottom>span{white-space:nowrap}
+.site-footer :focus-visible{outline-color:#e0c58b}
+.object-scene{display:block;width:100%;height:auto;fill:none}
+@media(max-width:1000px){
+  .nav-links{gap:20px}
+  .brand{font-size:25px}
+  .nav-shortlist>span:not(.saved-count){display:none}
+}
+@media(max-width:760px){
+  .season-strip{padding:0 24px;font-size:12px;min-height:40px}
+  .season-strip>span:first-child{display:none}
+  .season-guides{display:flex;align-items:center;min-height:40px;text-decoration:none}
+  .countdown .long{display:none}
+  .countdown .short{display:inline}
+  .nav{min-height:80px;gap:12px}
+  .brand{font-size:25px;gap:7px}
+  .brand-mark{width:26px;height:34px}
+  .brand small{font-size:8px;letter-spacing:.065em;margin-top:6px}
+  .nav-links{display:none}
+  .nav-shortlist{gap:7px}
+  .footer-top{grid-template-columns:1fr 1fr;gap:28px}
+  .footer-top .brand{grid-column:1/-1}
+  .footer-top>p{font-size:25px}
+  .footer-bottom{flex-direction:column;gap:16px}
+  .footer-bottom>span{white-space:normal}
+}
+@media(max-width:359px){
+  .wrap{padding-inline:20px}
+  .season-strip{padding-inline:20px}
+  .brand{font-size:22px}
+  .brand small{font-size:7px}
+  .brand-mark{width:23px}
+  .nav-shortlist{padding-left:0;gap:5px}
+  .saved-count{min-width:22px;height:22px}
+  .footer-top{grid-template-columns:1fr}
+}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }

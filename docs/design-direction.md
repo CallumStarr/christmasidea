@@ -16,15 +16,15 @@ Sources checked on 4 November 2026:
 
 ## Art direction
 
-**A small, beautifully run gift atelier.** The product is the consideration that happens before wrapping, not a dashboard that happens to recommend things.
+**A warm British Christmas gift edit.** Concrete ideas, useful buying advice and a recognisable illustrated vocabulary should demonstrate the service, rather than relying on abstract promises of thoughtfulness.
 
 1. A recognisable wordmark, botanical maker's mark and restrained seasonal masthead.
 2. Warm parchment, deep forest, aged gold and a little terracotta. Fraunces is expressive, not indiscriminately enormous; Figtree handles clear, comfortable interface text.
-3. Original, self-hosted SVG still-life artwork: patterned wrapping, ribbon, foliage and a handwritten-note-like composition. Flat ink and paper colours; no gradients, stock-image dependencies, canvas loops or 3D libraries.
-4. A compact writing desk beside the art. One clear prompt, optional examples, a real submit button and a quieter guided alternative. Privacy and disclosures remain accessible and explicit.
+3. Original, self-hosted SVG object illustrations: books, garden snips, a coffee flask, toys and hobby equipment. Ten distinct guide scenes and one example collection share the same ink-and-paper vocabulary. No gradients, stock-image dependencies, canvas loops or 3D libraries.
+4. A compact finder beside an explicitly labelled example collection. Show how a description becomes ideas, without pretending that illustrations are product listings. One clear prompt, working examples, a real submit button and a quieter guided alternative. Privacy and disclosures remain accessible and explicit.
 5. A featured typographic selection, a complementary adjacent idea, then lighter editorial entries. No invented photographs or giant placeholder boxes. Product imagery appears only when the existing verified-product pipeline provides it.
 6. Useful animation only: short button/arrow transitions, a gentle first entrance and a legible curation sequence. No scroll hijacking, marquees, parallax or cursor effects.
-7. Illustrated gift-guide starting points and a complete colophon, rather than a list tacked onto the bottom.
+7. Illustrated guide starting points, substantial buying notes and related reading. Every page uses the same masthead and footer. The homepage is the shared-markup source; the page generator synchronizes the shell into generated and authored pages while preserving legal content and CSS.
 
 ## Implementation sequence
 
@@ -47,16 +47,17 @@ Sources checked on 4 November 2026:
 
 Visual quality is a judgement, not a measurable promise of perfection. The final review should state what was actually checked and distinguish synthetic browser fixtures from live provider testing.
 
-## Completed review
+## Review evidence
 
-- Rebuilt the homepage, recommendation presentation, guide directory, generated guides, legal-page mastheads and favicon around this direction.
-- Reviewed real desktop and mobile screens. At 1440 x 900 the primary action ends at 872 CSS pixels; at 375 x 844 it ends at 826. Enabling the 65-pixel security-widget region below the action does not move it; token gating is unchanged. Large artwork follows the finder on mobile.
-- Homepage and populated collection: no horizontal overflow at all seven specified widths, in both themes. Guide directory, two individual guides, about, privacy and 404: 60 additional layout checks.
-- Both local font faces loaded. All three external SVG symbols rendered. A computed-style contrast check covered 160 rendered text nodes per theme without failures; automated tests also check shared text/focus tokens and fixed artwork palettes.
-- Exercised empty validation, full example payloads, stable input geometry, both form modes, finite loading stages, duplicate-submit blocking, cancellation, timeout, retry and zero/one/eight-result states.
-- Exercised save/remove, counts, dialog Escape and focus restoration, copying and copy failure, blocked storage, dismissal, feature promotion and the all-dismissed state. The dock is restricted to the collection; its visibility transitions have an executable state regression test.
-- Verified product enrichment, identical image/shopping destinations, image failure and rejection of stale enrichment for a replaced collection. Concept-only cards have no pretend photographs.
-- Combined authored CSS: 7,696 bytes gzipped. Original still-life: 6,094 bytes; motif sprite: 1,227 bytes. No new UI dependencies.
-- Generated-page builds preserve authored stylesheet hashes. The 34 focused tests and Cloudflare Worker deployment dry-run pass.
+- Reassessed desktop and mobile screenshots after implementation, then corrected SVG fill inheritance and simplified cramped mobile form labels. Reviewed the dark homepage, populated recommendations, illustrated directory and mobile guide composition again.
+- Checked all 15 routes at 320, 375, 390, 768, 1024, 1440 and 1920 CSS pixels in both themes: 210 layout checks without horizontal overflow, clipped main headings or duplicate shared shells.
+- A populated eight-idea collection also passed all 14 width/theme combinations. The saved-ideas dialog fits at 320 pixels, and the guided form has no overflow at 375 pixels.
+- A computed-colour scan of all routes in both themes, plus a populated dark collection, checked 2,717 visible text elements without a text-contrast failure. The scan composites ancestor background colours and respects the large-text threshold; it is not a full accessibility certification.
+- Both local font faces loaded. The homepage submit action ends at approximately 851 CSS pixels at 1440 x 900, and 762 at 375 x 844. The security-widget region remains below the action, with production token gating unchanged.
+- Exercised zero/one/eight-idea responses, single-card layout, save, dismissal, featured-card promotion, all-dismissed messaging, dialog Escape and saved-idea navigation from a secondary page.
+- Verified that trying the illustrated example from guided mode switches to the quick description and fills it. Service errors remain visible, and cancelling a pending request preserves the description.
+- Automated regressions cover the shared shell, all 80 buying notes, ten distinct guide illustrations, repeatable generation, countdown edge cases and validated shortlist counts. Existing frontend/API and Turnstile regressions remain part of validation.
+- Final validation: all 282 tests pass with `npm test`; `npx wrangler deploy --dry-run` and `git diff --check` pass. The asynchronous frontend integration test now waits against a bounded deadline rather than a CPU-dependent loop count.
+- No new runtime or UI dependencies, external fonts or image hosts. The active object sprite is 13,272 bytes; combined authored CSS is 8,502 bytes gzipped, below the 10 kB budget.
 
-Interaction checks used synthetic ideas/products and a locally disabled Turnstile challenge, not live AI or Amazon results. Existing token-gate regression tests cover security-token consumption and recovery. No deployment was performed. Production Core Web Vitals still require field measurement after deployment.
+Interaction checks used browser-only synthetic ideas and a locally disabled Turnstile challenge, not live AI or Amazon results. No production configuration was relaxed and no deployment was performed. Production Core Web Vitals and live-provider behaviour still require post-deployment measurement; local screenshots and layout checks do not establish those results.

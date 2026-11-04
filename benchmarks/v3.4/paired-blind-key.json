@@ -1,0 +1,125 @@
+{
+  "seed": "santas-helper-paired-review-v1",
+  "versions": {
+    "case-01": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-02": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-03": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-04": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-05": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-06": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-07": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-08": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-09": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-10": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-11": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-12": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-13": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-14": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-15": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-16": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-17": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-18": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-19": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-20": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-21": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-22": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-23": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-24": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-25": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-26": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-27": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-28": {
+      "A": "v3.3-preserved-baseline",
+      "B": "v3.4-current-engine"
+    },
+    "case-29": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    },
+    "case-30": {
+      "A": "v3.4-current-engine",
+      "B": "v3.3-preserved-baseline"
+    }
+  }
+}

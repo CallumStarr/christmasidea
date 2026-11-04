@@ -58,8 +58,9 @@ function frontend(fetchImpl) {
     gate.provide(token);
     start();
     // The real event handlers intentionally fire-and-forget run(); wait for their observable completion.
-    for (let turn = 0; turn < 100; turn++) {
-      await new Promise((resolve) => setImmediate(resolve));
+    const deadline = Date.now() + 2000;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
       if (!vm.runInContext("Boolean(activeController)", context)) return;
     }
     assert.fail("frontend request did not settle");

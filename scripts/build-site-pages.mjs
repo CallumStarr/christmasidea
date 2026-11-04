@@ -24,7 +24,7 @@ const GUIDES = [
   {
     slug: "gifts-for-4-year-olds",
     h1: "Gift ideas for 4-year-olds",
-    desc: "Safe, screen-free gift ideas for 4-year-olds, from pretend play to chunky puzzles, with tips for choosing quiet or noisy toys.",
+    desc: "Screen-free gift ideas for 4-year-olds, from pretend play to chunky puzzles, with tips on age guidance, space and noise.",
     intro: "Four-year-olds are curious, imaginative and increasingly independent. The best gifts give them something to pretend, build, sort or make, rather than something that only does one thing when a button is pressed.",
     tips: [
       "Check the age label on the box. If the child has younger siblings, keep small-part toys well away from them.",
@@ -32,14 +32,14 @@ const GUIDES = [
       "Pick one thing they can do with a grown-up and one they can do alone.",
     ],
     ideas: [
-      ["Chunky wooden jigsaw puzzle", "Large pieces suit small hands and build early problem-solving.", "chunky wooden jigsaw puzzle 4 years"],
-      ["Dressing-up costume", "Fuels imaginative role play, from firefighter to dragon.", "kids dressing up costume 4-5 years"],
-      ["Large building blocks", "Open-ended and quiet; big enough for little hands.", "large building blocks toddler preschool"],
-      ["Picture book set", "Short, funny stories to share at bedtime.", "picture books age 4 bundle"],
-      ["Play-dough or modelling clay kit", "Squishing and rolling builds finger strength and creativity.", "play dough set kids"],
-      ["Kids' watercolour paint set", "Washable paints and a pad let them make their own art.", "kids washable watercolour paint set"],
-      ["Balance bike or scooter", "Gets them outside and builds coordination. Check the weight and height guidance.", "kids balance bike 4 year old"],
-      ["Simple first board game", "Teaches turn-taking with short, friendly rules.", "first board game preschool 4 years"],
+      ["Chunky wooden jigsaw puzzle", "A satisfying little challenge for a child who likes finishing a job themselves.", "chunky wooden jigsaw puzzle 4 years", "Choose the piece count for their experience, not just their age. Clear pictures and a sturdy storage tray make it easier to start again."],
+      ["Dressing-up costume", "For the child whose living room is a fire station one day and a dragon's cave the next.", "kids dressing up costume 4-5 years", "Check sizing, fastening and washing instructions. A simple tabard they can put on themselves may get more use than a complicated outfit."],
+      ["Large building blocks", "Something to build, knock down and reinvent without batteries or instructions.", "large building blocks toddler preschool", "Match an existing block system if they have one. Check the age label and whether the box includes enough pieces for a satisfying build."],
+      ["Picture book set", "New characters for the bedtime rotation, with plenty to spot on every page.", "picture books age 4 bundle", "Check which titles the family already owns. A single beautifully illustrated story can be a better gift than a large mixed bundle."],
+      ["Play-dough or modelling clay kit", "For making a bakery, a dinosaur or whatever the afternoon calls for.", "play dough set kids", "Check the age label, ingredients and allergy guidance. Washable tools and resealable tubs are useful; a giant accessory set is not essential."],
+      ["Kids' watercolour paint set", "A small invitation to make something, rather than follow a screen.", "kids washable watercolour paint set", "Look for age-appropriate washable paints and add thick paper. Check the contents rather than assuming a set includes a usable brush."],
+      ["Balance bike or scooter", "For the child who would rather spend the afternoon outside.", "kids balance bike 4 year old", "Ask the parents first. Check seat or handlebar height, rider limits, storage space and suitable protective equipment."],
+      ["Simple first board game", "Short rounds and shared laughs while they get the hang of taking turns.", "first board game preschool 4 years", "Look for simple rules and a short playing time. Check the number of players and whether an adult needs to read every turn."],
     ],
   },
   {
@@ -53,14 +53,14 @@ const GUIDES = [
       "Something for the parents, such as a meal voucher or a treat, is often the most appreciated gift.",
     ],
     ideas: [
-      ["Soft crinkle cloth book", "High-contrast pages for looking at together.", "soft crinkle cloth baby book high contrast"],
-      ["Muslin squares", "Endlessly useful and machine washable.", "muslin cloth squares baby pack"],
-      ["Baby keepsake memory box", "A place to keep first-year mementoes.", "baby keepsake memory box"],
-      ["Soft rattle", "Light and easy for tiny hands to hold.", "soft fabric baby rattle"],
-      ["Baby bath towel with hood", "Cosy after bath time.", "hooded baby bath towel"],
-      ["Baby milestone cards", "Fun for photos of each month.", "baby milestone cards"],
-      ["Soft comforter toy", "A cuddly companion for the pram or car seat.", "baby comforter soft toy"],
-      ["Treat for the new parents", "Good coffee, tea or a cosy blanket for the 3am feeds.", "gift set new parents coffee tea"],
+      ["Soft crinkle cloth book", "A few bold pictures to explore together, even before there are words.", "soft crinkle cloth baby book high contrast", "Check the stated age suitability and washing instructions. Avoid loose accessories, long cords or detachable small parts."],
+      ["Muslin squares", "The practical extra that can go straight into the changing bag.", "muslin cloth squares baby pack", "Look for machine-washable fabric and useful dimensions. Ask whether the parents have a preferred material before buying a large pack."],
+      ["Baby keepsake memory box", "Somewhere for the hospital bracelet, first cards and other tiny mementoes.", "baby keepsake memory box", "Check internal dimensions and compartments. This is storage for an adult to keep out of the baby's reach, not a nursery toy."],
+      ["Soft rattle", "A simple first toy for supervised play with a grown-up.", "soft fabric baby rattle", "Choose a clearly age-labelled toy from a reputable seller. Check care instructions and inspect it regularly for loose stitching or parts."],
+      ["Baby bath towel with hood", "A useful addition to the bath-time routine, without guessing clothing sizes.", "hooded baby bath towel", "Check the towel's actual dimensions and care label. A soft, absorbent fabric matters more than decorative extras."],
+      ["Baby milestone cards", "A small keepsake for parents who enjoy documenting the first year.", "baby milestone cards", "Read the included milestones before ordering. Cards are photo props for adults to handle and should be kept out of the baby's reach."],
+      ["Board book for shared reading", "A story to return to as the baby grows, rather than another cuddly toy.", "baby board book high contrast", "Choose sturdy pages and a clearly stated age range. Skip electronic extras if the parents prefer a quiet home."],
+      ["Treat for the new parents", "Something for the people doing the night feeds, not just the new arrival.", "gift set new parents coffee tea", "Ask what they would actually enjoy. Dietary requirements and caffeine preferences matter; a meal voucher can be more useful than another hamper."],
     ],
   },
   {
@@ -74,14 +74,14 @@ const GUIDES = [
       "Check recommended ages on kits that include small parts or tools.",
     ],
     ideas: [
-      ["Glow-in-the-dark star ceiling stickers", "Turns a bedroom into a night sky.", "glow in the dark star stickers ceiling"],
-      ["Beginner telescope", "Look for stable mounts rather than huge magnification claims.", "beginner telescope kids"],
-      ["Solar system model kit", "A hands-on build that teaches the planets.", "solar system model kit kids"],
-      ["Illustrated book about space", "Full-page pictures and clear explanations.", "illustrated space book children"],
-      ["Planisphere or star map", "Helps find constellations on clear nights.", "planisphere star finder"],
-      ["Rocket building kit", "Construction and science in one project.", "build your own rocket kit"],
-      ["Space-themed jigsaw", "A calm activity for rainy days.", "space jigsaw puzzle"],
-      ["Binoculars for stargazing", "Easy for beginners and good for wildlife as well.", "binoculars for stargazing beginners"],
+      ["Glow-in-the-dark star ceiling stickers", "For the space fan who would like a little of the night sky indoors.", "glow in the dark star stickers ceiling", "Check the quantity, sizes and wall-surface guidance. For a child's room, ask a parent before gifting anything that attaches to the ceiling."],
+      ["Beginner telescope", "For someone ready to make observing the sky a proper hobby.", "beginner telescope kids", "Prioritise a stable mount and straightforward setup over magnification claims. Never observe the sun without specialist equipment and expert guidance."],
+      ["Solar system model kit", "For a hands-on learner who would rather build the planets than just read about them.", "solar system model kit kids", "Check the age range, small parts and whether paint or glue is included. Make sure there is somewhere to display the finished model."],
+      ["Illustrated book about space", "A good choice for the endlessly curious person with one more question.", "illustrated space book children", "Match the reading level and check the publication date. Adult observers may prefer a practical sky guide to a general children's encyclopaedia."],
+      ["Planisphere or star map", "A screen-free way to work out what is overhead on a clear night.", "planisphere star finder", "Choose one suitable for UK latitudes. A readable rotating planisphere is more practical outdoors than a purely decorative constellation print."],
+      ["Rocket building kit", "An afternoon project for the person fascinated by how things fit together.", "build your own rocket kit", "Distinguish a display model from a launching kit. Check tools, consumables, recommended ages and any outdoor-space or supervision requirements."],
+      ["Space-themed jigsaw", "A night-sky project for days when the real weather is not cooperating.", "space jigsaw puzzle", "Match the piece count to their patience and available table space. A detailed reference image helps with large areas of dark sky."],
+      ["Binoculars for stargazing", "A practical alternative for someone not ready to store and set up a telescope.", "binoculars for stargazing beginners", "Consider weight and whether they can hold them comfortably; some need a tripod. Never point binoculars at the sun."],
     ],
   },
   {
@@ -95,20 +95,20 @@ const GUIDES = [
       "Seasonal extras such as seed collections and bird feeders suit almost every garden.",
     ],
     ideas: [
-      ["Stainless-steel hand trowel and fork", "Strong, rust-resistant and comfortable to hold.", "stainless steel hand trowel fork set"],
-      ["Gardening gloves", "Breathable, thorn-resistant pairs get worn out quickly.", "gardening gloves thorn resistant women men"],
-      ["Seed collection", "Easy to grow herbs or flowers for next spring.", "gardener seed collection gift"],
-      ["Kneeler and seat", "Easier on the knees and back.", "garden kneeler seat"],
-      ["Hand cream for working hands", "A small luxury after a day in the soil.", "gardener hand cream"],
-      ["Bird feeder", "Brings wildlife to the garden all year.", "garden bird feeder"],
-      ["Gardening journal", "For planting plans and notes.", "garden planner journal"],
-      ["Pruning snips", "Precise and light for deadheading and herbs.", "garden snips pruning secateurs"],
+      ["Stainless-steel hand trowel and fork", "A worthwhile upgrade for the gardener still using the bent trowel from the back of the shed.", "stainless steel hand trowel fork set", "Look for a comfortable handle and a solid join between head and handle. A tool they enjoy holding beats a large set of flimsy extras."],
+      ["Gardening gloves", "A fresh pair for the person whose current ones have seen several winters.", "gardening gloves thorn resistant women men", "Check hand size and the kind of work they do. Fine planting and thorny pruning need different levels of protection; no glove is puncture-proof."],
+      ["Seed collection", "Next spring's project in a small envelope, especially for a cook who grows herbs.", "gardener seed collection gift", "Check sowing dates, available growing space and whether the collection suits pots. Clearly labelled individual packets are easier to plan with."],
+      ["Kneeler and seat", "A practical option for someone who spends a long time planting or weeding at ground level.", "garden kneeler seat", "Check dimensions, weight limits and stability on their garden surface. Ask first rather than assuming an aid will suit their needs."],
+      ["Hand cream for working hands", "A small end-of-day ritual after washing off the soil.", "gardener hand cream", "Check fragrance and ingredient preferences. A modest tube paired with a good nail brush can feel more considered than a generic gift basket."],
+      ["Bird feeder", "Something to watch from the kitchen window between gardening sessions.", "garden bird feeder", "Choose a feeder that opens easily for cleaning, with a suitable place to hang it. Check current wildlife guidance on hygiene and feeding."],
+      ["Gardening journal", "For the planting dates, unexpected successes and things to do differently next year.", "garden planner journal", "Look for enough free-writing space and a practical size. An undated journal works better than one that starts halfway through the growing year."],
+      ["Pruning snips", "For picking herbs and cutting flowers without reaching for the kitchen scissors.", "garden snips pruning secateurs", "Choose fine snips for soft stems, not heavy branches. Check hand fit, blade protection and the closing catch; they are not a substitute for secateurs."],
     ],
   },
   {
     slug: "gifts-for-history-lovers",
     h1: "Gift ideas for history lovers",
-    desc: "Gift ideas for history buffs: books, models, maps and experiences that go beyond the usual.",
+    desc: "Gift ideas for history lovers: books, models, maps and puzzles, with advice on choosing a period and checking the details.",
     intro: "History lovers are often specific about periods and places. Start with the era they love, then pick something to read, build or display.",
     tips: [
       "Check what they already own; keen readers often have the famous titles.",
@@ -116,14 +116,14 @@ const GUIDES = [
       "Maps, prints and models make good display gifts.",
     ],
     ideas: [
-      ["Narrative history book", "Well-written books on a period they love.", "popular history book bestseller"],
-      ["Historical atlas", "Beautiful and endlessly browsable.", "historical atlas world history"],
-      ["Roman or medieval model kit", "A hands-on project for a quiet weekend.", "historical model kit"],
-      ["History trivia game", "Fun for family evenings.", "history trivia board game"],
-      ["Reproduction map print", "Frame it for the study.", "vintage historical map print"],
-      ["Museum or heritage membership gift", "A year of visits to castles and houses.", "heritage membership gift"],
-      ["Timeline wall chart", "A visual overview they can pin up.", "history timeline wall chart"],
-      ["Biography of someone they admire", "A personal choice that shows you paid attention.", "biography historical figure"],
+      ["Narrative history book", "An absorbing account of the period they always bring up at dinner.", "popular history book bestseller", "Start with their favourite era, then check their shelves. Read a sample: a specialist reader and a casual enthusiast may want very different levels of detail."],
+      ["Historical atlas", "For someone who likes to understand where a story happened, not just when.", "historical atlas world history", "Check the geographic focus, period covered and printed size. Clear maps with readable labels matter more than an impressive page count."],
+      ["Roman or medieval model kit", "A weekend project with a finished object for the shelf.", "historical model kit", "Match the historical period and skill level. Check the scale, display dimensions and whether paints, glue or tools are needed separately."],
+      ["History trivia game", "A chance to put all those accumulated facts to use with friends.", "history trivia board game", "Check player numbers, typical playing time and geographic bias. A very specialist quiz can leave everyone except the recipient out of the game."],
+      ["Reproduction map print", "A particular city, journey or home town made into something to keep.", "vintage historical map print", "Check the date, print dimensions and whether a frame is included. Make sure a reproduction is clearly described as such."],
+      ["Museum-inspired puzzle", "An afternoon with a favourite collection, without finding room for another ornament.", "museum art history jigsaw puzzle", "Choose a subject they recognise and a suitable piece count. Check the finished dimensions before committing their dining table to it."],
+      ["Timeline wall chart", "For someone who enjoys connecting people and events across different periods.", "history timeline wall chart", "Read the period coverage and actual dimensions. Fold-out formats suit limited wall space; tiny text can make a large timeline frustrating."],
+      ["Biography of someone they admire", "A specific choice that shows you remembered the person behind their fascination.", "biography historical figure", "Check the author and whether it is a new account or a reissue. For a serious enthusiast, a well-sourced biography is preferable to a general gift edition."],
     ],
   },
   {
@@ -137,14 +137,14 @@ const GUIDES = [
       "Avoid flavoured blends unless you know their tastes.",
     ],
     ideas: [
-      ["Pour-over coffee set", "Simple, stylish way to brew a better cup.", "pour over coffee dripper set"],
-      ["Insulated travel mug", "Keeps drinks hot on the commute or walk.", "insulated travel mug leak proof"],
-      ["Tea infuser teapot", "Glass pots show off loose leaf tea.", "glass teapot infuser loose leaf"],
-      ["Hand coffee grinder", "Fresh grounds make a big difference.", "manual coffee grinder"],
-      ["Handmade ceramic mug", "A pretty everyday luxury.", "handmade ceramic mug"],
-      ["Milk frother", "Lattes and hot chocolate at home.", "handheld milk frother"],
-      ["Tea tasting set", "A sampler lets them find favourites.", "tea tasting sampler gift set"],
-      ["Coffee scoop and storage tin", "Keeps beans fresh and tidy.", "coffee storage canister airtight"],
+      ["Pour-over coffee set", "For the person who enjoys making the coffee almost as much as drinking it.", "pour over coffee dripper set", "Check filter size, whether filters are included and whether the dripper sits on their mug or needs a separate server. Match their current brewing habit."],
+      ["Insulated travel mug", "A practical gift for a slow coffee drinker or a long morning commute.", "insulated travel mug leak proof", "Check capacity, cup-holder fit and cleaning instructions. A splash-resistant lid is not necessarily safe to carry loose in a bag."],
+      ["Tea infuser teapot", "Space for loose leaves to open up, and a reason to make a proper pot.", "glass teapot infuser loose leaf", "Look for a removable basket and check the serving capacity. Make sure the care instructions suit the way they wash their everyday crockery."],
+      ["Hand coffee grinder", "For someone ready to grind just enough beans for each brew.", "manual coffee grinder", "Check adjustment range and capacity against their brewing method. Espresso needs more precision than many entry-level grinders can offer."],
+      ["Handmade ceramic mug", "A small upgrade to an everyday ritual, with no new technique to learn.", "handmade ceramic mug", "Check capacity and handle shape, not just the photograph. Confirm dishwasher and microwave suitability, and allow for handmade variations."],
+      ["Milk frother", "For a home hot chocolate or a milk-topped morning coffee.", "handheld milk frother", "Check how it is powered and whether batteries are included. A handheld whisk does not heat milk; a jug-style frother takes more cupboard space."],
+      ["Tea tasting set", "Several small discoveries rather than one large tin of the wrong blend.", "tea tasting sampler gift set", "Check caffeine preferences, flavours and whether the tea is loose-leaf or bagged. Read ingredients and allergen information before buying food or drink."],
+      ["Coffee scoop and storage tin", "An easy-to-use home for the beans that otherwise live in a folded bag.", "coffee storage canister airtight", "Check capacity and lid design. Pairing a tin with their usual beans is more personal than choosing an unfamiliar flavoured coffee."],
     ],
   },
   {
@@ -158,14 +158,14 @@ const GUIDES = [
       "Skip fragrance unless you know the scents she wears.",
     ],
     ideas: [
-      ["Soft throw blanket", "Cosy for the sofa on winter evenings.", "soft throw blanket sofa"],
-      ["Photo frame or personalised photo book", "A family memory she can display.", "personalised photo book family"],
-      ["Spa-at-home gift set", "Candles, bath salts and a face mask.", "spa gift set bath salts candle"],
-      ["Good-quality mug and treats", "A small ritual she will enjoy daily.", "mug tea gift set"],
-      ["Book by her favourite author", "A guaranteed pleasure.", "bestselling novel paperback"],
-      ["Cookbook for her cuisine", "Inspiration if she loves cooking.", "cookbook easy home cooking"],
-      ["Slippers", "Comfortable and practical.", "womens memory foam slippers"],
-      ["Jigsaw or craft kit", "A calm hobby for quiet evenings.", "jigsaw puzzle 1000 pieces"],
+      ["Soft throw blanket", "For her usual spot on the sofa, in a colour that actually belongs in her home.", "soft throw blanket sofa", "Check fabric, dimensions and washing instructions. A throw that only looks good folded over an armchair may not be big enough to curl up under."],
+      ["Photo frame or personalised photo book", "A favourite memory given a life beyond the phone camera roll.", "personalised photo book family", "Check image quality, layout and the ordering deadline. Leave time to review a proof; personalisation often changes return options."],
+      ["Bath-time treats", "For someone who already enjoys taking a little time over a bath.", "bath salts gift set", "Check fragrance and ingredient preferences. Do not assume she wants scented products; a good towel is an alternative if you are unsure."],
+      ["Good-quality mug and treats", "Her usual tea or coffee, with something good to go alongside it.", "mug tea gift set", "Choose the drink she actually buys, and check dietary needs. One well-chosen mug and her favourite biscuits can beat an oversized generic hamper."],
+      ["Book by her favourite author", "An easy next chapter when you know whose books she keeps returning to.", "bestselling novel paperback", "Check the exact title against her shelves or wish list. Consider print size, format and whether a gift receipt would be useful."],
+      ["Cookbook for her cuisine", "New ideas for someone who genuinely loves trying a recipe.", "cookbook easy home cooking", "Match the cuisine, dietary preferences and available cooking time. Give it as inspiration, not an expectation that she should cook for everyone."],
+      ["Slippers", "An everyday comfort, chosen for fit rather than a novelty slogan.", "womens memory foam slippers", "Check her size, preferred open or closed back, sole and care instructions. Keep the receipt: comfort is difficult to judge from a listing."],
+      ["Jigsaw or craft kit", "Something absorbing for the quiet days between Christmas and New Year.", "jigsaw puzzle 1000 pieces", "Match the activity to an existing interest. Check skill level, included materials and whether she will need extra equipment to finish it."],
     ],
   },
   {
@@ -179,20 +179,20 @@ const GUIDES = [
       "Experience gifts and good food are reliable.",
     ],
     ideas: [
-      ["Quality multi-tool", "Useful for jobs around the house or garden.", "multi tool pliers stainless"],
-      ["Insulated flask", "Keeps tea hot on walks and trips.", "insulated flask 1 litre"],
-      ["Biography or history book", "For quiet evenings.", "history book popular non fiction"],
-      ["Cordless torch or head torch", "Handy for the car, shed or camping.", "rechargeable head torch"],
-      ["Craft beer or whisky tasting glasses", "A good gift if he enjoys a drink.", "whisky tasting glasses gift set"],
-      ["Wallet or card holder", "A simple upgrade he will use daily.", "mens leather wallet slim"],
-      ["Board game for two", "Something to do together.", "two player board game strategy"],
-      ["Bluetooth speaker", "Music in the garage or garden.", "portable bluetooth speaker"],
+      ["Compact tool organiser", "For the person who owns the right bit somewhere, but can never find it.", "compact tool organiser small parts", "Check the tools or small parts he wants to store and measure the available space. Useful compartments matter more than a very large case."],
+      ["Insulated flask", "A proper hot drink at the end of a walk or halfway through a morning in the garden.", "insulated flask 1 litre", "Check capacity, empty weight and how easily it opens and cleans. A cup lid is useful outdoors; a large flask can be too bulky for a small bag."],
+      ["Biography or history book", "A quiet evening with the subject he always stops to watch on television.", "history book popular non fiction", "Find out which period or person interests him, then check what he owns. A specific choice beats the latest general bestseller."],
+      ["Cordless torch or head torch", "For the dark corner of the shed, an evening walk or a camping trip.", "rechargeable head torch", "Check weight, charging connection and the low-light setting as well as maximum brightness. An adjustable strap and simple controls are worth looking for."],
+      ["Craft beer or whisky tasting glasses", "For someone who already enjoys comparing a couple of favourites.", "whisky tasting glasses gift set", "Check the drink he actually likes and how the glasses should be washed. Skip alcohol-related gifts if you are not sure they would be welcome."],
+      ["Wallet or card holder", "A simple replacement for the one that has quietly started falling apart.", "mens leather wallet slim", "Check whether he carries notes, coins or just cards. Match his preferred layout rather than assuming smaller is automatically better."],
+      ["Board game for two", "A gift that includes a reason to sit down and spend an evening together.", "two player board game strategy", "Check that it is good with exactly two players, not merely playable with two. Match the rules complexity and playing time to his taste."],
+      ["Bluetooth speaker", "For music in the workshop or something to listen to while potting plants.", "portable bluetooth speaker", "Check battery life, charging connection and the stated water-resistance rating. Find out whether he already has a speaker system he likes."],
     ],
   },
   {
     slug: "secret-santa-gifts-under-10",
     h1: "Secret Santa gift ideas under £10",
-    desc: "Safe, universal Secret Santa gifts that suit almost anyone in the office or friend group, chosen to stay inside a £10 limit.",
+    desc: "Useful Secret Santa ideas for a £10 budget, with advice on preferences, practical details and checking the total price.",
     intro: "Secret Santa works best when the gift is useful, light-hearted and unlikely to offend. Prices change, so check the listing against your limit before you buy.",
     tips: [
       "Avoid anything very personal, such as clothing or fragrance.",
@@ -200,14 +200,14 @@ const GUIDES = [
       "Ask in the group chat about allergies or dietary needs before buying food.",
     ],
     ideas: [
-      ["Funny desk plant or cactus pot", "A cheerful addition to any workspace.", "mini desk plant pot"],
-      ["Notebook and nice pen", "Always used in the office.", "notebook pen gift set"],
-      ["Mug warmer or tea infuser", "Simple, useful and unobtrusive.", "tea infuser mug lid"],
-      ["Card game", "Quick to play with colleagues or family.", "pocket card game party"],
-      ["Scented candle", "Pick a neutral scent such as vanilla or sea salt.", "scented candle small gift"],
-      ["Socks with a festive pattern", "Fun and low-risk.", "festive novelty socks"],
-      ["Puzzle cube or brain teaser", "Small desk-friendly toy.", "puzzle cube brain teaser"],
-      ["Reusable coffee cup", "Practical and greener.", "reusable coffee cup lid"],
+      ["Small plant pot", "A desk-sized home for a cutting, without guessing someone's taste in jokes.", "mini desk plant pot", "Check dimensions, drainage and whether the plant is included. If buying a live plant, consider the recipient's light conditions and pets."],
+      ["Notebook and nice pen", "A useful pair for lists, meetings or the idea that appears on the bus home.", "notebook pen gift set", "Look for a pocket-friendly size and usable paper. Check the final price: gift packaging can push a basic set over the limit."],
+      ["Tea infuser", "For the colleague who always brings their own loose-leaf tea.", "tea infuser mug lid", "Choose a basket that fits an ordinary mug and is easy to empty. This only works if they drink loose-leaf tea; otherwise pick another idea."],
+      ["Card game", "Something to open over lunch or take home for the holidays.", "pocket card game party", "Check age guidance, player count and language. Keep the content workplace-appropriate and avoid games that rely on embarrassing other players."],
+      ["Small unscented candle", "A simple option when you know they enjoy candles, but not which fragrance.", "small unscented candle gift", "Check dimensions and the actual quantity. Include safe-use instructions and avoid guessing at a fragrance; even popular scents are not universal."],
+      ["Socks with a festive pattern", "A little seasonal colour for someone who enjoys Christmas rather than novelty slogans.", "festive novelty socks", "Check the size range and fabric. Skip personal jokes and make sure the recipient would actually enjoy wearing them."],
+      ["Puzzle cube or brain teaser", "A small distraction for the person who likes solving things with their hands.", "puzzle cube brain teaser", "Check difficulty and age suitability. Look for something with a clear objective rather than a decorative desk toy with no lasting interest."],
+      ["Reusable coffee cup", "An extra cup for a regular coffee run, without a name or slogan to get wrong.", "reusable coffee cup lid", "Check the lid, capacity and washing guidance. Include delivery charges when checking the total against the agreed limit."],
     ],
   },
   {
@@ -221,20 +221,51 @@ const GUIDES = [
       "Audiobook subscriptions are a hit if they commute.",
     ],
     ideas: [
-      ["Clip-on reading light", "Lets them read in bed without disturbing anyone.", "clip on book reading light rechargeable"],
-      ["Leather or beaded bookmark", "Small, pretty and practical.", "bookmark gift set"],
-      ["Book sleeve or cover", "Protects paperbacks in a bag.", "book sleeve padded"],
-      ["Reading cushion or lap desk", "Comfortable for long sessions.", "book reading pillow"],
-      ["Literary tote bag", "Carries the library haul.", "literary tote bag canvas"],
-      ["Bookends", "Neat shelves for a growing collection.", "bookends decorative"],
-      ["Cosy blanket and tea set", "The perfect reading-nook gift.", "blanket tea gift set"],
-      ["Book tracker journal", "For notes and wishlist titles.", "reading journal book log"],
+      ["Clip-on reading light", "For the person who means it when they say just one more chapter.", "clip on book reading light rechargeable", "Look for adjustable brightness, a gentle low setting and a clip that will not damage pages. Check weight and the charging connection."],
+      ["Leather or beaded bookmark", "A useful little upgrade from the receipt currently keeping their place.", "bookmark gift set", "Choose something thin enough not to strain the spine. A specific colour or motif they like is more personal than a generic literary quote."],
+      ["Book sleeve or cover", "For the paperback that goes everywhere in the bottom of a bag.", "book sleeve padded", "Measure a book they actually carry. Hardbacks, larger paperbacks and e-readers need different sizes; check the closure and washing instructions."],
+      ["Reading cushion or lap desk", "For longer reading sessions away from a desk.", "book reading pillow", "Check dimensions, support and storage space. Ask whether they prefer a cushion or a firm surface rather than choosing a bulky accessory unprompted."],
+      ["Literary tote bag", "Room for the library haul, in a design connected to a book they love.", "literary tote bag canvas", "Check handle length, fabric weight and whether it has a useful inner pocket. Read the dimensions rather than relying on a styled photograph."],
+      ["Bookends", "For the growing stack that has started leaning into the houseplant.", "bookends decorative", "Look for enough weight and a non-marking base. Check shelf depth and book height; very light decorative pairs may not hold heavy hardbacks."],
+      ["Cosy blanket and tea set", "A reading-evening kit assembled around their usual comforts.", "blanket tea gift set", "Choose the tea they drink and a washable throw. Buying the two separately often gives you a better match than a pre-packed gift set."],
+      ["Book tracker journal", "For remembering the brilliant ending and deciding what to read next.", "reading journal book log", "Check the page layout and number of entries. Some readers want prompts and ratings; others would rather have space for their own notes."],
     ],
   },
 ];
 
-const FOOTER = `<footer><p>Ad: we earn a commission from qualifying Amazon purchases made through links on this page. Prices and availability change, so check the listing before you buy.</p>
-<p><a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/">Santa's Helper</a></p></footer>`;
+const HEADER = home.match(/<header class="masthead">[\s\S]*?<\/header>/)?.[0];
+const FOOTER = home.match(/<footer class="site-footer">[\s\S]*?<\/footer>/)?.[0];
+if (!HEADER || !FOOTER) throw new Error("The homepage must provide the shared masthead and footer.");
+
+const EDITS = {
+  "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", group: "family", tone: "clay" },
+  "gifts-for-new-babies": { art: "baby", title: "For a new arrival", label: "The first Christmas", group: "family", tone: "clay" },
+  "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", group: "interests", tone: "sage" },
+  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "The outdoor edit", group: "interests", tone: "sage" },
+  "gifts-for-history-lovers": { art: "history", title: "For the history lover", label: "Another time & place", group: "interests", tone: "oat" },
+  "gifts-for-tea-and-coffee-lovers": { art: "coffee", title: "For the tea & coffee lover", label: "The morning ritual", group: "interests", tone: "oat" },
+  "gifts-for-mum": { art: "mum", title: "For mum", label: "Her kind of Christmas", group: "family", tone: "clay" },
+  "gifts-for-dad": { art: "dad", title: "For dad", label: "His kind of Christmas", group: "family", tone: "sage" },
+  "secret-santa-gifts-under-10": { art: "gesture", title: "Secret Santa, under £10", label: "Small budget, good idea", group: "budget", tone: "clay" },
+  "gifts-for-book-lovers": { art: "books", title: "For the book lover", label: "One more chapter", group: "interests", tone: "oat" },
+};
+
+function header(path) {
+  return HEADER
+    .replace('href="#form" aria-current="page"', 'href="/#form"')
+    .replace('href="/gifts/">The gift guides</a></div>', `href="/gifts/"${path.startsWith("/gifts") ? ' aria-current="page"' : ""}>The gift guides</a></div>`)
+    .replace(/<button class="nav-shortlist"[^>]*>([\s\S]*?)<\/button>/,
+      '<a class="nav-shortlist" id="nav-shortlist" href="/?shortlist=1" aria-label="Open your shortlist">$1</a>');
+}
+
+function art(g, className = "guide-illustration") {
+  const edit = EDITS[g.slug];
+  return `<div class="${className} tone-${edit.tone}" aria-hidden="true"><span>${esc(edit.label)}</span><svg class="object-scene" viewBox="0 0 400 280"><use href="/gift-objects.svg#${edit.art}"/></svg></div>`;
+}
+
+function guideLink(g) {
+  return `<li><a href="/gifts/${g.slug}">${art(g, "directory-art")}<div class="directory-copy"><h3>${esc(EDITS[g.slug].title)}</h3><span class="directory-arrow" aria-hidden="true">&nearr;</span><p>${esc(g.desc)}</p><span class="directory-meta">Eight ideas &middot; What to look for</span></div></a></li>`;
+}
 
 function head(title, desc, path, extra = "") {
   const url = `${ORIGIN}${path}`;
@@ -261,11 +292,12 @@ function head(title, desc, path, extra = "") {
 <link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/guide.css">
+<script type="module" src="/site-shell.js"></script>
 ${extra}</head>
 <body>
 <a class="skip-link" href="#guide-content">Skip to content</a>
-<header class="guide-masthead"><div class="guide-nav"><a class="guide-brand" href="/">Santa's Helper<small>The thought before the gift</small></a><nav aria-label="Site"><a href="/">The gift finder</a><a href="/gifts/">The gift guides</a></nav></div></header>
-<main class="wrap" id="guide-content" tabindex="-1">
+${header(path)}
+<main class="wrap guide-page" id="guide-content" tabindex="-1">
 `;
 }
 
@@ -279,21 +311,26 @@ function guidePage(g) {
     description: g.desc,
     mainEntityOfPage: `${ORIGIN}${path}`,
   };
-  const related = GUIDES.filter((x) => x.slug !== g.slug).slice(0, 6);
-  const motif = g.slug.includes("garden") ? "garden" : g.slug.includes("book") ? "books" : "gesture";
+  const related = GUIDES.filter((x) => x.slug !== g.slug)
+    .sort((a, b) => Number(EDITS[b.slug].group === EDITS[g.slug].group) - Number(EDITS[a.slug].group === EDITS[g.slug].group))
+    .slice(0, 3);
   return head(title, g.desc, path, `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
-`<nav class="crumb"><a href="/">Santa's Helper</a> › <a href="/gifts/">Gift guides</a></nav>
-<div class="guide-intro"><div><p class="eyebrow">From the gift guides</p><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p></div><div class="guide-illustration" aria-hidden="true"><svg viewBox="0 0 240 160"><use href="/guide-motifs.svg#${motif}"/></svg><span>A little inspiration.</span></div></div>
-<p class="disclosure">Ad: we earn a commission from qualifying Amazon purchases. Links search Amazon UK; we do not list prices.</p>
-<h2>How to choose</h2>
-<ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-<h2>Eight ideas to consider</h2>
-${g.ideas.map(([name, why, q]) => `<article class="idea"><h3>${esc(name)}</h3><p>${esc(why)}</p><p><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank">Search Amazon UK</a></p></article>`).join("\n")}
-<div class="cta"><strong>They're not just anyone.</strong> Describe the person, the little quirks and your budget. We'll help you find ideas that feel more like them. <a href="/">Find their gift &rarr;</a></div>
-<h2>More gift guides</h2>
-<ul class="more">${related.map((r) => `<li><a href="/gifts/${r.slug}">${esc(r.h1)}</a></li>`).join("")}</ul>
-${FOOTER}
+`<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/gifts/">Gift guides</a><span aria-hidden="true">/</span><span aria-current="page">${esc(EDITS[g.slug].title)}</span></nav>
+<div class="guide-intro"><div><p class="eyebrow">The Christmas gift guides</p><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Explore the eight ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">How to choose</a></nav></div>${art(g)}</div>
+<section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><p class="eyebrow">Before you choose</p><h2 id="choosing-title">A few things<br>worth knowing.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
+<section id="gift-ideas" aria-labelledby="ideas-title">
+<div class="ideas-heading"><div><p class="eyebrow">The possibilities</p><h2 id="ideas-title">Eight ideas to consider</h2></div><p>Gift concepts, not tested products.<br>Check the details before buying.</p></div>
+<p class="disclosure">Ad: we earn a commission from qualifying Amazon purchases. These links search Amazon UK, not a specific verified product. Prices and availability can change.</p>
+<div class="idea-grid">
+${g.ideas.map(([name, why, q, note], i) => {
+    if (!note) throw new Error(`Missing buying advice: ${g.slug} / ${name}`);
+    return `<article class="idea"><span class="idea-number">${String(i + 1).padStart(2, "0")}</span><h3>${esc(name)}</h3><p class="idea-why">${esc(why)}</p><p class="buying-note"><strong>What to look for</strong>${esc(note)}</p><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search Amazon UK for ${name} (affiliate link, opens in a new tab)`)}">Search Amazon UK <span aria-hidden="true">&nearr;</span></a></article>`;
+  }).join("\n")}
+</div></section>
+<aside class="finder-cta"><div><p class="eyebrow">Make it more personal</p><h2>Not quite their thing?</h2><p>Add their interests, what they already own and your budget. Our AI finder can suggest a different direction.</p></div><a href="/#form">Find a gift for them <span aria-hidden="true">&rarr;</span></a></aside>
+<section class="related-guides" aria-labelledby="more-guides"><div class="ideas-heading"><h2 id="more-guides">Another direction to explore</h2><a href="/gifts/">All gift guides <span aria-hidden="true">&rarr;</span></a></div><ul class="related-shelf">${related.map(guideLink).join("")}</ul></section>
 </main>
+${FOOTER}
 </body>
 </html>
 `;
@@ -301,13 +338,12 @@ ${FOOTER}
 
 function indexPage() {
   return head("Gift guides | Santa's Helper", "Original gift guides for children, new babies, hobbyists, mum, dad and Secret Santa.", "/gifts/") +
-`<nav class="crumb"><a href="/">Santa's Helper</a></nav>
-<h1>Gift guides</h1>
-<p class="standfirst">Some people have a thing. Start with what they love, and find a little inspiration for what to give.</p>
-<p>For something more personal, <a href="/">tell us about them</a>.</p>
-<ol class="guide-directory">${GUIDES.map((g) => `<li><a href="/gifts/${g.slug}"><h2>${esc(g.h1)}</h2><p>${esc(g.desc)}</p><span aria-hidden="true">&nearr;</span></a></li>`).join("")}</ol>
-${FOOTER}
+`<div class="directory-intro"><div><p class="eyebrow">The Christmas edit</p><h1>The gift guides</h1><p class="standfirst">For the lifelong hobbies, the new arrivals and the people who are impossible to buy for. Start with someone you know.</p></div><p class="directory-count"><strong>${GUIDES.length}</strong> guides to explore<br>Eight possibilities in each.</p></div>
+<nav class="directory-jumps" aria-label="Browse guides by"><a href="#interests">Their interests <span aria-hidden="true">&darr;</span></a><a href="#family">Your people <span aria-hidden="true">&darr;</span></a><a href="#budget">A smaller budget <span aria-hidden="true">&darr;</span></a></nav>
+${[["interests", "Start with what they love", "From a garden full of plans to a shelf full of books."], ["family", "For the people on your list", "A few starting points. Their interests make the difference."], ["budget", "A little gift goes a long way", "Secret Santa ideas to check against your agreed limit."]].map(([group, title, description]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2><p>${description}</p></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
+<aside class="finder-cta"><div><p class="eyebrow">For someone specific</p><h2>Tell us a little about them.</h2><p>Combine their interests, age and your budget for a more personal set of AI-generated ideas.</p></div><a href="/#form">Try the gift finder <span aria-hidden="true">&rarr;</span></a></aside>
 </main>
+${FOOTER}
 </body>
 </html>
 `;
@@ -316,10 +352,9 @@ ${FOOTER}
 function notFoundPage() {
   return head("Page not found | Santa's Helper", "That page could not be found.", "/404.html").replace(
     '<link rel="canonical" href="https://christmasidea.co.uk/404.html">\n', "<meta name=\"robots\" content=\"noindex\">\n") +
-`<h1>We could not find that page</h1>
-<p>It may have moved. Try the <a href="/">gift finder</a> or browse the <a href="/gifts/">gift guides</a>.</p>
-${FOOTER}
+`<div class="not-found"><p class="eyebrow">Page not found &middot; 404</p><h1>This one's gone<br>off the list.</h1><p>That page may have moved. There are still plenty of good places to start.</p><div class="guide-jumps"><a href="/#form">Find a gift <span aria-hidden="true">&rarr;</span></a><a href="/gifts/">Explore the guides</a></div></div>
 </main>
+${FOOTER}
 </body>
 </html>
 `;
@@ -329,6 +364,19 @@ mkdirSync(join(SITE, "gifts"), { recursive: true });
 writeFileSync(join(SITE, "404.html"), notFoundPage());
 writeFileSync(join(SITE, "gifts", "index.html"), indexPage());
 for (const g of GUIDES) writeFileSync(join(SITE, "gifts", `${g.slug}.html`), guidePage(g));
+
+// Legal copy stays authored; only the common site shell is synchronised.
+for (const name of ["about", "privacy"]) {
+  const path = join(SITE, `${name}.html`);
+  const page = readFileSync(path, "utf8")
+    .replace(/<header\b[\s\S]*?<\/header>/, header(`/${name}`))
+    .replace(/\n?<footer class="site-footer">[\s\S]*?<\/footer>\n?/, "\n")
+    .replace(/<script type="module" src="\/site-shell\.js"><\/script>\s*/, "")
+    .replace("</head>", '<script type="module" src="/site-shell.js"></script>\n</head>')
+    .replace('class="wrap" id="guide-content"', 'class="wrap legal-page" id="guide-content" tabindex="-1"')
+    .replace("</body>", `${FOOTER}\n</body>`);
+  writeFileSync(path, page);
+}
 
 const today = new Date().toISOString().slice(0, 10);
 const urls = ["/", "/gifts/", ...GUIDES.map((g) => `/gifts/${g.slug}`), "/about", "/privacy"];
