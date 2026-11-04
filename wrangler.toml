@@ -30,6 +30,7 @@ ALLOWED_ORIGINS = "https://christmasidea.co.uk,https://www.christmasidea.co.uk"
 MODEL = "claude-haiku-5-5"
 MAX_OUTPUT_TOKENS = "4500"
 CLAUDE_EFFORT = "low"
+RECOMMENDATION_MODE = "baseline-v3.3"
 # Hard cap on AI searches per day across all visitors (resets 00:00 UTC). Above it the Worker uses the checked catalogue fallback.
 DAILY_AI_LIMIT = "500"
 # Per-visitor caps (visitor = hashed IP, rotated daily; raw IPs are never stored).
@@ -57,3 +58,6 @@ new_sqlite_classes = ["BudgetCounter"]
 
 [observability]
 enabled = true
+
+[triggers]
+crons = ["0 3 * * *"]

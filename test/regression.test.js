@@ -7,7 +7,7 @@ import { assignBlindLabels, describeDiagnostics, renderBlindCsv, CSV_HEADERS } f
 import { scoreRows, readBlindKey } from "../scripts/score-benchmark.js";
 
 const ORIGIN = "https://gifts.example.com";
-const env = { ALLOWED_ORIGINS: ORIGIN, ANTHROPIC_API_KEY: "sk-test", MODEL: "claude-haiku-5-5" };
+const env = { ALLOWED_ORIGINS: ORIGIN, ANTHROPIC_API_KEY: "sk-test", IP_SALT: "unit-test-ip-salt-0123456789abcdef", MODEL: "claude-haiku-5-5" };
 const okBudget = { consume: async () => ({ ok: true }) };
 
 const input = (description) => normaliseInput({ mode: "describe", description }).value;

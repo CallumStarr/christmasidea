@@ -14,10 +14,13 @@
 <meta property="og:image" content="https://christmasidea.co.uk/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#8b1631">
+<meta name="theme-color" content="#FBF9F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12161A" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/theme.css">
+<link rel="stylesheet" href="/home.css">
 <script>
 /* =====================  SETTINGS  ===================== */
 window.GIFT_CONFIG = {
@@ -30,231 +33,50 @@ window.GIFT_CONFIG = {
   TURNSTILE_SITE_KEY: "0x4AAAAAAFyTaguvuOpUKQOd"
 };
 </script>
-<style>
-@font-face{font-family:"Fraunces";src:url(/fonts/fraunces.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
-@font-face{font-family:"Figtree";src:url(/fonts/figtree.woff2) format("woff2");font-weight:300 900;font-style:normal;font-display:swap}
-:root{
-  --berry:#8b1631; --berry-deep:#5a0c1f; --berry-ink:#3a0814;
-  --gold:#f2b544; --gold-deep:#c88a17; --gold-pale:#fde9bf;
-  --pine:#0f3d2e; --pine-2:#17543f;
-  --snow:#fff9f3; --card:#ffffff; --ink:#24161b; --muted:#6c5a5f; --line:#ecdcd6;
-  --focus:#1f6fd1;
-  --display:"Fraunces", Georgia, serif;
-  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--snow);color:var(--ink);font:400 17px/1.55 var(--body)}
-a{color:inherit}
-img{max-width:100%;display:block}
-:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
-.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
-.display{font-family:var(--display);font-variation-settings:"SOFT" 100}
-
-/* ---------- Hero: the page is a wrapped present ---------- */
-.hero{position:relative;overflow:hidden;color:#fff6ea;background-color:var(--berry);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23f2b544' fill-opacity='.16'%3E%3Cpath d='M30 14l2.6 7.9H41l-6.7 4.9 2.6 7.9L30 29.8l-6.9 4.9 2.6-7.9-6.7-4.9h8.4z'/%3E%3Cpath d='M90 74l2.6 7.9H101l-6.7 4.9 2.6 7.9L90 89.8l-6.9 4.9 2.6-7.9-6.7-4.9h8.4z'/%3E%3Ccircle cx='92' cy='26' r='2.4'/%3E%3Ccircle cx='28' cy='86' r='2.4'/%3E%3Ccircle cx='60' cy='56' r='1.6'/%3E%3C/g%3E%3C/svg%3E"),
-    radial-gradient(120% 90% at 20% 10%, #a51f3e 0%, var(--berry) 45%, var(--berry-deep) 100%);
-  padding:22px 0 128px}
-.ribbon-v,.ribbon-h{position:absolute;pointer-events:none;
-  background:linear-gradient(90deg,var(--gold-deep),var(--gold) 30%,#ffd98a 50%,var(--gold) 70%,var(--gold-deep))}
-.ribbon-v{top:0;bottom:0;right:17%;width:46px}
-.ribbon-h{left:0;right:0;bottom:96px;height:40px;background:linear-gradient(180deg,var(--gold-deep),var(--gold) 30%,#ffd98a 50%,var(--gold) 70%,var(--gold-deep))}
-.bow{position:absolute;right:calc(17% - 77px);bottom:28px;width:200px;height:170px;pointer-events:none;filter:drop-shadow(0 10px 18px rgba(40,0,10,.35))}
-#snow{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.nav{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{display:flex;align-items:center;gap:10px;white-space:nowrap;text-decoration:none;font:800 21px/1 var(--display);font-variation-settings:"SOFT" 100;letter-spacing:-.01em}
-.countdown .short{display:none}
-@media (max-width:760px){.countdown .short{display:inline}}
-.countdown{background:var(--berry-deep);border:1px solid rgba(242,181,68,.6);box-shadow:0 6px 16px -8px rgba(0,0,0,.5);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:600;white-space:nowrap}
-.hero-copy{position:relative;max-width:640px;margin-top:56px;margin-bottom:64px}
-.hero h1{font:900 clamp(42px,7.4vw,84px)/.95 var(--display);font-variation-settings:"SOFT" 100,"WONK" 1;letter-spacing:-.025em;margin:0 0 20px;text-wrap:balance}
-.hero p{margin:0;font-size:clamp(17px,2vw,20px);color:#ffe3e4;max-width:44ch}
-
-/* ---------- Form ---------- */
-.panel{position:relative;background:var(--card);border-radius:26px;padding:30px;margin-top:-84px;
-  box-shadow:0 2px 0 var(--line),0 30px 60px -30px rgba(90,12,31,.45)}
-.panel::before{content:"";position:absolute;left:28px;right:28px;top:0;height:6px;border-radius:0 0 6px 6px;background:linear-gradient(90deg,var(--gold-deep),var(--gold),var(--gold-deep))}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px 28px}
-.mode-switch{margin-bottom:24px}
-.mode-options{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;background:#f6eeeb;border:1px solid var(--line);border-radius:15px;max-width:560px}
-.mode-option{position:relative;display:block;margin:0;cursor:pointer}
-.mode-option input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.mode-option span{display:flex;align-items:center;justify-content:center;min-height:46px;padding:10px 14px;border:1.5px solid transparent;border-radius:11px;color:var(--muted);font-weight:700;text-align:center;transition:background .15s,border-color .15s,color .15s,box-shadow .15s}
-.mode-option input:checked+span{background:#fff;border-color:var(--line);color:var(--berry);box-shadow:0 2px 7px rgba(58,8,20,.08)}
-.mode-option input:focus-visible+span{outline:3px solid var(--focus);outline-offset:2px}
-.quick-fields{display:grid;gap:18px}
-.full{grid-column:1/-1}
-fieldset{border:0;margin:0;padding:0;min-width:0}
-legend,label.q{display:block;font:700 16px/1.3 var(--body);margin:0 0 10px}
-.hint{font-size:14px;color:var(--muted);margin:-5px 0 10px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip input{position:absolute;opacity:0;pointer-events:none}
-.chip span{display:inline-block;padding:9px 15px;border:1.5px solid var(--line);border-radius:999px;font-size:15px;font-weight:500;cursor:pointer;background:#fff;transition:background .15s,border-color .15s,color .15s,transform .15s}
-.chip span:hover{border-color:var(--berry)}
-.chip input:checked + span{background:var(--berry);border-color:var(--berry);color:#fff}
-.chip input:focus-visible + span{outline:3px solid var(--focus);outline-offset:2px}
-select,input[type=text],textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fffdfb;border:1.5px solid var(--line);border-radius:12px;padding:12px 13px}
-select:focus,input:focus,textarea:focus{border-color:var(--berry);outline:none;box-shadow:0 0 0 3px rgba(139,22,49,.15)}
-textarea{min-height:96px;resize:vertical}
-.count{font-size:13px;color:var(--muted);text-align:right;margin-top:4px}
-.actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:28px}
-.btn{appearance:none;border:0;cursor:pointer;font:700 17px/1 var(--body);border-radius:14px;padding:17px 28px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px}
-.btn-gold{background:var(--gold);color:var(--berry-ink);box-shadow:inset 0 -3px 0 var(--gold-deep)}
-.btn-gold:hover{background:#f7c25e}
-.btn-gold[disabled]{opacity:.7;cursor:progress}
-.btn-quiet{background:transparent;color:var(--berry);padding:12px 6px;text-decoration:underline;text-underline-offset:3px;font-weight:600}
-.btn-outline{background:#fff;color:var(--berry);border:2px solid var(--berry)}
-.btn-outline:hover{background:#fdf0f2}
-.privacy{font-size:13.5px;color:var(--muted);max-width:50ch;margin:0}
-#ts{margin-top:18px}
-
-/* ---------- Status, loading ---------- */
-.status{margin:30px 0 0;padding:14px 16px;border-radius:14px;background:#fff4dc;border:1px solid #f1d697;color:#5a4214;font-size:15px}
-.status.err{background:#fdecee;border-color:#f2c1c9;color:#6b1426}
-.loading{display:flex;align-items:center;gap:16px;margin-top:48px;font:700 21px/1.3 var(--display);font-variation-settings:"SOFT" 100;color:var(--berry)}
-.baubles{display:flex;gap:8px}
-.baubles i{display:block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 12%,transparent 13%),var(--berry);animation:swing 1.1s infinite ease-in-out}
-.baubles i:nth-child(2){background-color:var(--gold);animation-delay:.15s;background:radial-gradient(circle at 35% 30%,#fff 0 12%,transparent 13%),var(--gold)}
-.baubles i:nth-child(3){animation-delay:.3s;background:radial-gradient(circle at 35% 30%,#fff 0 12%,transparent 13%),var(--pine-2)}
-@keyframes swing{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-
-.recipient-insight{margin:14px 0 20px;padding:14px 17px;background:#fffdf8;border:1px solid var(--line);border-left:4px solid var(--gold-deep);border-radius:12px}
-.recipient-insight-label{margin:0 0 3px;color:var(--berry);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.recipient-summary{margin:0;color:var(--ink);font-size:15px;line-height:1.5}
-.understood{margin:10px 0 0;font-size:14px;color:#4a3a3f}
-.understood summary{cursor:pointer;font-weight:700;color:var(--berry)}
-.understood ul{margin:8px 0 0;padding-left:18px}
-.understood li{margin:2px 0}
-.understood .guess{color:#6b5a5f;font-style:italic}
-.card p.connection{margin:-10px 0 16px;font-size:13.5px;line-height:1.45;color:#6b5a5f}
-.card p.connection strong{color:var(--berry-ink);font-weight:700}
-.discovery-tag{position:absolute;z-index:2;right:12px;top:12px;background:var(--gold);color:#3a2a00;font-size:12px;font-weight:800;padding:5px 10px;border-radius:999px}
-.dismiss{margin-top:8px;background:none;border:0;padding:4px 0;color:#6b5a5f;font-size:13px;text-decoration:underline;cursor:pointer;align-self:flex-start}
-.card.dismissed{opacity:.45}
-@media (max-width:600px){.recipient-insight{padding:12px 14px}}
-/* ---------- Results ---------- */
-.results{margin-top:56px}
-.results-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
-.results-head h2{font:900 clamp(32px,5vw,48px)/1 var(--display);font-variation-settings:"SOFT" 100;margin:0;letter-spacing:-.02em;color:var(--berry)}
-.disclosure{font-size:14px;color:var(--muted);margin:12px 0 0;max-width:72ch}
-.cards{list-style:none;padding:0;margin:28px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:24px}
-.card{position:relative;background:var(--card);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;
-  box-shadow:0 1px 0 var(--line),0 18px 40px -26px rgba(90,12,31,.5)}
-.card.reveal{animation:unwrap .55s cubic-bezier(.2,.8,.2,1.15) both;animation-delay:calc(var(--i) * 70ms)}
-@keyframes unwrap{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
-.media{position:relative;aspect-ratio:4/3;background:#f6f1eb;overflow:hidden}
-.media img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:contain;padding:12px;transition:opacity .4s}
-.media img.loading{opacity:0}
-.media .ph{position:absolute;inset:0;display:grid;place-items:center}
-.media .ph svg{width:44%;height:auto}
-.cat{position:absolute;z-index:2;left:12px;top:12px;background:rgba(255,255,255,.94);color:var(--berry-ink);font-size:13px;font-weight:700;padding:6px 11px;border-radius:999px}
-.image-note{position:absolute;z-index:2;right:8px;bottom:8px;background:rgba(255,255,255,.92);color:var(--muted);font-size:11.5px;padding:4px 8px;border-radius:8px;max-width:calc(100% - 16px)}
-.product-image-link{position:absolute;inset:0;z-index:1;display:block}
-.product-badge{position:absolute;z-index:2;left:12px;bottom:12px;background:rgba(15,61,46,.94);color:#fff;font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px}
-.product-price{font-size:15px;font-weight:700;color:var(--pine);margin:-8px 0 14px}
-.concept-label{font-size:12px;color:var(--muted);margin:0 0 5px}
-.card-body{padding:18px 18px 16px;display:flex;flex-direction:column;flex:1}
-.card h3{font:800 22px/1.15 var(--display);font-variation-settings:"SOFT" 100;margin:0 0 8px;letter-spacing:-.01em}
-.card p.why{margin:0 0 18px;font-size:15.5px;line-height:1.5;color:#4a3a3f;flex:1}
-.row{display:flex;gap:8px;align-items:center}
-.shop{flex:1;background:var(--berry);color:#fff;border-radius:12px;padding:13px 12px;font-weight:700;font-size:15.5px;text-decoration:none;text-align:center}
-.shop:hover{background:var(--berry-deep)}
-.save{flex:none;width:48px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--berry);transition:transform .15s}
-.save:hover{border-color:var(--berry)}
-.save[aria-pressed=true]{background:var(--berry);border-color:var(--berry);color:#fff}
-.save[aria-pressed=true] svg{animation:pop .3s ease}
-@keyframes pop{50%{transform:scale(1.3)}}
-.save svg{width:21px;height:21px}
-.aff{font-size:12px;color:var(--muted);margin:9px 0 0}
-.more{margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.source{font-size:13.5px;color:var(--muted);margin:0}
-
-/* ---------- Shortlist ---------- */
-.listbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;padding:12px 16px calc(14px + env(safe-area-inset-bottom));pointer-events:none}
-.listbar button{pointer-events:auto;box-shadow:0 14px 30px -10px rgba(58,8,20,.55)}
-dialog{border:0;border-radius:22px;padding:0;width:min(560px,calc(100vw - 32px));max-height:min(80vh,720px)}
-dialog::backdrop{background:rgba(58,8,20,.55)}
-.dlg{padding:26px}
-.dlg h2{font:900 30px/1.05 var(--display);font-variation-settings:"SOFT" 100;margin:0 0 6px;color:var(--berry)}
-.dlg ul{list-style:none;padding:0;margin:16px 0}
-.dlg li{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line)}
-.dlg li a{font-weight:700;text-decoration:underline;text-underline-offset:3px}
-.dlg li small{display:block;color:var(--muted)}
-.dlg .x{background:none;border:0;color:var(--berry);cursor:pointer;font:inherit;font-size:14px;padding:4px}
-.dlg-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-
-/* ---------- Footer ---------- */
-footer{margin-top:96px;background:var(--berry-deep);color:#f7dfe2;padding:40px 0 120px;font-size:14px}
-footer p{margin:0 0 10px;max-width:78ch}
-footer a{color:#fff}
-footer .brand{margin-bottom:18px;color:#fff6ea}
-
-@media (max-width:760px){
-  .grid2{grid-template-columns:1fr}
-  .mode-options{max-width:none}
-  .panel{padding:22px 18px;margin-top:-70px;border-radius:22px}
-  .hero{padding-bottom:110px}
-  .hero-copy{margin-top:40px;margin-bottom:56px}
-  .ribbon-v{display:none}
-  .ribbon-h{bottom:92px;height:24px}
-  .bow{right:10px;bottom:55px;width:110px;height:94px}
-  .countdown .long{display:none}
-  .btn-gold{width:100%}
-  .countdown{font-size:13px;padding:6px 11px}
-}
-@media (max-width:360px){
-  .brand{font-size:18px;gap:7px}
-  .brand svg{width:26px;height:26px}
-  .countdown{font-size:12px;padding:5px 9px}
-  .nav{gap:8px}
-}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-</style>
 </head>
 <body>
-<noscript><p style="padding:1rem;text-align:center;background:#fff3cd">Santa's Helper needs JavaScript to find gift ideas. Please enable it and reload.</p></noscript>
+<a class="skip-link" href="#form">Skip to the gift finder</a>
+<noscript><p class="wrap">The gift finder needs JavaScript. You can still browse our <a href="/gifts/">gift guides</a>.</p></noscript>
 
-<header class="hero">
-  <canvas id="snow" aria-hidden="true"></canvas>
-  <div class="ribbon-v" aria-hidden="true"></div>
-  <div class="ribbon-h" aria-hidden="true"></div>
-  <svg class="bow" viewBox="0 0 200 170" aria-hidden="true">
-    <defs>
-      <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe09a"/><stop offset=".55" stop-color="#f2b544"/><stop offset="1" stop-color="#b97a10"/></linearGradient>
-      <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe09a"/><stop offset=".55" stop-color="#f2b544"/><stop offset="1" stop-color="#b97a10"/></linearGradient>
-    </defs>
-    <path d="M92 86 C58 108 40 150 52 166 L70 150 L84 166 C82 140 88 112 96 92Z" fill="url(#g1)"/>
-    <path d="M108 86 C142 108 160 150 148 166 L130 150 L116 166 C118 140 112 112 104 92Z" fill="url(#g2)"/>
-    <path d="M98 78 C70 34 12 20 8 52 C4 84 56 96 98 86Z" fill="url(#g1)"/>
-    <path d="M102 78 C130 34 188 20 192 52 C196 84 144 96 102 86Z" fill="url(#g2)"/>
-    <path d="M98 80 C78 54 38 44 30 58" fill="none" stroke="#b97a10" stroke-width="3" stroke-linecap="round" opacity=".55"/>
-    <path d="M102 80 C122 54 162 44 170 58" fill="none" stroke="#b97a10" stroke-width="3" stroke-linecap="round" opacity=".55"/>
-    <ellipse cx="100" cy="82" rx="17" ry="15" fill="url(#g1)" stroke="#b97a10" stroke-width="2"/>
-  </svg>
-
+<header class="masthead">
+  <div class="season-strip">
+    <span>A little less guesswork. A lot more thought.</span>
+    <a class="season-guides" href="/gifts/">The gift guides &rarr;</a>
+    <span class="countdown" id="countdown" hidden></span>
+  </div>
   <div class="wrap">
     <nav class="nav" aria-label="Site">
       <a class="brand" href="/">
-        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="3" y="12" width="24" height="15" rx="3" fill="#fff6ea"/><rect x="2" y="8" width="26" height="6" rx="2" fill="#ffe3e4"/><rect x="13" y="8" width="4" height="19" fill="#f2b544"/><path d="M15 8c-2-5-8-5-7.5-1.5S13 8 15 8zm0 0c2-5 8-5 7.5-1.5S17 8 15 8z" fill="none" stroke="#f2b544" stroke-width="2"/></svg>
-        Santa's Helper
+        <svg class="brand-mark" width="38" height="44" viewBox="0 0 38 44" fill="none" aria-hidden="true">
+          <path d="M19 39V7m0 23C7 29 4 22 4 22c10-1 15 8 15 8Zm0-10C8 18 7 11 7 11c8 0 12 9 12 9Zm0 5c12-2 15-10 15-10-10 0-15 10-15 10Zm0-12c7-4 8-11 8-11-8 2-8 11-8 11Z" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="7" cy="33" r="2" fill="currentColor"/><circle cx="29" cy="31" r="2" fill="currentColor"/>
+        </svg>
+        <span>Santa's Helper<small>The thought before the gift</small></span>
       </a>
-      <span class="countdown" id="countdown" hidden></span>
+      <div class="nav-links"><a href="#form" aria-current="page">The gift finder</a><a href="/gifts/">The gift guides</a></div>
+      <button class="nav-shortlist" id="nav-shortlist" type="button" aria-label="Open your shortlist, 0 saved ideas">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg>
+        <span>Shortlist</span><span class="saved-count" id="nav-count">0</span>
+      </button>
     </nav>
-    <div class="hero-copy">
-      <h1 class="display">Stuck on what to get them?</h1>
-      <p>Tell us a little about who you're buying for and we'll come back with gift ideas that actually suit them.</p>
-    </div>
   </div>
 </header>
 
-<main class="wrap">
-  <form class="panel" id="form" novalidate>
+<main>
+<section class="atelier wrap" aria-labelledby="hero-title">
+  <div class="concierge">
+    <div class="hero-copy">
+      <p class="eyebrow"><span aria-hidden="true">&#10035;</span> A more personal kind of Christmas</p>
+      <h1 id="hero-title">They're not<br>just <em>anyone.</em></h1>
+      <p class="deck">The best gifts say, &ldquo;I know you.&rdquo; Tell us a little about them. We'll help you find something that feels just right.</p>
+    </div>
+  <form class="panel" id="form" aria-labelledby="finder-title" tabindex="-1" novalidate>
+    <div class="panel-heading">
+      <h2 id="finder-title">Who are we thinking of?</h2>
+    </div>
     <div class="mode-switch">
       <fieldset>
-        <legend>How would you like to describe them?</legend>
+        <legend class="sr-only">How would you like to describe them?</legend>
         <div class="mode-options" role="radiogroup" aria-label="How to describe the gift recipient">
           <label class="mode-option">
             <input type="radio" name="mode" value="describe" checked>
@@ -270,10 +92,20 @@ footer .brand{margin-bottom:18px;color:#fff6ea}
 
     <div id="quick-fields" class="quick-fields">
       <div>
-        <label class="q" for="description">Describe the person you're buying for</label>
-        <p class="hint" id="description-hint">Tell us about their age, interests, hobbies, personality, budget, things they already own or anything they wouldn't like. Write naturally; you don't need to answer a list of questions.</p>
-        <textarea id="description" name="description" maxlength="1200" rows="5" aria-describedby="description-hint description-count" placeholder="For example: My brother is 34, loves mountain biking, craft coffee and camping. He's quite practical and already owns most of the usual cycling equipment. I'd like something a bit unusual, around £40."></textarea>
-        <div class="count" id="description-count" aria-live="polite">0 / 1,200</div>
+        <label class="sr-only" for="description">Describe the person you're buying for</label>
+        <p class="sr-only" id="description-hint">Tell us about their age, interests, personality and your budget. Mention anything they already own or wouldn't like. No names or sensitive personal details, please.</p>
+        <div class="writing-field">
+          <textarea id="description" name="description" maxlength="1200" rows="3" aria-describedby="description-hint description-count" placeholder="My dad is happiest in the garden, loves a good coffee, and already owns every tool. Around £40."></textarea>
+          <div class="field-foot"><span>Interests, little quirks, your budget&hellip;</span><span class="count" id="description-count">0 / 1,200</span></div>
+        </div>
+        <div class="prompt-examples" role="group" aria-label="Example descriptions">
+          <p>A little inspiration:</p>
+          <div class="prompt-chips">
+            <button type="button" class="prompt-chip" data-description="A creative teenager who loves astronomy, £35"><span>The stargazer</span><span aria-hidden="true">&nearr;</span></button>
+            <button type="button" class="prompt-chip" data-description="A dad who enjoys cooking but already owns every gadget"><span>The impossible dad</span><span aria-hidden="true">&nearr;</span></button>
+            <button type="button" class="prompt-chip" data-description="A five-year-old who loves trains and building things"><span>The little inventor</span><span aria-hidden="true">&nearr;</span></button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -330,24 +162,47 @@ footer .brand{margin-bottom:18px;color:#fff6ea}
       </div>
     </div>
 
-    <p class="privacy">Please don't include names, addresses or other personal details. When the AI helper is enabled, your answers are sent to our AI provider to generate gift suggestions.</p>
-
-    <div id="ts" hidden></div>
-
-    <div class="actions">
-      <button type="submit" class="btn btn-gold" id="go">
-        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1l1.9 5.6L17.5 8l-5.6 1.9L10 15.5 8.1 9.9 2.5 8l5.6-1.4zM16 13l.9 2.1L19 16l-2.1.9L16 19l-.9-2.1L13 16l2.1-.9z"/></svg>
-        Find gift ideas
-      </button>
+    <div class="form-end">
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" id="go"><span>Find their gift</span><span class="button-arrow" aria-hidden="true">&rarr;</span></button>
+      </div>
+      <p class="privacy">No names or sensitive details, please. Descriptions are shared with our AI provider. <a href="/privacy">Privacy</a></p>
+      <div id="ts" hidden></div>
     </div>
+    <div id="status" role="status" aria-live="polite"></div>
   </form>
+  <div id="loading" class="loading" aria-busy="true" hidden>
+    <div class="loading-head">
+      <p class="eyebrow">At the wrapping desk</p>
+      <button type="button" class="cancel-search" id="cancel">Cancel search</button>
+    </div>
+    <ol class="curation-steps" aria-label="The curation journey">
+      <li aria-current="step">Considering the person</li>
+      <li>Tracing the connections</li>
+      <li>Curating your collection</li>
+    </ol>
+    <span class="sr-only" id="loading-text" role="status" aria-live="polite" aria-atomic="true">Considering the person...</span>
+    <p class="loading-note">A little thought takes a moment. Usually 10&ndash;20 seconds. <span>These stages describe the journey, not live progress.</span></p>
+  </div>
+  </div>
+  <figure class="atelier-art">
+    <div class="art-caption-top"><span>The art of giving</span><span>Christmas, considered.</span></div>
+    <div class="art-scene">
+      <img src="/atelier.svg" width="640" height="700" alt="" fetchpriority="high" decoding="async">
+      <div class="art-note" aria-hidden="true"><span>A gift is a way<br>of saying</span><strong>I know<br>you.</strong><svg viewBox="0 0 74 24" fill="none"><path d="M2 14c16-16 29-8 21 3-8 10-18-8-4-12 16-5 29 21 53 5" stroke="currentColor" stroke-width="1.3"/></svg></div>
+      <span class="art-seal" aria-hidden="true"><span>Chosen with</span><strong>thought</strong><span>not guesswork</span></span>
+    </div>
+    <figcaption><span>For the person. Not just the occasion.</span><span aria-hidden="true">Fig. 01 &mdash; A little consideration</span></figcaption>
+  </figure>
+</section>
 
-  <div id="status" role="status" aria-live="polite"></div>
-  <div id="loading" class="loading" hidden><span class="baubles" aria-hidden="true"><i></i><i></i><i></i></span><span id="loading-text">Wrapping up some ideas...</span></div>
-
+<div class="wrap">
   <section class="results" id="results" hidden aria-labelledby="results-title">
     <div class="results-head">
-      <h2 id="results-title" class="display" tabindex="-1">Gift ideas for them</h2>
+      <div>
+        <p class="eyebrow">Considered for one person</p>
+        <h2 id="results-title" tabindex="-1">Gift ideas for them</h2>
+      </div>
       <button type="button" class="btn btn-quiet" id="restart">Start again</button>
     </div>
     <div class="recipient-insight" id="recipient-insight" hidden>
@@ -358,41 +213,62 @@ footer .brand{margin-bottom:18px;color:#fff6ea}
         <ul id="understood-list"></ul>
       </details>
     </div>
-    <p class="disclosure"><strong>Ad.</strong> We earn a commission if you buy through these affiliate links, at no extra cost to you. <strong>As an Amazon Associate I earn from qualifying purchases.</strong> When a verified product is found, its photo and shopping link are for that same listing. Decorative placeholders are not product photos; check listing details, prices and reviews before buying.</p>
+    <div class="recommendation-disclosure">
+      <p class="disclosure"><strong>Ad &middot; Amazon affiliate links.</strong> These are gift ideas, not verified products unless labelled. We may earn a commission, at no extra cost to you.</p>
+      <details class="affiliate-details"><summary>A note on our recommendations</summary><p>As an Amazon Associate I earn from qualifying purchases. Idea links search Amazon; they do not confirm an exact item, price or availability. If a verified listing is available, its photo and shopping link are for that same product. Check listing details, age guidance, prices and reviews before buying.</p></details>
+    </div>
     <ul class="cards" id="cards"></ul>
+    <p class="feedback-toast" id="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
     <div class="more">
       <button type="button" class="btn btn-outline" id="more">Show me different ideas</button>
       <p class="source" id="source"></p>
     </div>
   </section>
+  <section class="browse" aria-labelledby="browse-title">
+    <div class="section-heading">
+      <div><p class="eyebrow">A few good starting points</p><h2 id="browse-title">Some people have <em>a thing.</em></h2></div>
+      <a class="text-link" href="/gifts/">Explore the gift guides <span aria-hidden="true">&rarr;</span></a>
+    </div>
+    <ul class="guide-shelf">
+      <li class="guide-garden"><a href="/gifts/gifts-for-gardeners"><div class="guide-art"><span>For green fingers</span><svg aria-hidden="true" viewBox="0 0 240 160"><use href="/guide-motifs.svg#garden"/></svg><span class="guide-index">01 / The garden</span></div><div class="guide-copy"><h3>Always growing<br>something.</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Good things for the happiest person in the potting shed.</p></a></li>
+      <li class="guide-books"><a href="/gifts/gifts-for-book-lovers"><div class="guide-art"><span>For one more chapter</span><svg aria-hidden="true" viewBox="0 0 240 160"><use href="/guide-motifs.svg#books"/></svg><span class="guide-index">02 / The reading room</span></div><div class="guide-copy"><h3>Just one<br>more page.</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Little pleasures for the person with a book in every room.</p></a></li>
+      <li class="guide-gesture"><a href="/gifts/secret-santa-gifts-under-10"><div class="guide-art"><span>For a little thank you</span><svg aria-hidden="true" viewBox="0 0 240 160"><use href="/guide-motifs.svg#gesture"/></svg><span class="guide-index">03 / Under &pound;10</span></div><div class="guide-copy"><h3>Small gift.<br>Lovely thought.</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Secret Santa ideas that say more, without spending more.</p></a></li>
+    </ul>
+  </section>
+  <section class="approach" aria-labelledby="approach-title">
+    <p class="eyebrow">The Santa's Helper way</p>
+    <h2 id="approach-title">Less &ldquo;what's popular?&rdquo;<br>More <em>&ldquo;that's so them.&rdquo;</em></h2>
+    <div class="approach-notes"><p><span>01</span>Start with the person.<small>The interests, the little rituals, the things they could talk about for hours.</small></p><p><span>02</span>Look a little closer.<small>Our AI connects those details to gift ideas, including a few less-obvious possibilities.</small></p><p><span>03</span>Keep the good ones.<small>Save a shortlist, set aside the misses, and explore the ideas on Amazon UK.</small></p></div>
+  </section>
+</div>
 </main>
 
 <div class="listbar" id="listbar" hidden>
-  <button type="button" class="btn btn-gold" id="openlist">Your shortlist (0)</button>
+  <button type="button" class="btn btn-primary" id="openlist">Your shortlist (0)</button>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlg-title">
   <div class="dlg">
     <h2 id="dlg-title">Your shortlist</h2>
-    <p class="disclosure" style="margin:0">Saved on this device only. Ad: we earn a commission if you buy through these links.</p>
+    <p class="disclosure" style="margin:0"><span id="shortlist-storage">Saved on this device only.</span> Ad: we earn a commission if you buy through these links.</p>
     <ul id="dlg-list"></ul>
     <div class="dlg-actions">
       <button type="button" class="btn btn-outline" id="copylist">Copy list</button>
-      <button type="button" class="btn btn-gold" id="closelist">Done</button>
+      <button type="button" class="btn btn-primary" id="closelist">Done</button>
     </div>
   </div>
 </dialog>
 
 <footer>
   <div class="wrap">
-    <div class="brand">Santa's Helper</div>
-    <p>As an Amazon Associate I earn from qualifying purchases.</p>
-    <p>Gift ideas are suggestions generated automatically and may not suit everyone. Decorative placeholders are not product photos. Always check product details, age guidance and current prices on Amazon before you buy.</p>
-    <p><a href="/gifts/">Gift guides</a> · <a href="/about">About and contact</a> · <a href="/privacy">Privacy</a></p>
+    <div class="footer-top"><a class="brand" href="/">Santa's Helper</a><p>A little less searching.<br>A little more Christmas.</p><nav aria-label="Footer"><a href="/gifts/">Gift guides</a><a href="/about">About and contact</a><a href="/privacy">Privacy</a></nav></div>
+    <div class="footer-bottom"><p>As an Amazon Associate I earn from qualifying purchases. Gift ideas are generated automatically; always check product details, age guidance and current prices before buying.</p><span>Made for thoughtful giving.</span></div>
   </div>
 </footer>
 
-<script>
+<script type="module">
+import { fetchIdeas, fetchProducts, sendFeedback as postFeedback } from "/api.js";
+import { createTurnstileTokenGate, TurnstileTokenError } from "/turnstile-token.js";
 (() => {
 "use strict";
 const CFG = window.GIFT_CONFIG || {};
@@ -412,34 +288,6 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const sh = document.createElement("span"); sh.className = "short"; sh.textContent = short;
   el.append(l, sh);
   el.hidden = false;
-})();
-
-/* ---------- snow (hero only, paused when off screen) ---------- */
-(() => {
-  if (reduceMotion) return;
-  const c = $("#snow"), hero = c.parentElement, ctx = c.getContext("2d");
-  let w, h, flakes = [], running = true;
-  const resize = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    w = hero.clientWidth; h = hero.clientHeight;
-    c.width = w * dpr; c.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = Math.round(Math.min(70, w / 18));
-    flakes = Array.from({ length: n }, () => ({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 2.2 + .8, s: Math.random() * .5 + .25, d: Math.random() * 6.28 }));
-  };
-  const tick = () => {
-    if (!running) return;
-    ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = "rgba(255,246,234,.85)";
-    for (const f of flakes){
-      f.y += f.s; f.d += .01; f.x += Math.sin(f.d) * .3;
-      if (f.y > h + 4){ f.y = -4; f.x = Math.random() * w; }
-      ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 6.283); ctx.fill();
-    }
-    requestAnimationFrame(tick);
-  };
-  new IntersectionObserver(([e]) => { const was = running; running = e.isIntersecting; if (running && !was) tick(); }).observe(hero);
-  addEventListener("resize", resize);
-  resize(); tick();
 })();
 
 /* ---------- options ---------- */
@@ -471,6 +319,13 @@ document.querySelectorAll("input[name=relation]").forEach((r) => r.addEventListe
 }));
 $("#about").addEventListener("input", (e) => { $("#about-count").textContent = `${e.target.value.length} / 500`; });
 $("#description").addEventListener("input", (e) => { $("#description-count").textContent = `${e.target.value.length} / 1,200`; });
+document.querySelectorAll(".prompt-chip").forEach((button) => button.addEventListener("click", () => {
+  const description = $("#description");
+  description.value = button.dataset.description;
+  description.dispatchEvent(new Event("input", { bubbles: true }));
+  description.focus();
+  description.setSelectionRange(description.value.length, description.value.length);
+}));
 
 function setMode(mode){
   const describe = mode === "describe";
@@ -483,9 +338,29 @@ document.querySelectorAll('input[name="mode"]').forEach((radio) => {
 setMode("describe");
 
 /* ---------- shortlist storage ---------- */
+let shortlistPersistent = true;
 const store = {
-  get(){ try { return JSON.parse(localStorage.getItem("ci-shortlist") || "[]"); } catch { return []; } },
-  set(v){ try { localStorage.setItem("ci-shortlist", JSON.stringify(v)); } catch {} }
+  get(){
+    try {
+      const saved = JSON.parse(localStorage.getItem("ci-shortlist") || "[]");
+      if (!Array.isArray(saved)) throw new TypeError("Invalid shortlist format");
+      return saved;
+    } catch {
+      shortlistPersistent = false;
+      console.warn("Shortlist storage could not be read.");
+      return [];
+    }
+  },
+  set(v){
+    try {
+      localStorage.setItem("ci-shortlist", JSON.stringify(v));
+      shortlistPersistent = true;
+    } catch {
+      shortlistPersistent = false;
+      console.warn("Shortlist storage could not be updated.");
+      showFeedback("Your shortlist is available for this visit only; browser storage is unavailable.");
+    }
+  }
 };
 let shortlist = store.get().filter((x) => x && typeof x.title === "string" && typeof x.query === "string").slice(0, 50);
 
@@ -500,51 +375,61 @@ function amazonUrl(query){
 
 /* ---------- Turnstile (optional) ---------- */
 let tsWidget = null;
+const turnstileEnabled = Boolean(CFG.USE_API && CFG.TURNSTILE_SITE_KEY);
+const tsGate = createTurnstileTokenGate();
+function resetTurnstile(){
+  tsGate.recover();
+  if (tsWidget === null) {
+    tsGate.fail("The security check isn't available. Refresh the page and try again.");
+    throw new TurnstileTokenError("The security check isn't available. Refresh the page and try again.");
+  }
+  try {
+    window.turnstile.reset(tsWidget);
+  } catch {
+    tsGate.fail("The security check couldn't be refreshed. Refresh the page and try again.");
+    throw new TurnstileTokenError("The security check couldn't be refreshed. Refresh the page and try again.");
+  }
+}
 if (CFG.USE_API && CFG.TURNSTILE_SITE_KEY){
-  window.onTurnstileLoad = () => { $("#ts").hidden = false; tsWidget = window.turnstile.render("#ts", { sitekey: CFG.TURNSTILE_SITE_KEY, size: "flexible" }); };
+  const turnstileError = () => {
+    const message = "The security check couldn't load. Check your connection or refresh the page, then try again.";
+    tsGate.fail(message);
+    setStatus(message, true);
+  };
+  window.onTurnstileLoad = () => {
+    $("#ts").hidden = false;
+    try {
+      tsWidget = window.turnstile.render("#ts", {
+        sitekey: CFG.TURNSTILE_SITE_KEY,
+        size: "flexible",
+        callback: (token) => tsGate.provide(token),
+        "expired-callback": () => {
+          tsGate.invalidate();
+          if (!tsGate.busy) {
+            try { resetTurnstile(); } catch {}
+          }
+        },
+        "error-callback": turnstileError,
+        "timeout-callback": turnstileError,
+      });
+    } catch {
+      turnstileError();
+    }
+  };
   const s = document.createElement("script");
   s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit";
   s.async = true; s.defer = true; document.head.append(s);
+  s.addEventListener("error", turnstileError, { once: true });
 }
-const tsToken = () => { try { return tsWidget !== null ? (window.turnstile.getResponse(tsWidget) || "") : ""; } catch { return ""; } };
-const tsReset = () => { try { if (tsWidget !== null) window.turnstile.reset(tsWidget); } catch {} };
 
 /* ---------- API ---------- */
 const apiOn = () => CFG.USE_API && location.protocol.startsWith("http");
 
-async function fetchIdeas(input){
-  if (!apiOn()) return { ideas: [], source: "none", productDiscoveryEnabled: false, notice: "Gift suggestions require the live Santa's Helper service. Please open this page from the website." };
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 35000);
-  try {
-    const res = await fetch("/api/ideas", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...input, turnstileToken: tsToken() }), signal: ctrl.signal
-    });
-    let data = {};
-    try { data = await res.json(); } catch {}
-    if (Array.isArray(data.ideas) && data.fallback) return {
-      ideas: data.ideas, source: "catalogue", productDiscoveryEnabled: data.product_discovery_enabled === true,
-      recipient: data.recipient,
-      notice: data.ideas.length ? data.error : (data.note || data.error)
-    };
-    if (res.ok && Array.isArray(data.ideas) && data.ideas.length) return {
-      ideas: data.ideas, source: data.source || "ai",
-      recipientSummary: typeof data.recipient_summary === "string" ? data.recipient_summary : "",
-      recipient: data.recipient,
-      productDiscoveryEnabled: data.product_discovery_enabled === true
-    };
-    if (res.ok) return { ideas: [], source: "none", notice: data.note || "We couldn't find enough suitable ideas. Try adding detail or adjusting the budget." };
-    throw Object.assign(new Error(data.error || "Something went wrong. Try again."), { user: true });
-  } catch (err){
-    if (err.user) throw err;
-    return { ideas: [], source: "none", notice: "The recommendation service didn't respond. Please try again in a moment." };
-  } finally { clearTimeout(timer); tsReset(); }
-}
-
 function validAmazonProduct(product){
   if (!product || product.provider !== "amazon" || !/^[A-Z0-9]{10}$/.test(product.asin || "")) return false;
   if (product.productId !== product.asin || product.affiliateUrl !== product.productUrl) return false;
+  const retrieved = Date.parse(product.retrievedAt), expires = Date.parse(product.expiresAt), now = Date.now();
+  if (!Number.isFinite(retrieved) || !Number.isFinite(expires) || retrieved > now || now - retrieved > 3600000 || expires <= now) return false;
   try {
     const url = new URL(product.affiliateUrl);
     const id = url.pathname.match(/^\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:\/|$)/i)?.[1];
@@ -562,33 +447,31 @@ function validProductImage(url){
 
 async function fillProducts(ideas){
   if (!ideas.length || !apiOn()) return;
-  try {
-    const res = await fetch("/api/products", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ideas: ideas.map((idea) => ({
-        title: idea.title, query: idea.query, concept: idea.concept || idea.title, productSpec: idea.productSpec || {}
-      })) })
-    });
-    if (!res.ok) return;
-    const { products = [] } = await res.json();
-    for (const [index, product] of products.entries()){
-      if (!validAmazonProduct(product)) continue;
-      const card = cardsByTitle.get(ideas[index]?.title);
-      if (card) setVerifiedProduct(card, ideas[index], product);
-    }
-  } catch {
-    console.warn("Product enrichment unavailable; showing gift placeholders.");
+  const request = ideas.map((idea) => ({
+    title: idea.title, query: idea.query, concept: idea.concept || idea.title, productSpec: idea.productSpec || {}
+  }));
+  const cards = ideas.map((idea) => cardsByTitle.get(idea.title));
+  const { products } = await fetchProducts(request, { enabled: apiOn() });
+  for (const [index, product] of products.entries()){
+    if (!validAmazonProduct(product)) continue;
+    const card = cards[index];
+    if (card?.isConnected) setVerifiedProduct(card, ideas[index], product);
   }
 }
 
 /* ---------- rendering ---------- */
-const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.6 3 5 6.6 5c2 0 3.4 1.1 4.4 2.5C12 6.1 13.4 5 15.4 5 19 5 21.1 8.6 19.6 11.8 17.5 16.4 12 21 12 21z"/></svg>';
-const PAPERS = ["#8b1631","#17543f","#c88a17","#5a0c1f","#2b5d8a"];
-const GIFT_SVG = (paper) => `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="14" y="40" width="72" height="50" rx="5" fill="${paper}"/><rect x="10" y="28" width="80" height="16" rx="4" fill="${paper}" opacity=".85"/><rect x="45" y="28" width="10" height="62" fill="#f2b544"/><path d="M50 28c-6-14-24-15-22-5s16 5 22 5zm0 0c6-14 24-15 22-5s-16 5-22 5z" fill="none" stroke="#f2b544" stroke-width="5" stroke-linejoin="round"/></svg>`;
+const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-4.7-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.3-8 10-8 10Z"/></svg>';
 const cardsByTitle = new Map();
 const isSaved = (t) => shortlist.some((x) => x.title === t);
+let feedbackTimer;
+function showFeedback(message){
+  clearTimeout(feedbackTimer);
+  $("#feedback").textContent = message;
+  if (message) feedbackTimer = setTimeout(() => { $("#feedback").textContent = ""; }, 6000);
+}
 
 function setVerifiedProduct(card, idea, product){
+  card.classList.add("verified");
   const media = card.querySelector(".media");
   const heading = card.querySelector("h3");
   const shop = card.querySelector(".shop");
@@ -620,10 +503,10 @@ function setVerifiedProduct(card, idea, product){
   const link = document.createElement("a"); link.className = "product-image-link";
   link.href = product.affiliateUrl; link.target = "_blank"; link.rel = "sponsored noopener";
   link.setAttribute("aria-label", `View ${product.title} on Amazon (affiliate link, opens in new tab)`);
-  const image = document.createElement("img"); image.className = "loading";
+  const image = document.createElement("img"); image.className = "image-loading";
   image.alt = product.title; image.loading = "lazy"; image.decoding = "async";
   image.src = product.imageUrl; image.sizes = "(max-width:760px) 100vw, 360px";
-  image.addEventListener("load", () => image.classList.remove("loading"));
+  image.addEventListener("load", () => image.classList.remove("image-loading"));
   image.addEventListener("error", () => { link.remove(); note.textContent = "Product photo unavailable"; });
   link.append(image); media.prepend(link);
   note.textContent = "Verified product image";
@@ -632,8 +515,7 @@ function setVerifiedProduct(card, idea, product){
 /* ---------- anonymous feedback (enumerated fields only, never titles or text) ---------- */
 const fbItem = (idea, position) => ({ strategy: idea.strategy, source: idea.source, discovery: idea.discovery === true, position });
 function sendFeedback(body){
-  if (!apiOn()) return;
-  try { fetch("/api/feedback", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), keepalive: true }).catch(() => {}); } catch {}
+  return postFeedback(body, { enabled: apiOn() });
 }
 
 function renderUnderstood(recipient){
@@ -652,49 +534,83 @@ function renderUnderstood(recipient){
 
 function renderCards(ideas){
   const ul = $("#cards"); ul.textContent = ""; cardsByTitle.clear();
+  showFeedback("");
   ideas.forEach((idea, idx) => {
     const li = document.createElement("li"); li.className = "card reveal"; li.style.setProperty("--i", idx);
     const media = document.createElement("div"); media.className = "media";
-    const ph = document.createElement("div"); ph.className = "ph"; ph.innerHTML = GIFT_SVG(PAPERS[idx % PAPERS.length]);
     const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = idea.category || "Gift idea";
-    const imageNote = document.createElement("span"); imageNote.className = "image-note"; imageNote.textContent = "Illustrative placeholder";
-    media.append(ph, cat, imageNote);
-    if (idea.discovery === true){ const tag = document.createElement("span"); tag.className = "discovery-tag"; tag.textContent = "Something different"; media.append(tag); }
+    const imageNote = document.createElement("span"); imageNote.className = "image-note"; imageNote.textContent = "Product photo unavailable";
+    media.append(cat, imageNote);
     const body = document.createElement("div"); body.className = "card-body";
+    const kicker = document.createElement("p"); kicker.className = "card-kicker";
+    kicker.textContent = `${String(idx + 1).padStart(2, "0")} / ${idea.category || "A considered idea"}`;
+    if (idea.discovery === true){ const tag = document.createElement("span"); tag.className = "discovery-tag"; tag.textContent = "Adjacent discovery"; kicker.append(tag); }
     const h = document.createElement("h3"); h.textContent = idea.title;
     const why = document.createElement("p"); why.className = "why"; why.textContent = idea.why;
     let connection = null;
     if (idea.connection && typeof idea.connection.text === "string" && idea.connection.text){
       connection = document.createElement("p"); connection.className = "connection";
-      const label = document.createElement("strong"); label.textContent = "Why we thought of this: ";
+      const label = document.createElement("strong"); label.textContent = "The thinking behind it";
       connection.append(label, document.createTextNode(idea.connection.text));
     }
     const row = document.createElement("div"); row.className = "row";
     const a = document.createElement("a"); a.className = "shop"; a.href = amazonUrl(idea.query);
-    a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = "See it on Amazon";
-    a.setAttribute("aria-label", `See ${idea.title} on Amazon (affiliate link, opens in new tab)`);
-    a.addEventListener("click", () => sendFeedback({ event: "click", item: fbItem(idea, idx) }));
+    a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = "Search Amazon for this idea";
+    a.setAttribute("aria-label", `Search Amazon for ${idea.title} (affiliate link, opens in new tab)`);
+    a.addEventListener("click", () => { void sendFeedback({ event: "click", item: fbItem(idea, idx) }); });
     const save = document.createElement("button"); save.type = "button"; save.className = "save"; save.innerHTML = HEART;
     const sync = () => { const on = isSaved(idea.title); save.setAttribute("aria-pressed", String(on)); save.setAttribute("aria-label", on ? `Remove ${idea.title} from shortlist` : `Save ${idea.title} to shortlist`); };
-    save.addEventListener("click", () => { const adding = !isSaved(idea.title); toggleSave(idea); sync(); if (adding) sendFeedback({ event: "save", item: fbItem(idea, idx) }); });
+    save.addEventListener("click", () => { const adding = !isSaved(idea.title); toggleSave(idea); sync(); if (adding) void sendFeedback({ event: "save", item: fbItem(idea, idx) }); });
     sync();
     const aff = document.createElement("p"); aff.className = "aff"; aff.textContent = "Ad";
     const dismiss = document.createElement("button"); dismiss.type = "button"; dismiss.className = "dismiss"; dismiss.textContent = "Not for them";
     dismiss.setAttribute("aria-label", `Not for them: ${idea.title}`);
     dismiss.addEventListener("click", () => {
-      if (li.classList.contains("dismissed")) return;
-      li.classList.add("dismissed"); dismiss.textContent = "Noted \u2014 thanks"; dismiss.disabled = true;
-      sendFeedback({ event: "dismiss", item: fbItem(idea, idx) });
+      if (dismiss.disabled) return;
+      dismiss.disabled = true;
+      const position = [...ul.querySelectorAll(".card:not([hidden])")].indexOf(li);
+      li.hidden = true;
+      updateCardLayout();
+      const remaining = [...ul.querySelectorAll(".card:not([hidden]) .dismiss")];
+      const next = remaining[position] || remaining[position - 1] || $("#more");
+      next.focus({ preventScroll: true });
+      showFeedback(`Set aside: ${idea.title}.`);
+      setStatus("Idea hidden from this list.", false);
+      const revision = statusRevision;
+      void sendFeedback({ event: "dismiss", item: fbItem(idea, idx) }).then((recorded) => {
+        if (apiOn() && !recorded && statusRevision === revision){
+          const message = "Idea hidden, but we couldn't send the optional anonymous feedback.";
+          setStatus(message, false);
+          showFeedback(message);
+        }
+      });
     });
     row.append(a, save);
-    body.append(h, why);
+    body.append(kicker, h, why);
     if (connection) body.append(connection);
     body.append(row, aff, dismiss);
     li.append(media, body);
     ul.append(li);
     cardsByTitle.set(idea.title, li);
   });
-  sendFeedback({ event: "shown", items: ideas.slice(0, 12).map(fbItem) });
+  updateCardLayout();
+  void sendFeedback({ event: "shown", items: ideas.slice(0, 12).map(fbItem) });
+}
+
+function updateCardLayout(){
+  const visible = [...$("#cards").querySelectorAll(".card:not([hidden])")];
+  for (const card of cardsByTitle.values()){
+    card.classList.toggle("featured", card === visible[0]);
+    card.classList.toggle("companion", card === visible[1]);
+    card.classList.toggle("solo", visible.length === 1 && card === visible[0]);
+  }
+  const empty = $("#cards .empty-selection");
+  if (visible.length) empty?.remove();
+  else if (!empty){
+    const note = document.createElement("li"); note.className = "empty-selection";
+    note.textContent = "Not quite them? A different collection is a click away.";
+    $("#cards").append(note);
+  }
 }
 
 function toggleSave(idea){
@@ -702,8 +618,21 @@ function toggleSave(idea){
   else shortlist = [...shortlist, { title: idea.title, query: idea.query, category: idea.category || "" }].slice(-50);
   store.set(shortlist); renderBar();
 }
-function renderBar(){ $("#listbar").hidden = shortlist.length === 0; $("#openlist").textContent = `Your shortlist (${shortlist.length})`; }
+let collectionInView = false;
+function renderBar(){
+  $("#listbar").hidden = shortlist.length === 0 || !collectionInView;
+  $("#openlist").textContent = `Your shortlist (${shortlist.length})`;
+  $("#nav-count").textContent = shortlist.length;
+  $("#nav-shortlist").setAttribute("aria-label", `Open your shortlist, ${shortlist.length} saved ${shortlist.length === 1 ? "idea" : "ideas"}`);
+}
+new IntersectionObserver(([entry]) => {
+  collectionInView = entry.isIntersecting;
+  renderBar();
+}).observe($("#results"));
 function renderDialog(){
+  $("#shortlist-storage").textContent = shortlistPersistent
+    ? "Saved on this device only."
+    : "Available for this visit only; browser storage is unavailable.";
   const ul = $("#dlg-list"); ul.textContent = "";
   if (!shortlist.length){ const li = document.createElement("li"); li.textContent = "Nothing saved yet. Tap the heart on any idea."; ul.append(li); return; }
   for (const item of shortlist){
@@ -713,27 +642,65 @@ function renderDialog(){
     const small = document.createElement("small"); small.textContent = item.category;
     div.append(a, small);
     const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "Remove";
-    x.addEventListener("click", () => { shortlist = shortlist.filter((s) => s.title !== item.title); store.set(shortlist); renderDialog(); renderBar(); syncSaveButtons(); });
+    x.addEventListener("click", () => {
+      shortlist = shortlist.filter((s) => s.title !== item.title);
+      store.set(shortlist); renderDialog(); renderBar(); syncSaveButtons();
+      ($("#dlg-list .x") || $("#closelist")).focus({ preventScroll: true });
+    });
     li.append(div, x); ul.append(li);
   }
 }
-function syncSaveButtons(){ for (const [t, li] of cardsByTitle) li.querySelector(".save").setAttribute("aria-pressed", String(isSaved(t))); }
-$("#openlist").addEventListener("click", () => { renderDialog(); $("#dlg").showModal(); });
+function syncSaveButtons(){
+  for (const [title, li] of cardsByTitle){
+    const save = li.querySelector(".save"), on = isSaved(title);
+    save.setAttribute("aria-pressed", String(on));
+    save.setAttribute("aria-label", on ? `Remove ${title} from shortlist` : `Save ${title} to shortlist`);
+  }
+}
+let shortlistOpener = null;
+function openShortlist(event){
+  shortlistOpener = event.currentTarget;
+  renderDialog(); $("#dlg").showModal();
+}
+$("#openlist").addEventListener("click", openShortlist);
+$("#nav-shortlist").addEventListener("click", openShortlist);
 $("#closelist").addEventListener("click", () => $("#dlg").close());
+$("#dlg").addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  event.preventDefault(); $("#dlg").close();
+});
+$("#dlg").addEventListener("close", () => {
+  const opener = shortlistOpener === $("#openlist") && $("#listbar").hidden
+    ? ($(".card:not([hidden]) .save") || $("#nav-shortlist")) : shortlistOpener;
+  opener?.focus({ preventScroll: true });
+});
 $("#copylist").addEventListener("click", async (e) => {
   const text = "My Christmas gift shortlist\n" + shortlist.map((s) => `- ${s.title}`).join("\n");
   try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied"; } catch { e.target.textContent = "Couldn't copy"; }
   setTimeout(() => { e.target.textContent = "Copy list"; }, 1800);
 });
 
-function setStatus(msg, isErr){
+function setStatus(msg, isErr, canRetry = false){
+  statusRevision += 1;
   const el = $("#status"); el.textContent = "";
   if (!msg) return;
   const p = document.createElement("p"); p.className = "status" + (isErr ? " err" : ""); p.textContent = msg; el.append(p);
+  if (canRetry && current){
+    const retry = document.createElement("button"); retry.type = "button"; retry.className = "btn btn-outline"; retry.textContent = "Try again";
+    retry.addEventListener("click", () => {
+      if (activeController) return;
+      if (turnstileEnabled && tsGate.failed) {
+        try { resetTurnstile(); } catch (error) { setStatus(error.message, true); return; }
+      }
+      void run(current);
+    });
+    el.append(retry);
+  }
 }
 
 /* ---------- form flow ---------- */
-let current = null, shownTitles = [];
+let current = null, shownTitles = [], statusRevision = 0;
+let activeController = null;
 function readForm(){
   const f = $("#form");
   const mode = (f.querySelector('input[name="mode"]:checked') || {}).value || "describe";
@@ -754,14 +721,51 @@ function readForm(){
 }
 
 async function run(input){
+  if (activeController) return;
+  current = input;
   const go = $("#go"), more = $("#more");
-  go.disabled = true; more.disabled = true; setStatus(""); $("#loading").hidden = false;
-  const steps = ["Reading your description...", "Working out what they enjoy and why...", "Exploring ideas beyond the obvious...", "Checking every idea against what you told us...", "Almost there - this usually takes 10 to 20 seconds."];
-  const label = $("#loading-text"); let stepIdx = 0; label.textContent = steps[0];
-  const ticker = setInterval(() => { stepIdx = Math.min(stepIdx + 1, steps.length - 1); label.textContent = steps[stepIdx]; }, 4000);
+  const controller = new AbortController();
+  activeController = controller;
+  const timer = setTimeout(() => controller.abort("timeout"), 35000);
+  go.disabled = true; more.disabled = true; $("#cancel").disabled = false; $("#cancel").textContent = "Cancel search";
+  $("#restart").disabled = true;
+  $("#form").setAttribute("aria-busy", "true");
+  setStatus(""); $("#loading").hidden = false;
+  $("#loading").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+  const messages = ["Considering the person...", "Tracing the connections...", "Curating your collection..."];
+  const label = $("#loading-text"); let messageIndex = 0; label.textContent = messages[0];
+  const stages = [...document.querySelectorAll(".curation-steps li")];
+  const showStage = () => stages.forEach((stage, index) => {
+    stage.classList.toggle("complete", index < messageIndex);
+    if (index === messageIndex) stage.setAttribute("aria-current", "step");
+    else stage.removeAttribute("aria-current");
+  });
+  showStage();
+  const ticker = setInterval(() => {
+    if (messageIndex === messages.length - 1) return;
+    messageIndex += 1; label.textContent = messages[messageIndex]; showStage();
+  }, 5000);
   try {
-    const out = await fetchIdeas(input);
-    if (!out.ideas.length){ setStatus(out.notice || "We've run out of new ideas for this description. Try adding more detail about them.", false); return; }
+    if (turnstileEnabled && tsGate.failed) resetTurnstile();
+    const fetch = (turnstileToken = "") => fetchIdeas(input, { enabled: apiOn(), turnstileToken, signal: controller.signal });
+    const out = turnstileEnabled
+      ? await tsGate.execute(fetch, {
+        signal: controller.signal,
+        reset: () => {
+          try {
+            resetTurnstile();
+          } catch {
+            throw new TurnstileTokenError("The security check couldn't be refreshed. Refresh the page and try again.");
+          }
+        },
+      })
+      : await fetch();
+    if (out.retryTurnstile) {
+      setStatus(out.notice, true, true);
+      return;
+    }
+    if (!out.ideas.length){ setStatus(out.notice || "We've run out of new ideas for this description. Try adding more detail about them.", out.error, out.error); return; }
+    setStatus(out.notice || "", false);
     shownTitles = [...shownTitles, ...out.ideas.map((i) => i.title)].slice(-24);
     renderCards(out.ideas);
     const summary = out.source === "ai" && typeof out.recipientSummary === "string" ? out.recipientSummary.trim() : "";
@@ -770,20 +774,40 @@ async function run(input){
     $("#recipient-insight").hidden = !summary && !understood;
     $("#results").hidden = false;
     $("#source").textContent = out.source === "ai" ? "Ideas curated by AI from your answers." : "Catalogue suggestions checked against your answers.";
-    if (out.notice) setStatus(out.notice, false);
     const title = $("#results-title"); title.focus({ preventScroll: true });
     title.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     if (out.productDiscoveryEnabled) fillProducts(out.ideas);
-  } catch (err){
-    setStatus(err.message, true);
+  } catch (error) {
+    if (error instanceof TurnstileTokenError) {
+      setStatus(error.message, true, Boolean(current && tsWidget !== null));
+    } else if (controller.signal.aborted) {
+      const cancelled = controller.signal.reason === "cancelled";
+      setStatus(
+        cancelled
+          ? "Search cancelled. Your description is still here."
+          : "This search is taking longer than expected. Your description is still here; please try again.",
+        !cancelled,
+        !cancelled,
+      );
+    } else {
+      setStatus("Gift suggestions are temporarily unavailable. Your description is still here; please try again.", true, true);
+    }
   } finally {
     clearInterval(ticker);
+    clearTimeout(timer);
+    activeController = null;
+    $("#form").removeAttribute("aria-busy");
+    const returnToForm = controller.signal.reason === "cancelled" || document.activeElement === $("#cancel");
     $("#loading").hidden = true; go.disabled = false; more.disabled = false;
+    if (returnToForm) go.focus({ preventScroll: true });
+    $("#restart").disabled = false;
+    $("#cancel").disabled = false;
   }
 }
 
 $("#form").addEventListener("submit", (e) => {
   e.preventDefault();
+  if (activeController) return;
   const input = readForm();
   if (input.mode === "describe" && !input.description){
     setStatus("Tell us a little about the person so we can find ideas that suit them.", true);
@@ -794,16 +818,28 @@ $("#form").addEventListener("submit", (e) => {
     $("#interests").focus(); return;
   }
   current = input; shownTitles = [];
-  run(input);
+  void run(input);
 });
-$("#more").addEventListener("click", () => { if (current){ sendFeedback({ event: "more" }); run({ ...current, exclude: shownTitles }); } });
+$("#cancel").addEventListener("click", () => {
+  if (!activeController) return;
+  $("#cancel").disabled = true;
+  $("#cancel").textContent = "Cancelling…";
+  activeController.abort("cancelled");
+});
+$("#more").addEventListener("click", () => {
+  if (current && !activeController){
+    void sendFeedback({ event: "more" });
+    void run({ ...current, exclude: shownTitles });
+  }
+});
 $("#restart").addEventListener("click", () => {
   $("#form").reset();
   $("#about-count").textContent = "0 / 500";
   $("#description-count").textContent = "0 / 1,200";
   setMode("describe");
   $("#results").hidden = true; setStatus(""); current = null; shownTitles = [];
-  window.scrollTo({ top: 0 }); $("#interests").focus();
+  showFeedback("");
+  window.scrollTo({ top: 0 }); $("#description").focus({ preventScroll: true });
 });
 renderBar();
 })();

@@ -8,6 +8,8 @@ import { cleanText } from "./text.js";
 import { productDiscoveryAvailable, searchProductsForIdeas } from "./product-search.js";
 import { ENGINE_VERSION, engineFallback, promptHints, runEngine, understand } from "./engine/index.js";
 import { feedbackKeys } from "./engine/feedback.js";
+import * as baselinePrompt from "./prompts/gift-curator-v3.3.js";
+import { catalogueFallback } from "./catalogue.js";
 
 export { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS };
 export { CANDIDATE_COUNT, GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
@@ -158,6 +160,7 @@ function makeStrictSchema(schema) {
 }
 
 export const STRICT_GIFT_TOOL = { ...GIFT_TOOL, strict: true, input_schema: makeStrictSchema(GIFT_TOOL.input_schema) };
+const BASELINE_TOOL = { ...baselinePrompt.GIFT_TOOL, strict: true, input_schema: makeStrictSchema(baselinePrompt.GIFT_TOOL.input_schema) };
 
 const STRICT_OUTPUT_NOTE = "\n\nOUTPUT REQUIREMENT\n- Include every field in the tool schema. Use an empty string for note when no additional note is needed.";
 const AUTO_TOOL_NOTE = "\n- You must return the result by calling the gift_ideas tool exactly once. Do not answer with plain text instead.";
@@ -167,19 +170,22 @@ const AUTO_TOOL_NOTE = "\n- You must return the result by calling the gift_ideas
  * tool_choice; the response then starts with the tool call and has no thinking block. Models that
  * cannot force a tool (Sonnet 5.5) pass forceTool=false and get `auto` plus an explicit instruction.
  */
-export function buildClaudeRequest({ model, userMessage, maxTokens, effort, forceTool = true }) {
+export function buildClaudeRequest({ model, userMessage, maxTokens, effort, forceTool = true, baseline = false }) {
+  const system = baseline ? baselinePrompt.SYSTEM_PROMPT : SYSTEM_PROMPT;
+  const tool = baseline ? BASELINE_TOOL : STRICT_GIFT_TOOL;
   return {
     model,
     ...generationParams({ maxTokens, effort }),
-    system: forceTool ? `${SYSTEM_PROMPT}${STRICT_OUTPUT_NOTE}` : `${SYSTEM_PROMPT}${STRICT_OUTPUT_NOTE}${AUTO_TOOL_NOTE}`,
-    tools: [STRICT_GIFT_TOOL],
-    tool_choice: forceTool ? { type: "tool", name: STRICT_GIFT_TOOL.name } : { type: "auto" },
+    system: forceTool ? `${system}${STRICT_OUTPUT_NOTE}` : `${system}${STRICT_OUTPUT_NOTE}${AUTO_TOOL_NOTE}`,
+    tools: [tool],
+    tool_choice: forceTool ? { type: "tool", name: tool.name } : { type: "auto" },
     messages: [{ role: "user", content: userMessage }],
   };
 }
 
 /** Like callClaude, but also reports why generation stopped so truncation is never mistaken for success. */
 export async function callClaudeDetailed(input, env, fetchImpl, hints = null) {
+  const baseline = env.RECOMMENDATION_MODE === "baseline-v3.3";
   const res = await fetchImpl(ANTHROPIC_URL, {
     method: "POST",
     headers: {
@@ -189,9 +195,10 @@ export async function callClaudeDetailed(input, env, fetchImpl, hints = null) {
     },
     body: JSON.stringify(buildClaudeRequest({
       model: env.MODEL || "claude-haiku-5-5",
-      userMessage: buildUserMessage(input, hints),
+      userMessage: baseline ? baselinePrompt.buildUserMessage(input) : buildUserMessage(input, hints),
       maxTokens: env.MAX_OUTPUT_TOKENS,
       effort: env.CLAUDE_EFFORT,
+      baseline,
     })),
     signal: AbortSignal.timeout(Number(env.UPSTREAM_TIMEOUT_MS) || 25000),
   });
@@ -213,7 +220,7 @@ export async function callClaudeDetailed(input, env, fetchImpl, hints = null) {
 async function visitorHash(request, env) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   const day = new Date().toISOString().slice(0, 10);
-  return { ip, hash: (await sha256Hex(`${env.IP_SALT || "salt"}:${day}:${ip}`)).slice(0, 32) };
+  return { ip, hash: (await sha256Hex(`${env.IP_SALT}:${day}:${ip}`)).slice(0, 32) };
 }
 
 /**
@@ -226,17 +233,59 @@ async function visitorHash(request, env) {
  * }
  */
 async function readJson(request, max) {
-  const length = Number(request.headers.get("Content-Length") || 0);
-  if (length > max) return { error: "Request too large.", status: 413 };
+  const contentType = (request.headers.get("Content-Type") || "").split(";", 1)[0].trim();
+  if (!/^application\/(?:[\w.-]+\+)?json$/i.test(contentType)) {
+    return { error: "Send the form as JSON.", status: 415 };
+  }
+  const declaredLength = request.headers.get("Content-Length");
+  if (declaredLength !== null) {
+    if (!/^\d+$/.test(declaredLength.trim())) return { error: "Send the form as JSON.", status: 400 };
+    if (Number(declaredLength) > max) return { error: "Request too large.", status: 413 };
+  }
+
+  const reader = request.body?.getReader();
+  if (!reader) return { error: "Send the form as JSON.", status: 400 };
+  const chunks = [];
+  let total = 0;
+  let oversized = false;
   try {
-    return { body: await request.json() };
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > max) {
+        oversized = true;
+        try {
+          await reader.cancel();
+        } catch {
+          console.warn("Could not cancel oversized request body stream.");
+        }
+        break;
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return { error: "Send the form as JSON.", status: 400 };
+  } finally {
+    reader.releaseLock();
+  }
+  if (oversized) return { error: "Request too large.", status: 413 };
+
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return { body: JSON.parse(new TextDecoder().decode(bytes)) };
   } catch {
     return { error: "Send the form as JSON.", status: 400 };
   }
 }
 
 // Counts of rejected/repaired/warned checks only. Never includes shopper text or model output.
-function logCuration(diagnostics, stopReason) {
+function logCuration(diagnostics, stopReason, baseline = false) {
   const counts = {};
   for (const { code, action } of diagnostics.issues) counts[`${action}:${code}`] = (counts[`${action}:${code}`] || 0) + 1;
   for (const candidate of diagnostics.rejected || []) {
@@ -244,22 +293,24 @@ function logCuration(diagnostics, stopReason) {
   }
   const fn = diagnostics.shortfall || diagnostics.truncated ? console.warn : console.log;
   fn("Gift curation", JSON.stringify({
-    prompt: PROMPT_VERSION, engine: ENGINE_VERSION, validator: diagnostics.validator, stop_reason: stopReason,
+    prompt: baseline ? baselinePrompt.PROMPT_VERSION : PROMPT_VERSION,
+    engine: baseline ? "baseline-v3.3" : ENGINE_VERSION, validator: diagnostics.validator, stop_reason: stopReason,
     truncated: diagnostics.truncated, candidates: diagnostics.candidates, returned: diagnostics.returned,
     backups_used: diagnostics.backups_used || 0, discovery_shown: diagnostics.engine?.discovery_shown ?? null, issues: counts,
   }));
 }
 
 function fallbackResponse(input, message, status, origin, env) {
-  const result = engineFallback(input);
-  logCuration(result.diagnostics, "catalogue_fallback");
+  const baseline = env.RECOMMENDATION_MODE === "baseline-v3.3";
+  const result = baseline ? catalogueFallback(input) : engineFallback(input);
+  logCuration(result.diagnostics, "catalogue_fallback", baseline);
   return json({
     error: message,
     fallback: true,
     source: "catalogue",
     ideas: result.ideas,
     recipient: result.recipient,
-    engine_version: ENGINE_VERSION,
+    engine_version: baseline ? "baseline-v3.3" : ENGINE_VERSION,
     shortfall: result.diagnostics.shortfall,
     product_discovery_enabled: productDiscoveryAvailable(env),
     note: result.ideas.length ? "" : "We don't have enough verified catalogue ideas for this recipient and budget. Try adding detail or adjusting the budget.",
@@ -274,9 +325,17 @@ export async function handleRequest(request, env, deps) {
     return new Response(null, { status: origin ? 204 : 403, headers: corsHeaders(origin) });
   }
   if (url.pathname === "/api/health") return json({ ok: true }, 200, origin);
+  if (url.pathname === "/api/ready") {
+    const ready = typeof env.IP_SALT === "string" && env.IP_SALT.length >= 32;
+    return json({ ok: ready }, ready ? 200 : 503, origin);
+  }
   if (!["/api/ideas", "/api/products", "/api/feedback"].includes(url.pathname)) return json({ error: "Not found" }, 404, origin);
   if (request.method !== "POST") return json({ error: "Use POST." }, 405, origin);
   if (!origin) return json({ error: "This site isn't allowed to use the API." }, 403, null);
+  if (typeof env.IP_SALT !== "string" || env.IP_SALT.length < 32) {
+    console.error("IP_SALT is missing or too short; refusing API request.");
+    return json({ error: "The service is temporarily unavailable. Please try again later." }, 503, origin);
+  }
 
   const { ip, hash: ipHash } = await visitorHash(request, env);
 
@@ -306,6 +365,9 @@ export async function handleRequest(request, env, deps) {
   const parsed = normaliseInput(r.body);
   if (!parsed.ok) return json({ error: parsed.error }, 400, origin);
   const input = parsed.value;
+  const baseline = env.RECOMMENDATION_MODE === "baseline-v3.3";
+  const promptVersion = baseline ? baselinePrompt.PROMPT_VERSION : PROMPT_VERSION;
+  const engineVersion = baseline ? "baseline-v3.3" : ENGINE_VERSION;
   if (!env.ANTHROPIC_API_KEY) {
     return fallbackResponse(input, "AI recommendations are temporarily unavailable. Here are catalogue suggestions checked against your answers.", 503, origin, env);
   }
@@ -315,7 +377,7 @@ export async function handleRequest(request, env, deps) {
 
   // Identical requests are served from cache and cost nothing. The key covers everything that
   // changes the answer: prompt, validator rules, model and the visitor's input.
-  const cacheKeyHash = await sha256Hex(JSON.stringify([PROMPT_VERSION, VALIDATOR_VERSION, ENGINE_VERSION, env.MODEL || "", generationFingerprint(env), input]));
+  const cacheKeyHash = await sha256Hex(JSON.stringify([promptVersion, VALIDATOR_VERSION, engineVersion, env.MODEL || "", generationFingerprint(env), input]));
   const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v7/${cacheKeyHash}`);
   if (deps.cache) {
     try {
@@ -337,18 +399,20 @@ export async function handleRequest(request, env, deps) {
 
   let result;
   let truncated = false;
-  const understanding = understand(input);
+  const understanding = baseline ? null : understand(input);
   try {
-    const call = await callClaudeDetailed(input, env, deps.fetch, promptHints(understanding));
+    const call = await callClaudeDetailed(input, env, deps.fetch, baseline ? null : promptHints(understanding));
     truncated = call.truncated;
-    result = runEngine(call.output, input, { truncated, understanding });
-    logCuration(result.diagnostics, call.stopReason);
+    result = baseline
+      ? curateIdeas(call.output, input, { truncated, decorate: () => ({ source: "model" }) })
+      : runEngine(call.output, input, { truncated, understanding });
+    logCuration(result.diagnostics, call.stopReason, baseline);
   } catch (err) {
     console.error("Claude call failed", err && err.status, err && err.detail, String(err));
     return fallbackResponse(input, "Our AI helper is busy right now. Here are catalogue suggestions checked against your answers.", 502, origin, env);
   }
   // A cut-off response with no surviving model ideas is a failure, even if graph backups could pad it.
-  if (truncated && !result.ideas.some((i) => i.source === "model")) {
+  if (truncated && (baseline ? !result.ideas.length : !result.ideas.some((i) => i.source === "model"))) {
     return fallbackResponse(input, "Our AI response was incomplete. Here are catalogue suggestions checked against your answers.", 502, origin, env);
   }
 
@@ -359,8 +423,8 @@ export async function handleRequest(request, env, deps) {
     recipient: result.recipient,
     source: "ai",
     product_discovery_enabled: productDiscoveryAvailable(env),
-    prompt_version: PROMPT_VERSION,
-    engine_version: ENGINE_VERSION,
+    prompt_version: promptVersion,
+    engine_version: engineVersion,
     shortfall: result.diagnostics.shortfall,
   };
   if (truncated) payload.truncated = true;

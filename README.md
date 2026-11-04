@@ -8,11 +8,34 @@ One Cloudflare Worker that serves the website and its small API:
 
 If the AI is unavailable or its daily cap is reached, the Worker selects from `src/catalogue.js` and runs the candidates through the same recipient-aware validator as AI ideas. It uses stated age, explicit exclusions, owned items and budget bands, and returns fewer than eight when that is all that survives. The catalogue has only coarse price bands (not verified product prices), so a strict budget below £10 may have no verified fallback idea. Product discovery is optional; when unavailable or disabled, the site shows its locally rendered gift-box placeholder and keeps the Amazon search link.
 
+## Quality checks
+
+### Release recommendation selection
+
+Production selects `RECOMMENDATION_MODE = "baseline-v3.3"` in `wrangler.toml`, following the completed paired review's preference for the preserved baseline. This uses the frozen v3.3 prompt/tool, its ten candidates, and the validator's original-order variety selection. It does not run graph top-ups, discovery hints or v3.4 reranking. Current safety and product-only validation remain in place; replay tests verify identical titles and ordering on all 30 reviewed baseline outputs. Catalogue fallback also uses the original catalogue curation.
+
+The v4 prompt and engine remain preserved for offline research. The existing v3.3/v3.4 replay commands describe the experimental engine, not the selected baseline release. `test/baseline-release.test.js` checks the release path against the preserved baseline, including prompt selection, cache isolation and Turnstile enforcement. No new live model quality result is claimed.
+
+Rollback: record the currently deployed Cloudflare version before deployment. If post-deployment checks fail, use Cloudflare's deployment rollback to that recorded version. This rolls back the Worker and assets, not Durable Object data or secrets. Do not rotate secrets or alter storage during rollback. The previous version lacks the release fixes, so treat rollback as temporary containment, not acceptance.
+
+Run the deterministic suite and fixed benchmark replays locally:
+
+```powershell
+npm ci
+npm test
+npm run benchmark:replay:v3.3
+npm run benchmark:replay:v3.4
+```
+
+These replays use stored model outputs and make no API calls. CI runs the same checks; a live Claude benchmark is intentionally not part of routine CI. After a material prompt or engine change, run the live benchmark only with explicit cost confirmation, then prepare and complete the blind paired review described in `benchmarks/v3.4/README.md`.
+
 ## Pages and launch assets
 
-- `site/gifts/` - ten original gift guides plus an index, `site/404.html`, `site/guide.css` and `site/sitemap.xml` are **generated** by `npm run build:pages` (`scripts/build-site-pages.mjs`). Edit the guide content in that script, re-run it and commit the output. The affiliate tag is read from `AMAZON_TAG` in `site/index.html`.
+- `site/gifts/` - ten original gift guides plus an index, `site/404.html` and `site/sitemap.xml` are **generated** by `npm run build:pages` (`scripts/build-site-pages.mjs`). Edit the guide content/templates in that script, re-run it and commit the output. The affiliate tag is read from `AMAZON_TAG` in `site/index.html`.
+- `site/theme.css` owns the shared parchment/forest colour tokens, automatic dark mode, local Fraunces/Figtree fonts and reduced-motion rules. Edit `site/home.css` for the gift atelier and `site/guide.css` for editorial/legal pages directly; the page build preserves these stylesheets. Original local artwork lives in `site/atelier.svg` and `site/guide-motifs.svg`; no external UI, font or illustration dependencies are needed. The finder precedes large artwork on mobile. Its curation stages are illustrative, not server progress; cancellation and errors retain the description. Recommendations are concept-led (featured/companion plus lighter entries), with photographs shown only for verified products. See [the design direction and research](docs/design-direction.md) for rationale and acceptance criteria.
 - `site/robots.txt`, `og-image.png`, `apple-touch-icon.png`, `about.html`, `privacy.html`.
 - `src/index.js` sets security headers (CSP, HSTS, framing and referrer policy). The CSP allows inline scripts and styles because the pages use them, plus approved Amazon image hosts and Cloudflare Turnstile and Web Analytics. Tighten it if you move scripts into hashed files.
+- The browser's Cancel button aborts the browser fetch and returns the UI to the form; it does not guarantee that the Worker or an already-started Claude request stops processing. The Worker applies its own upstream timeout.
 
 ## Before you publish (checklist)
 
@@ -20,7 +43,7 @@ If the AI is unavailable or its daily cap is reached, the Worker selects from `s
 2. Legal pages are filled in (name, address, email). Check you are happy for your home address to be public; a virtual office or PO-style business address is an alternative, but it must still be a geographic address where you can be reached. Register with the ICO if required.
 3. `npm test` and `npx wrangler deploy --dry-run` must pass.
 4. Re-run the five-case smoke test and review the actual recommendations (see the benchmark section), then the full 30-case run.
-5. Set a monthly spend limit in the Anthropic console. `DAILY_AI_LIMIT` is 500 for launch (at about $0.0015 a call that is roughly $0.75 a day, or about $25 a month in the worst case); raise it once traffic and quality justify it. Over the cap, visitors get the recipient-aware fallback.
+5. Set a monthly spend limit in the Anthropic console. `DAILY_AI_LIMIT` is 500; the stored v3.4 Haiku run averaged about $0.0021 per call, or roughly $1.05/day and $31.50 per 30 days at the cap before cache hits. Actual costs vary with tokens, pricing and traffic. Over the cap, visitors get the recipient-aware fallback.
 6. Add your Cloudflare Web Analytics token, enable Turnstile (`TURNSTILE_SITE_KEY` in `site/index.html` and `TURNSTILE_SECRET`), and submit `sitemap.xml` to Google Search Console.
 
 ## Go live (about 15 minutes)
@@ -47,7 +70,11 @@ npx wrangler secret put ANTHROPIC_API_KEY
 npx wrangler secret put IP_SALT
 ```
 
-For `IP_SALT`, type any long random string. It's used to anonymise visitor IPs for the rate limits.
+For `IP_SALT`, set a securely generated random value of at least 32 characters. It is used to derive a daily-changing pseudonymous rate-limit identifier; this is not anonymisation. `npx wrangler secret list` confirms only that a secret name is configured. It does not reveal or verify the value's length or randomness, which the operator must check privately.
+
+For local development, put `IP_SALT=<a locally generated random value of at least 32 characters>` in the ignored `.dev.vars` file. The API fails closed with a generic unavailable response if the salt is missing or too short; never commit `.dev.vars`.
+
+`/api/health` is a liveness check only. `/api/ready` returns ready only when the required `IP_SALT` passes the generic configuration check; it never exposes the secret or its length.
 
 **4. Deploy**
 
@@ -126,7 +153,7 @@ The Claude API is the main variable cost. At the configured cap of 500 AI search
 ### Limits that stop costs running away
 
 1. **Daily AI cap** (`DAILY_AI_LIMIT`, default 500, resets midnight UTC). Above it, visitors get recipient-aware suggestions from the Worker catalogue.
-2. **Per-visitor caps**: 4 AI searches a minute and 15 a day. Visitors are identified by a hashed IP that changes daily; raw IPs are never stored.
+2. **Per-visitor caps**: 4 AI searches a minute and 15 a day. Rate limits use a pseudonymous IP-derived value that changes daily; Cloudflare also processes connection data to operate the service.
 3. **Product lookup caps** limit Amazon API calls per second (default 1), per hour and visitor (`PRODUCT_SEARCH_PER_SECOND_LIMIT`, `PRODUCT_SEARCH_HOURLY_LIMIT`, `PRODUCT_SEARCH_PER_VISITOR_DAILY_LIMIT`, `PRODUCT_SEARCH_PER_VISITOR_MINUTE_LIMIT`). Confirm the actual account allocation with Amazon before choosing production limits.
 4. **Browser CORS policy** (`ALLOWED_ORIGINS`) limits which browser origins can read API responses. It is not authentication: non-browser clients can spoof `Origin`, so enable Turnstile and retain rate/spend limits.
 5. **Claude Console spend limit** as the final backstop.
@@ -153,120 +180,26 @@ If you see abuse, create a free Cloudflare Turnstile widget for christmasidea.co
 
 The `CATALOGUE` array in `src/catalogue.js` is Worker-side. Each entry has a title (`t`), Amazon search (`q`), category (`c`), supported age groups (`a`), coarse budget bands (`b`), interest keywords (`k`) and description (`w`). The legacy photo-search field is unused. The fallback is filtered by age and conservative budget-band ceilings, then validated against exclusions, known small-parts rules, preferences and already-owned items. Add and test catalogue entries there; the browser does not contain a second gift list.
 
-The About/contact and privacy pages are drafts in `site/about.html` and `site/privacy.html`. They contain explicit pre-publication notices because the operator's legal name, geographic address and contact email have not been supplied. Complete and verify those notices before publishing.
+The About/contact and privacy pages contain operator and contact details. The operator must verify their accuracy, required disclosures and publication suitability before release.
 
 ## Tests
 
 ```bash
-npm test   # Worker tests
+npm test
+npm run benchmark:replay:v3.3
+npm run benchmark:replay:v3.4
 ```
 
-## Gift recommendation benchmark (Haiku vs Sonnet)
+## Current gift recommendation evaluation
 
-The repository includes a fixed set of 30 synthetic recipient scenarios in `benchmarks/recipients.json`. It covers both freeform and guided inputs, limited budgets, specific hobbies, people who "have everything", age suitability, explicit dislikes, items already owned, low-information requests and cross-interest gift ideas.
+The current benchmark has 50 synthetic cases, including 30 original scenarios shared with the preserved v3.3 baseline and 20 v3.4 discovery cases. The stored Claude Haiku 5.5 run used one request per case, adaptive thinking, low effort and a 4,500-token output limit; it cost $0.104119 total. Its model latency was 12.7 seconds at the median and 14.2 seconds at p95. These are stored-run measurements, not live-site latency or evidence of perceived quality.
 
-The benchmark (protocol 4) builds its request with the **same function as the production Worker** (`buildClaudeRequest` in `src/core.js`). For Haiku 5.5 that means the identical system prompt, the strict `gift_ideas` tool, a **forced** `tool_choice` (`{type: "tool", name: "gift_ideas"}`), `thinking: {type: "adaptive"}`, `output_config.effort: "low"` and the production output limit. Anthropic's Haiku 5.5 migration guide documents that Haiku accepts a forced `tool_choice` and that the response then starts with the tool call and has no thinking block, so forcing the tool also stops hidden thinking tokens consuming the output allowance. Sonnet 5.5 does not support forced tool selection, so if it is selected (`--models=sonnet`) it alone uses `tool_choice: auto` plus an instruction to call the tool. The runner rejects resuming runs made under an older protocol. It does not modify the production model setting and makes no retailer or image-provider calls. It records response time, Anthropic token usage, `stop_reason`, `thinking_tokens`, estimated API cost, the recipient summary, the returned ideas and basic machine-checkable warnings. The default output ceiling is the production limit of 4,500 tokens per response (`BENCHMARK_MAX_TOKENS` can override it) and the default effort is the production `low` (`BENCHMARK_EFFORT` can override it); both are recorded in the run file, and a run cannot be resumed under different settings. Actual billed output is based on tokens generated, not the ceiling. A response that stops with `stop_reason: max_tokens` is recorded with status `truncated`, flagged `TRUNCATED_max_tokens`, and never treated as an ordinary success. The warnings are a triage aid, not a substitute for human judgement. Each result also stores the unfiltered `raw_output`, the visitor-facing `output` and a `validation` block (candidates generated, accepted, rejected with reason codes, repairs, warnings).
+See [the v3.4 benchmark guide](benchmarks/v3.4/README.md) for run settings, metric meanings, human results and limitations. The 30-case paired score sheet and separate 50-case Haiku review are complete. In the paired review, v3.3 was preferred on 28 cases and v3.4 on 2; this single-score-sheet result does not support claiming a perceived-quality improvement. See the [paired scores](benchmarks/v3.4/paired-blind-review-scored.csv), the [50-case Haiku scores](benchmarks/v3.4/live-haiku/review-template-completed.csv) and the [weighted summary](benchmarks/v3.4/live-haiku/score-summary.json). Distribute only the blinded CSV, never the A/B key alongside it. The fixed-seed assignment is reproducible and is not independent randomisation.
 
-### 1. Preview without spending API credits
+Routine CI runs unit/regression tests, benchmark integrity checks and fixed offline replays of the stored v3.3 and v3.4 outputs. This is an integrity/replay regression check, not a recommendation-quality gate or evidence that quality improved; it does not call Claude. For a major prompt/engine change, run a live benchmark only with explicit cost confirmation:
 
 ```bash
-npm run benchmark
+npm run benchmark -- --live --confirm-cost --models=haiku --cases-file=benchmarks/v3.4/cases.json --output=benchmarks/v3.4/live-haiku
 ```
 
-This is a dry run. It lists the number of cases and planned requests but makes no network calls.
-
-### 2. Run a small live pilot first
-
-Set `ANTHROPIC_API_KEY` in your terminal environment. Do not paste the key into source code or commit it to Git.
-
-Windows PowerShell:
-
-```powershell
-$env:ANTHROPIC_API_KEY = "your-Anthropic-API-key"
-npm run benchmark -- --live --confirm-cost --limit=5
-```
-
-macOS / Linux:
-
-```bash
-export ANTHROPIC_API_KEY="your-Anthropic-API-key"
-npm run benchmark -- --live --confirm-cost --limit=5
-```
-
-The pilot makes 5 Haiku calls by default (the runner now defaults to `--models=haiku`; add `--models=haiku,sonnet` to include Sonnet). Check `stop_reason`, candidate/accepted/rejected counts and token usage before running all 30 cases. Use a fresh pilot after updating from benchmark protocol 1; do not resume an older run.
-
-### 3. Run the full comparison
-
-```bash
-npm run benchmark -- --live --confirm-cost
-```
-
-This makes 30 Haiku calls with the current prompt (`gift-curator-v3.3`). Add `--models=haiku,sonnet` for the old two-model comparison (60 calls). Calls are made sequentially, retried up to three times for transient rate-limit/server errors, and checkpointed after every response. If interrupted, use the path to the saved `benchmark-results.json`, repeating the same `--models`, `--case` and `--limit` selection:
-
-```bash
-npm run benchmark -- --live --confirm-cost --resume="benchmarks/runs/<run-folder>/benchmark-results.json"
-```
-
-You can also run one model or selected cases:
-
-```bash
-npm run benchmark -- --live --confirm-cost --models=haiku
-npm run benchmark -- --live --confirm-cost --case=case-01 --case=case-18
-```
-
-Each run creates:
-
-- `benchmark-results.json` — full outputs, actual usage, latency and estimated costs.
-- `review-template.csv` — paired outputs labelled Model A / Model B, so the reviewer can score them without seeing which model produced each row.
-- `blind-key.json` — the model mapping. Keep this closed until the review scores have been completed.
-
-### 4. Review the outputs
-
-Open `review-template.csv` in Excel. Read each pair for the same `case_id` and score both rows from 1 to 5. Use the same standard for each model:
-
-| Criterion | Weight | What a strong result looks like |
-|---|---:|---|
-| Recipient fit | 25% | Ideas clearly reflect the actual person and their stated interests. |
-| Budget fit | 15% | Ideas are realistically within the stated budget; no invented prices. |
-| Variety | 15% | Ideas are meaningfully different, not small variations of one product. |
-| Originality | 10% | Includes thoughtful, less-obvious suggestions without becoming random. |
-| Constraints and age safety | 15% | Respects dislikes, owned items, age, safety and other explicit restrictions. |
-| Product search usefulness | 10% | Queries describe specific product types likely to find relevant results. |
-| Summary accuracy | 10% | Summary is concise and does not invent interests, traits or facts. |
-
-Use 1 = poor / clear failure, 3 = acceptable / mixed, and 5 = excellent. A clearly unsafe or explicitly excluded recommendation should receive a low constraints-and-safety score, even if the rest of the list is good. Do not award originality for novelty alone: the idea still needs to suit the recipient.
-
-Once all seven rating columns are filled for every reviewed row, run:
-
-```bash
-npm run benchmark:score -- "benchmarks/runs/<run-folder>/review-template.csv"
-```
-
-The scorer uses `blind-key.json` only after ratings are complete. It reports weighted averages, criterion averages and paired wins, then saves `score-summary.json`.
-
-### 5. Blind prompt comparison: gift-curator-v2 vs gift-curator-v3 (offline, no API cost)
-
-Reuse the historical Haiku v2 outputs (`benchmarks/runs/2026-11-02T23-17-14-316Z`, never modified) and compare them with a v3 run:
-
-```powershell
-npm run benchmark:compare -- --candidate="benchmarks\runs\<v3-run-folder>\benchmark-results.json" --model=haiku
-```
-
-Both runs are replayed through the **same current validators**, so the comparison is of visitor-facing results (v3's best eight of ten valid candidates versus v2's eight, after validation). The command writes a new folder under `benchmarks/comparisons/` containing `blind-review.csv` (randomised Model A/B, titles, descriptions, summaries, queries, neutral validation diagnostics, seven score columns), `blind-key.json`, `comparison-metrics.json` and `comparison-report.md`. Score only `blind-review.csv`; do not open the other files first. Then:
-
-```powershell
-npm run benchmark:score -- "benchmarks\comparisons\<folder>\blind-review.csv"
-```
-
-The metrics file reports deterministic measures (ideas shown, ideas rejected within the first eight, replacements used, summaries replaced, tokens, cost) so genuine quality gains can be told apart from filtering. Caveats: validators are heuristic and were tuned against the v2 baseline; v2 lacks the price/angle/basis fields that some v3 checks use; the AI-led scores are subjective, and 30 synthetic cases cannot establish statistical significance. A pilot with fewer than 30 cases compares only the shared cases.
-
-### Model pricing used in estimates
-
-As checked against Anthropic's published model pages on 2 November 2026, the standard API rates used by the runner are:
-
-| Model | Input / 1M tokens | Output / 1M tokens |
-|---|---:|---:|
-| Claude Haiku 5.5 (`claude-haiku-5-5`) | $0.10 | $0.50 |
-| Claude Sonnet 5.5 (`claude-sonnet-5-5`) | $2.00 | $10.00 |
-
-The runner calculates estimates from the token usage returned by Anthropic. The result may differ from the final account bill due to account-specific pricing, credits, taxes or changes to published rates. Re-check Anthropic's current [model documentation](https://platform.claude.com/docs/en/models/overview) before a future run. No model switch should be made solely from an aggregate score: inspect poor outputs, case-by-case wins, response times and cost per usable idea too. Keep Haiku as the production default until the evidence justifies a change.
+The live command requires `ANTHROPIC_API_KEY`; do not commit it. The benchmark writes a new output directory, so choose a new path rather than overwriting historical artifacts.

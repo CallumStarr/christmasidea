@@ -1,0 +1,57 @@
+@font-face{font-family:"Fraunces";src:url(/fonts/fraunces.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Figtree";src:url(/fonts/figtree.woff2) format("woff2");font-weight:300 900;font-style:normal;font-display:swap}
+
+:root{
+  color-scheme:light dark;
+  --paper:#fbf9f5;
+  --surface:#f7f4ef;
+  --inset:#eee9df;
+  --ink:#1f2421;
+  --muted:#64675e;
+  --line:#d5d0c5;
+  --accent:#1b3b2b;
+  --accent-hover:#2c503b;
+  --on-accent:#fbf9f5;
+  --gold:#c59b27;
+  --gold-ink:#775c13;
+  --focus:#775c13;
+  --error:#8a3026;
+  --error-bg:#f9eee8;
+  --display:"Fraunces",Georgia,serif;
+  --body:"Figtree",sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --paper:#12161a;
+    --surface:#1b2125;
+    --inset:#252d30;
+    --ink:#eeeae1;
+    --muted:#b3b9b1;
+    --line:#46504e;
+    --accent:#b9d1bc;
+    --accent-hover:#d3e2d4;
+    --on-accent:#15251c;
+    --gold-ink:#d8b558;
+    --focus:#d8b558;
+    --error:#ffb7a9;
+    --error-bg:#342320;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:24px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.6 var(--body)}
+a{color:inherit;text-underline-offset:4px;text-decoration-thickness:1px}
+button,input,select,textarea{font:inherit}
+button,a,input,select,textarea{-webkit-tap-highlight-color:transparent}
+button{color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:4px}
+h1,h2,h3,.display{font-family:var(--display);font-weight:500;line-height:1.08;letter-spacing:-.035em;font-variation-settings:"SOFT" 40,"WONK" 1;text-wrap:balance}
+p{overflow-wrap:break-word}
+.eyebrow{font:600 12px/1.5 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--gold-ink)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.skip-link{position:absolute;top:8px;left:8px;z-index:30;padding:12px 20px;background:var(--accent);color:var(--on-accent);transform:translateY(-150%)}
+.skip-link:focus{transform:none}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}

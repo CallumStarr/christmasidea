@@ -3,13 +3,31 @@ import assert from "node:assert/strict";
 import { handleRequest, sanitiseIdeas, normaliseInput, buildUserMessage, ANTHROPIC_VERSION, GIFT_TOOL } from "../src/core.js";
 
 const ORIGIN = "https://gifts.example.com";
-const env = { ALLOWED_ORIGINS: ORIGIN, ANTHROPIC_API_KEY: "sk-test", MODEL: "claude-haiku-5-5" };
+const env = { ALLOWED_ORIGINS: ORIGIN, ANTHROPIC_API_KEY: "sk-test", IP_SALT: "unit-test-ip-salt-0123456789abcdef", MODEL: "claude-haiku-5-5" };
 
 function req(body, { origin = ORIGIN, method = "POST", path = "/api/ideas" } = {}) {
   return new Request(`https://api.example.com${path}`, {
     method,
     headers: { "Content-Type": "application/json", Origin: origin, "CF-Connecting-IP": "1.2.3.4" },
     body: method === "POST" ? JSON.stringify(body) : undefined,
+  });
+}
+
+function streamedReq(chunks, { path = "/api/ideas", contentLength, contentType = "application/json" } = {}) {
+  const encoded = chunks.map((chunk) => new TextEncoder().encode(chunk));
+  let index = 0;
+  const headers = { "Content-Type": contentType, Origin: ORIGIN, "CF-Connecting-IP": "1.2.3.4" };
+  if (contentLength !== undefined) headers["Content-Length"] = String(contentLength);
+  return new Request(`https://api.example.com${path}`, {
+    method: "POST",
+    headers,
+    body: new ReadableStream({
+      pull(controller) {
+        if (index < encoded.length) controller.enqueue(encoded[index++]);
+        else controller.close();
+      },
+    }),
+    duplex: "half",
   });
 }
 
@@ -248,6 +266,71 @@ test("www redirects to the main domain, keeping path and query", () => {
   assert.equal(r.headers.get("Location"), "https://christmasidea.co.uk/a/b?x=1");
   assert.equal(canonicalRedirect(new Request("https://christmasidea.co.uk/"), e), null);
   assert.equal(canonicalRedirect(new Request("https://christmasidea.yourname.workers.dev/"), e), null);
+});
+
+test("API refuses requests when IP_SALT is missing or too short", async () => {
+  const { IP_SALT: _salt, ...withoutSalt } = env;
+  for (const testEnv of [withoutSalt, { ...env, IP_SALT: "short" }]) {
+    const res = await handleRequest(req({ mode: "describe", description: "My aunt loves gardening." }), testEnv, {});
+    assert.equal(res.status, 503);
+    assert.deepEqual(await res.json(), { error: "The service is temporarily unavailable. Please try again later." });
+  }
+});
+
+test("API readiness reflects salt configuration while health remains a liveness check", async () => {
+  const { IP_SALT: _salt, ...withoutSalt } = env;
+  const valid = await handleRequest(new Request("https://api.example.com/api/ready"), env, {});
+  assert.equal(valid.status, 200);
+  assert.deepEqual(await valid.json(), { ok: true });
+
+  for (const testEnv of [withoutSalt, { ...env, IP_SALT: "short" }]) {
+    const ready = await handleRequest(new Request("https://api.example.com/api/ready"), testEnv, {});
+    assert.equal(ready.status, 503);
+    assert.deepEqual(await ready.json(), { ok: false });
+    const health = await handleRequest(new Request("https://api.example.com/api/health"), testEnv, {});
+    assert.equal(health.status, 200);
+    assert.deepEqual(await health.json(), { ok: true });
+  }
+});
+
+test("JSON requests are bounded by bytes actually streamed, not just Content-Length", async () => {
+  const input = JSON.stringify({ mode: "describe", description: "My aunt loves gardening." });
+  const validFetch = async () => new Response(JSON.stringify({
+    content: [{ type: "tool_use", name: "gift_ideas", input: goodIdeas }],
+  }));
+  const noLength = await handleRequest(streamedReq([input.slice(0, 12), input.slice(12)]), env, {
+    fetch: validFetch,
+    budget: okBudget,
+  });
+  assert.equal(noLength.status, 200);
+
+  const large = JSON.stringify({ mode: "describe", description: "x".repeat(8100) });
+  const understated = await handleRequest(streamedReq([large], { contentLength: 1 }), env, {});
+  assert.equal(understated.status, 413);
+  assert.deepEqual(await understated.json(), { error: "Request too large." });
+
+  const declaredOversize = await handleRequest(streamedReq(["{}"], { contentLength: 8001 }), env, {});
+  assert.equal(declaredOversize.status, 413);
+
+  const malformed = await handleRequest(streamedReq(["{\"mode\":"], {}), env, {});
+  assert.equal(malformed.status, 400);
+  assert.deepEqual(await malformed.json(), { error: "Send the form as JSON." });
+
+  const unsupported = await handleRequest(streamedReq([input], { contentType: "text/plain" }), env, {});
+  assert.equal(unsupported.status, 415);
+
+  const feedbackBody = JSON.stringify({ event: "shown", padding: "x".repeat(4100) });
+  const feedback = await handleRequest(streamedReq(
+    [feedbackBody.slice(0, 2000), feedbackBody.slice(2000)],
+    { path: "/api/feedback" },
+  ), env, {});
+  assert.equal(feedback.status, 413);
+
+  const acrossChunks = JSON.stringify({ mode: "describe", description: "x".repeat(8100) });
+  const chunked = await handleRequest(streamedReq(
+    [acrossChunks.slice(0, 3000), acrossChunks.slice(3000, 6000), acrossChunks.slice(6000)],
+  ), env, {});
+  assert.equal(chunked.status, 413);
 });
 
 test("/api/feedback stores only enumerated counters and fails safely", async () => {

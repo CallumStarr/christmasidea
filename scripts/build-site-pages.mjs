@@ -1,4 +1,4 @@
-// Generates the static gift-guide pages, 404 page, stylesheet and sitemap into site/.
+// Generates the static gift-guide pages, 404 page and sitemap into site/.
 // Run with: npm run build:pages
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -233,18 +233,6 @@ const GUIDES = [
   },
 ];
 
-const CSS = `:root{font-family:"Figtree",system-ui,Arial,sans-serif;color:#20342c;background:#fbfaf6;line-height:1.6}
-body{margin:0}.wrap{max-width:760px;margin:0 auto;padding:2rem 1.25rem 4rem}
-a{color:#17624b}h1,h2{line-height:1.2}h1{font-size:2.2rem}
-nav.crumb{font-size:.95rem;margin-bottom:1rem}
-.disclosure{font-size:.9rem;padding:.6rem .8rem;background:#eef6f1;border-radius:6px}
-.idea{padding:1rem 0;border-bottom:1px solid #e3e0d6}.idea h3{margin:.1rem 0}
-.cta{margin:2rem 0;padding:1.25rem;background:#8b1631;color:#fff;border-radius:10px}
-.cta a{color:#fff;font-weight:700}
-.more{columns:2;padding-left:1.2rem}
-footer{margin-top:3rem;font-size:.9rem;color:#5b6b64}
-@media(max-width:600px){.more{columns:1}h1{font-size:1.8rem}}`;
-
 const FOOTER = `<footer><p>Ad: we earn a commission from qualifying Amazon purchases made through links on this page. Prices and availability change, so check the listing before you buy.</p>
 <p><a href="/about">About</a> · <a href="/privacy">Privacy</a> · <a href="/">Santa's Helper</a></p></footer>`;
 
@@ -265,13 +253,19 @@ function head(title, desc, path, extra = "") {
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:image" content="${ORIGIN}/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#8b1631">
+<meta name="theme-color" content="#FBF9F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12161A" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/guide.css">
 ${extra}</head>
 <body>
-<main class="wrap">
+<a class="skip-link" href="#guide-content">Skip to content</a>
+<header class="guide-masthead"><div class="guide-nav"><a class="guide-brand" href="/">Santa's Helper<small>The thought before the gift</small></a><nav aria-label="Site"><a href="/">The gift finder</a><a href="/gifts/">The gift guides</a></nav></div></header>
+<main class="wrap" id="guide-content" tabindex="-1">
 `;
 }
 
@@ -286,16 +280,16 @@ function guidePage(g) {
     mainEntityOfPage: `${ORIGIN}${path}`,
   };
   const related = GUIDES.filter((x) => x.slug !== g.slug).slice(0, 6);
+  const motif = g.slug.includes("garden") ? "garden" : g.slug.includes("book") ? "books" : "gesture";
   return head(title, g.desc, path, `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
 `<nav class="crumb"><a href="/">Santa's Helper</a> › <a href="/gifts/">Gift guides</a></nav>
-<h1>${esc(g.h1)}</h1>
+<div class="guide-intro"><div><p class="eyebrow">From the gift guides</p><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p></div><div class="guide-illustration" aria-hidden="true"><svg viewBox="0 0 240 160"><use href="/guide-motifs.svg#${motif}"/></svg><span>A little inspiration.</span></div></div>
 <p class="disclosure">Ad: we earn a commission from qualifying Amazon purchases. Links search Amazon UK; we do not list prices.</p>
-<p>${esc(g.intro)}</p>
 <h2>How to choose</h2>
 <ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
 <h2>Eight ideas to consider</h2>
-${g.ideas.map(([name, why, q]) => `<div class="idea"><h3>${esc(name)}</h3><p>${esc(why)}</p><p><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank">Search Amazon UK</a></p></div>`).join("\n")}
-<div class="cta"><strong>Need something more personal?</strong> Describe who you are shopping for and get eight tailored ideas in seconds. <a href="/">Try the gift finder</a>.</div>
+${g.ideas.map(([name, why, q]) => `<article class="idea"><h3>${esc(name)}</h3><p>${esc(why)}</p><p><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank">Search Amazon UK</a></p></article>`).join("\n")}
+<div class="cta"><strong>They're not just anyone.</strong> Describe the person, the little quirks and your budget. We'll help you find ideas that feel more like them. <a href="/">Find their gift &rarr;</a></div>
 <h2>More gift guides</h2>
 <ul class="more">${related.map((r) => `<li><a href="/gifts/${r.slug}">${esc(r.h1)}</a></li>`).join("")}</ul>
 ${FOOTER}
@@ -309,8 +303,9 @@ function indexPage() {
   return head("Gift guides | Santa's Helper", "Original gift guides for children, new babies, hobbyists, mum, dad and Secret Santa.", "/gifts/") +
 `<nav class="crumb"><a href="/">Santa's Helper</a></nav>
 <h1>Gift guides</h1>
-<p>Practical guides for common gift problems. For ideas matched to one specific person, use the <a href="/">gift finder</a>.</p>
-<ul>${GUIDES.map((g) => `<li><a href="/gifts/${g.slug}">${esc(g.h1)}</a> – ${esc(g.desc)}</li>`).join("")}</ul>
+<p class="standfirst">Some people have a thing. Start with what they love, and find a little inspiration for what to give.</p>
+<p>For something more personal, <a href="/">tell us about them</a>.</p>
+<ol class="guide-directory">${GUIDES.map((g) => `<li><a href="/gifts/${g.slug}"><h2>${esc(g.h1)}</h2><p>${esc(g.desc)}</p><span aria-hidden="true">&nearr;</span></a></li>`).join("")}</ol>
 ${FOOTER}
 </main>
 </body>
@@ -331,7 +326,6 @@ ${FOOTER}
 }
 
 mkdirSync(join(SITE, "gifts"), { recursive: true });
-writeFileSync(join(SITE, "guide.css"), CSS + "\n");
 writeFileSync(join(SITE, "404.html"), notFoundPage());
 writeFileSync(join(SITE, "gifts", "index.html"), indexPage());
 for (const g of GUIDES) writeFileSync(join(SITE, "gifts", `${g.slug}.html`), guidePage(g));
@@ -344,4 +338,4 @@ writeFileSync(
     urls.map((u) => `  <url><loc>${ORIGIN}${u}</loc><lastmod>${today}</lastmod></url>`).join("\n") +
     `\n</urlset>\n`
 );
-console.log(`Wrote ${GUIDES.length} guides, index, 404, guide.css and sitemap.xml`);
+console.log(`Wrote ${GUIDES.length} guides, index, 404 and sitemap.xml`);

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
+import { runInNewContext } from "node:vm";
 
 const site = (p) => new URL(`../site/${p}`, import.meta.url);
 const read = (p) => readFile(site(p), "utf8");
@@ -57,17 +58,109 @@ test("Worker sets CSP and HSTS headers and locks framing", async () => {
 
 test("product cards link the verified image and shopping button to the same Amazon listing", async () => {
   const html = await read("index.html");
-  assert.match(html, /\/api\/products/);
+  assert.match(await read("api.js"), /\/api\/products/);
   assert.match(html, /link\.href = product\.affiliateUrl/);
   assert.match(html, /shop\.href = product\.affiliateUrl/);
   assert.match(html, /heading\.textContent = product\.title/);
   assert.match(html, /product\.price\?\.currency === "GBP"/);
-  assert.match(html, /object-fit:contain/);
+  assert.match(await read("home.css"), /object-fit:contain/);
   assert.match(html, /loading = "lazy"/);
   assert.match(html, /decoding = "async"/);
-  assert.match(html, /Illustrative placeholder/);
+  assert.match(html, /card\.classList\.add\("verified"\)/);
   assert.match(html, /Product photo unavailable/);
   assert.doesNotMatch(html, /api\/photos|pexels\.com|images\.pexels\.com/i);
+});
+
+test("product enrichment updates its original cards, never a later collection with matching titles", async () => {
+  const html = await read("index.html");
+  const source = html.match(/async function fillProducts\(ideas\)\{[\s\S]*?\n\}/)?.[0];
+  assert.ok(source, "product enrichment function must exist");
+  for (const replaced of [false, true]) {
+    const idea = { title: "Garden notebook", query: "garden notebook" };
+    const original = { isConnected: true };
+    const cards = new Map([[idea.title, original]]);
+    const applied = [];
+    let resolve;
+    const pending = new Promise((done) => { resolve = done; });
+    const enrich = runInNewContext(`(${source})`, {
+      apiOn: () => true,
+      cardsByTitle: cards,
+      fetchProducts: () => pending,
+      validAmazonProduct: () => true,
+      setVerifiedProduct: (...args) => applied.push(args),
+    });
+    const filling = enrich([idea]);
+    if (replaced) {
+      original.isConnected = false;
+      cards.set(idea.title, { isConnected: true });
+    }
+    const product = { title: "Verified notebook" };
+    resolve({ products: [product] });
+    await filling;
+    assert.equal(applied.length, replaced ? 0 : 1);
+    if (!replaced) {
+      assert.equal(applied[0][0], original);
+      assert.equal(applied[0][1], idea);
+      assert.equal(applied[0][2], product);
+    }
+  }
+});
+
+test("shortlist dock is contextual and never covers the finder", async () => {
+  const html = await read("index.html");
+  const source = html.match(/let collectionInView = false;[\s\S]*?\.observe\(\$\("#results"\)\);/)?.[0];
+  assert.ok(source);
+  const elements = Object.fromEntries(["#listbar", "#openlist", "#nav-count", "#nav-shortlist", "#results"].map((id) => [id, {
+    hidden: true,
+    setAttribute(name, value) { this[name] = value; },
+  }]));
+  const shortlist = [{ title: "Notebook" }];
+  let notify;
+  runInNewContext(source, {
+    $: (id) => elements[id],
+    shortlist,
+    IntersectionObserver: class {
+      constructor(callback) { notify = callback; }
+      observe(element) { assert.equal(element, elements["#results"]); }
+    },
+  });
+  notify([{ isIntersecting: false }]);
+  assert.equal(elements["#listbar"].hidden, true);
+  assert.equal(elements["#nav-count"].textContent, 1);
+  assert.equal(elements["#nav-shortlist"]["aria-label"], "Open your shortlist, 1 saved idea");
+  notify([{ isIntersecting: true }]);
+  assert.equal(elements["#listbar"].hidden, false);
+  shortlist.pop();
+  notify([{ isIntersecting: true }]);
+  assert.equal(elements["#listbar"].hidden, true);
+});
+
+test("homepage separates gift concepts from verified products and offers accessible prompt examples", async () => {
+  const html = await read("index.html");
+  assert.match(html, /Example descriptions/);
+  assert.match(html, /class="prompt-chip"/);
+  assert.match(html, /Search Amazon for this idea/);
+  assert.match(html, /not verified products/);
+  const disclosure = html.match(/<div class="recommendation-disclosure">([\s\S]*?)<\/div>/)?.[1];
+  assert.ok(disclosure, "shopping links need a dedicated disclosure");
+  const visibleDisclosure = disclosure.match(/<p class="disclosure">([\s\S]*?)<\/p>/)?.[1];
+  assert.ok(visibleDisclosure, "the concept/product distinction must not be hidden inside details");
+  assert.match(visibleDisclosure, /Amazon affiliate links/);
+  assert.match(visibleDisclosure, /gift ideas, not verified products unless labelled/);
+  assert.match(visibleDisclosure, /earn a commission/);
+  assert.ok(html.indexOf(disclosure) < html.indexOf('id="cards"'), "disclosure must precede shopping results");
+  const css = await read("home.css");
+  assert.match(css, /\.media\{display:none\}/, "gift concepts must not display pretend product images");
+  assert.match(css, /\.verified \.media\{display:block/, "only verified products expose product imagery");
+  const verification = html.match(/function setVerifiedProduct\(card, idea, product\)\{([\s\S]*?)\n\}/)?.[1];
+  assert.ok(verification);
+  assert.match(verification, /card\.classList\.add\("verified"\)/);
+  assert.match(verification, /Verified Amazon product/);
+  assert.match(html, /id="cancel"/);
+  assert.match(html, /id="loading-text" role="status" aria-live="polite"/);
+  assert.ok(html.indexOf('id="ts"') > html.indexOf('id="go"'), "the security widget must not push the primary action below the first screen");
+  assert.match(await read("api.js"), /Search cancelled\. Your description is still here\./);
+  assert.doesNotMatch(html, /Checking every idea against what you told us|Reading your description/);
 });
 
 test("site privacy text describes optional Amazon product search without Pexels processing", async () => {
@@ -75,4 +168,18 @@ test("site privacy text describes optional Amazon product search without Pexels 
   assert.match(privacy, /Optional product discovery/);
   assert.match(privacy, /one hour/);
   assert.doesNotMatch(privacy, /Pexels/i);
+});
+
+test("privacy notice explains feedback minimisation and scheduled retention cleanup", async () => {
+  const privacy = await read("privacy.html");
+  assert.match(privacy, /does not receive your recipient description, generated idea text or a session identifier/);
+  assert.match(privacy, /daily aggregate counters/);
+  assert.match(privacy, /daily scheduled cleanup prunes feedback aggregate counters once they are 90 days old/);
+  assert.match(privacy, /pseudonymous processing, not a guarantee of anonymity/);
+  assert.match(privacy, /ASA guidance on affiliate marketing disclosures/);
+
+  const worker = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
+  const config = await readFile(new URL("../wrangler.toml", import.meta.url), "utf8");
+  assert.match(worker, /async scheduled\(_controller, env, ctx\)/);
+  assert.match(config, /crons = \["0 3 \* \* \*"\]/);
 });

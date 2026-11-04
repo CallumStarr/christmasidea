@@ -52,7 +52,7 @@ test("missing Anthropic key returns recipient-aware catalogue ideas with an hone
   });
   const response = await handleRequest(request, {
     ALLOWED_ORIGINS: "https://gifts.example.com",
-    IP_SALT: "test",
+    IP_SALT: "unit-test-ip-salt-0123456789abcdef",
   }, {
     fetch: async () => { throw new Error("Claude must not be called without a key"); },
     budget: { consume: async () => { throw new Error("fallback must not consume AI budget"); } },
@@ -68,7 +68,8 @@ test("missing Anthropic key returns recipient-aware catalogue ideas with an hone
 test("the browser no longer owns or selects the fallback catalogue", async () => {
   const { readFile } = await import("node:fs/promises");
   const html = await readFile(new URL("../site/index.html", import.meta.url), "utf8");
+  const api = await readFile(new URL("../site/api.js", import.meta.url), "utf8");
   assert.doesNotMatch(html, /const LIST = \[/);
   assert.doesNotMatch(html, /function localIdeas\(/);
-  assert.match(html, /data\.fallback/);
+  assert.match(api, /data\.fallback/);
 });

@@ -86,11 +86,11 @@ shopper still gets a reasoned list.
 
 The UI posts `shown`, `click`, `save`, `dismiss` and `more` to `POST /api/feedback`.
 
-**Stored:** only daily counters keyed by strategy, source, discovery flag and position.
+**Stored:** only daily aggregate counters keyed by event, strategy, source, discovery flag and position. A daily scheduled Worker invocation also prunes expired usage and feedback buckets.
 
-**Not stored:** IP (only a salted hash is used, for rate limiting), text, titles or session ids.
+**Not stored in feedback counters:** raw IP, request text, titles or session ids. The Worker uses a daily-changing IP hash only for short-lived rate-limit counters.
 
-**Retention and limits:** counters are kept 90 days, and each visitor is limited to 40 events a minute.
+**Retention and limits:** expired daily feedback buckets are deleted by the daily schedule and during normal budget-counter activity; buckets at or beyond the 90-day date cutoff are removed. Each visitor is limited to 40 feedback requests a minute. Cloudflare still processes network/request data to provide the Worker service.
 
 A click is **not** treated as a good gift. The counters feed offline evaluation, and they will not change live ranking until:
 
@@ -115,9 +115,9 @@ Once those hold, LinUCB would choose the *strategy mix*, not individual products
 
 ## Measuring it
 
-See [`benchmarks/v3.4/README.md`](../benchmarks/v3.4/README.md). The structural metrics are ILD, literal share,
-discovery, grounded connections, budget and coverage. They show whether the engine does what it was designed to do. They
-are **not** a quality score; that needs blind human review.
+See [`benchmarks/v3.4/README.md`](../benchmarks/v3.4/README.md). Structural metrics include ILD, literal share,
+grounded connections, product match-cap budget checks, near-duplicate pairs, repeated interests and strategy balance.
+They show selected properties of the output, not whether ideas are good; that needs blind human review.
 
 ## References
 

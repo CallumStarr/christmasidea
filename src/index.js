@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { handleRequest, canonicalRedirect } from "./core.js";
+import { pruneUsageBuckets, scheduleBudgetPrune } from "./budget-storage.js";
 
 // One global counter object enforces daily AI and product lookup limits. Durable Objects handle one request at a time, so
 // check-and-increment is race free.
@@ -26,18 +27,12 @@ export class BudgetCounter extends DurableObject {
 
   // Buckets: "D2026-11-02" (day), "M2026-11-02T21:53" (minute), "H2026-11-02T21" (hour), "S2026-11-02T21:53:00" (second).
   buckets() {
-    const iso = new Date().toISOString();
-    const b = {
-      day: `D${iso.slice(0, 10)}`,
-      minute: `M${iso.slice(0, 16)}`,
-      hour: `H${iso.slice(0, 13)}`,
-      second: `S${iso.slice(0, 19)}`,
-    };
-    this.sql.exec(
-      "DELETE FROM usage WHERE (bucket LIKE 'D%' AND bucket < ?) OR (bucket LIKE 'M%' AND bucket < ?) OR (bucket LIKE 'H%' AND bucket < ?) OR (bucket LIKE 'S%' AND bucket < ?)",
-      b.day, b.minute, b.hour, b.second
-    );
-    return b;
+    return pruneUsageBuckets(this.sql);
+  }
+
+  async prune() {
+    this.buckets();
+    return true;
   }
 
   async consume(ipHash) {
@@ -85,8 +80,6 @@ export class BudgetCounter extends DurableObject {
     if (this.count(b.minute, `fb:${ipHash}`) >= minuteLimit) return { ok: false };
     this.add(b.minute, `fb:${ipHash}`);
     const day = `F${b.day.slice(1)}`;
-    const cutoff = `F${new Date(Date.now() - 90 * 86400_000).toISOString().slice(0, 10)}`;
-    this.sql.exec("DELETE FROM usage WHERE bucket LIKE 'F%' AND bucket < ?", cutoff);
     for (const k of keys.slice(0, 64)) this.add(day, k);
     return { ok: true };
   }
@@ -121,6 +114,9 @@ function withHeaders(res, extra) {
 }
 
 export default {
+  async scheduled(_controller, env, ctx) {
+    scheduleBudgetPrune(env, ctx);
+  },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
