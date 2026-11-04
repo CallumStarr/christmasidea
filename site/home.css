@@ -150,8 +150,8 @@ body:has(.listbar:not([hidden])) .feedback-toast{bottom:94px}
 .guide-books .guide-art{background:#e8ddca;color:#705b37}
 .guide-gesture .guide-art{background:#e9d4c8;color:#754733}
 .guide-art>span:first-child{align-self:flex-start;font-size:12px}
-.guide-art svg{display:block;width:100%;height:auto;fill:none;transition:transform .3s ease}
-.guide-shelf a:hover .guide-art svg{transform:translateY(-3px)}
+.guide-art .editorial-photo{transition:transform .3s ease}
+.guide-shelf a:hover .guide-art .editorial-photo{transform:translateY(-3px)}
 .guide-index{align-self:flex-start;font-size:11px}
 .guide-copy{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:20px}
 .guide-copy h3{font-size:clamp(25px,2.2vw,31px);line-height:1.15;font-weight:450;margin:0}
@@ -250,7 +250,7 @@ dialog::backdrop{background:rgb(10 18 14 / .65)}
   .guide-shelf a{display:grid;grid-template-columns:36% 1fr;column-gap:20px;align-items:start}
   .guide-art{grid-row:span 2;aspect-ratio:1;padding:0;justify-content:center}
   .guide-art>span{display:none}
-  .guide-art svg{width:120%;max-width:none;height:auto}
+  .guide-art .editorial-photo{height:100%;aspect-ratio:1}
   .guide-copy{gap:10px;margin-top:8px}
   .guide-copy h3{font-size:24px}
   .round-arrow{width:30px;height:30px;font-size:16px}

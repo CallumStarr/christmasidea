@@ -16,15 +16,15 @@ Sources checked on 4 November 2026:
 
 ## Art direction
 
-**A warm British Christmas gift edit.** Concrete ideas, useful buying advice and a recognisable illustrated vocabulary should demonstrate the service, rather than relying on abstract promises of thoughtfulness.
+**A warm British Christmas gift edit.** Concrete ideas, useful buying advice and cohesive photographic-style editorial imagery should demonstrate the service, rather than relying on abstract promises of thoughtfulness. The photographic direction is approved; a broader design change remains subject to explicit approval.
 
 1. A recognisable wordmark, botanical maker's mark and restrained seasonal masthead.
 2. Warm parchment, deep forest, aged gold and a little terracotta. Fraunces is expressive, not indiscriminately enormous; Figtree handles clear, comfortable interface text.
-3. Original, self-hosted SVG object illustrations: books, garden snips, a coffee flask, toys and hobby equipment. Ten distinct guide scenes share the same ink-and-paper vocabulary. No gradients, stock-image dependencies, canvas loops or 3D libraries.
+3. Ten self-hosted, AI-created editorial scenes: books, garden tools, a telescope, toys and hobby equipment. Rich natural light, tactile materials and identifiable objects replace the rejected line illustrations. Local responsive WebPs, not remote image services or runtime generation.
 4. A compact, centred single-column finder, without a sample-collection sidebar. One clear prompt, small example-description buttons, a real submit button and a quieter guided alternative. Privacy and disclosures remain accessible and explicit.
-5. A featured typographic selection, a complementary adjacent idea, then lighter editorial entries. No invented photographs or giant placeholder boxes. Product imagery appears only when the existing verified-product pipeline provides it.
+5. A featured typographic selection, a complementary adjacent idea, then lighter editorial entries. No giant placeholder boxes. AI-created category imagery is explicitly disclosed and separate from recommendation product imagery, which appears only when the existing verified-product pipeline provides it.
 6. Useful animation only: short button/arrow transitions, a gentle first entrance and a legible curation sequence. No scroll hijacking, marquees, parallax or cursor effects.
-7. Illustrated guide starting points, substantial buying notes and related reading. Every page uses the same masthead and footer. The homepage is the shared-markup source; the page generator synchronizes the shell into generated and authored pages while preserving legal content and CSS.
+7. Photographic guide starting points, substantial buying notes and related reading. Every page uses the same masthead and footer. The homepage is the shared-markup source; the page generator synchronizes the shell into generated and authored pages while preserving legal content and CSS.
 
 ## Implementation sequence
 
@@ -38,11 +38,11 @@ Sources checked on 4 November 2026:
 
 - At 1440 x 900, headline, description input and submit action are visible without scrolling. The homepage hero contains only the finder, not a decorative or sample sidebar.
 - No horizontal overflow at 320, 375, 390, 768, 1024, 1440 or 1920 CSS pixels, in either colour scheme.
-- No new runtime or UI dependencies, external fonts or third-party image hosts. Keep combined authored CSS below 10 kB gzipped and original SVG artwork below 30 kB.
+- No new runtime or UI dependencies, external fonts or third-party image hosts. Keep combined authored CSS below 10 kB gzipped. Editorial variants are 400 x 280, 800 x 560 and 1200 x 840, with respective per-image budgets of 35, 100 and 180 kB.
 - Normal text contrast >= 4.5:1; control/focus contrast >= 3:1. Touch targets >= 44 CSS pixels where practical. Respect reduced motion.
 - Focus does not resize the input. All form modes, examples, error/retry/cancel, shortlist, dialog Escape, dismissal and image-failure states work without reload.
 - Recommendation count may be zero, one or eight. Empty and single-result states must not leave broken compositions.
-- Decorative illustration must never be presented as a verified product photograph. Affiliate disclosures precede shopping links.
+- AI-created editorial scenes must never be presented as verified product photographs. Reserve image space, describe guide heroes, and avoid duplicated descriptions on decorative linked thumbnails. Affiliate disclosures precede shopping links.
 - Generated guide builds preserve manually authored styles. Focused frontend tests and Worker deployment dry-run pass.
 
 Visual quality is a judgement, not a measurable promise of perfection. The final review should state what was actually checked and distinguish synthetic browser fixtures from live provider testing.
@@ -77,3 +77,11 @@ The social preview now uses the current forest, parchment and sage palette, with
 Image tests render every scene at 160 x 112, check clear edges, validate all internal references and category objects, and verify social/icon dimensions, palettes and size budgets. These checks complement browser screenshots; they do not prove subjective visual quality or that every visitor will interpret an illustration identically.
 
 Verification for this iteration: all 286 tests pass; 96 browser layout checks cover the homepage, directory and ten guides at four widths in both themes. Reviewed the interest and family artwork together, all three compact mobile homepage tiles, the mobile astronomy hero and the Secret Santa illustration. The sprite is 25,716 bytes (6,709 gzipped), the social PNG is 85,464 bytes and the touch icon is 7,064 bytes. The Worker deployment dry-run passes; no recommendation or Turnstile behaviour was changed.
+
+## Approved photographic replacement
+
+The SVG scene refinements above were subsequently rejected. The ten approved photographic-style images now replace content illustrations on the homepage, directory, guide heroes and related guides. Optimised 1400 x 980 WebP masters are retained in `assets/editorial/`; `npm run build:images` produces 30 responsive variants totalling 1,673,410 bytes. The largest is 149,030 bytes. Original image generation is not part of the build.
+
+The existing page structure, colours, typography and finder behaviour are retained. The brand mark, favicon and social graphic remain purpose-made brand artwork. Editorial images are disclosed as AI-created inspiration, never evidence of a reviewed product. The image tests cover every responsive source, dimensions, budgets, accessible descriptions and disclosure; the full 286-test suite and deployment dry-run pass.
+
+Overall website mockups are proposals only. Neither the original plain design nor the richer heritage proposal was approved. The next refinement reduces ornamental framing and integrates the finder with the photographic first-screen composition. Do not implement any broader redesign until the user explicitly approves it; approval of category imagery is not design approval.

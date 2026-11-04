@@ -79,6 +79,7 @@ p{overflow-wrap:break-word}
 .footer-bottom>span{white-space:nowrap}
 .site-footer :focus-visible{outline-color:#e0c58b}
 .object-scene{display:block;width:100%;height:auto;fill:none}
+.editorial-photo{display:block;width:100%;height:auto;aspect-ratio:10/7;object-fit:cover}
 @media(max-width:1000px){
   .nav-links{gap:20px}
   .brand{font-size:25px}

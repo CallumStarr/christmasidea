@@ -238,16 +238,16 @@ const FOOTER = home.match(/<footer class="site-footer">[\s\S]*?<\/footer>/)?.[0]
 if (!HEADER || !FOOTER) throw new Error("The homepage must provide the shared masthead and footer.");
 
 const EDITS = {
-  "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", description: "Illustration of a wooden toy train, alphabet blocks and colouring pencils", group: "family", tone: "clay" },
-  "gifts-for-new-babies": { art: "baby", title: "For a new arrival", label: "The first Christmas", description: "Illustration of a teddy bear, picture book and wooden rattle on a folded blanket", group: "family", tone: "clay" },
-  "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", description: "Illustration of a telescope on a tripod beside a framed constellation chart", group: "interests", tone: "sage" },
-  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "The outdoor edit", description: "Illustration of a watering can, trowel, garden snips and a packet of seeds", group: "interests", tone: "sage" },
-  "gifts-for-history-lovers": { art: "history", title: "For the history lover", label: "Another time & place", description: "Illustration of a classical museum, an old map and a magnifying glass", group: "interests", tone: "oat" },
-  "gifts-for-tea-and-coffee-lovers": { art: "coffee", title: "For the tea & coffee lover", label: "The morning ritual", description: "Illustration of a cafetiere, ceramic teapot and freshly poured cup", group: "interests", tone: "oat" },
-  "gifts-for-mum": { art: "mum", title: "For mum", label: "Her kind of Christmas", description: "Illustration of a ribbon-tied present, journal, candle and cup of tea", group: "family", tone: "clay" },
-  "gifts-for-dad": { art: "dad", title: "For dad", label: "His kind of Christmas", description: "Illustration of a coffee flask, headphones and binoculars", group: "family", tone: "sage" },
-  "secret-santa-gifts-under-10": { art: "gesture", title: "Secret Santa, under £10", label: "Small budget, good idea", description: "Illustration of a small wrapped present, houseplant and mug", group: "budget", tone: "clay" },
-  "gifts-for-book-lovers": { art: "books", title: "For the book lover", label: "One more chapter", description: "Illustration of an open book, reading glasses, lamp and cup of tea", group: "interests", tone: "oat" },
+  "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", description: "AI-created scene of a wooden toy train, building blocks and colouring pencils on an oak table", group: "family", tone: "clay" },
+  "gifts-for-new-babies": { art: "baby", title: "For a new arrival", label: "The first Christmas", description: "AI-created scene of a teddy bear, picture book and wooden rattle on a folded blanket", group: "family", tone: "clay" },
+  "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", description: "AI-created scene of a telescope and brass globe beside a window at dusk", group: "interests", tone: "sage" },
+  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "The outdoor edit", description: "AI-created scene of garden secateurs, gloves, seed envelopes and potted rosemary on limestone", group: "interests", tone: "sage" },
+  "gifts-for-history-lovers": { art: "history", title: "For the history lover", label: "Another time & place", description: "AI-created scene of a classical temple model, old map, magnifying glass and leatherbound books", group: "interests", tone: "oat" },
+  "gifts-for-tea-and-coffee-lovers": { art: "coffee", title: "For the tea & coffee lover", label: "The morning ritual", description: "AI-created scene of a cafetiere, green ceramic teapot and stoneware cup in morning light", group: "interests", tone: "oat" },
+  "gifts-for-mum": { art: "mum", title: "For mum", label: "Her kind of Christmas", description: "AI-created scene of a linen journal, amber candle, cup of tea and ribbon-tied present", group: "family", tone: "clay" },
+  "gifts-for-dad": { art: "dad", title: "For dad", label: "His kind of Christmas", description: "AI-created scene of an olive coffee flask, leather headphones and binoculars on an oak table", group: "family", tone: "sage" },
+  "secret-santa-gifts-under-10": { art: "gesture", title: "Secret Santa, under £10", label: "Small budget, good idea", description: "AI-created scene of a small kraft-paper present, houseplant, mug and pocket notebook", group: "budget", tone: "clay" },
+  "gifts-for-book-lovers": { art: "books", title: "For the book lover", label: "One more chapter", description: "AI-created scene of an open book, reading glasses, linen-shaded lamp and stoneware cup", group: "interests", tone: "oat" },
 };
 
 function header(path) {
@@ -261,7 +261,10 @@ function header(path) {
 function art(g, className = "guide-illustration") {
   const edit = EDITS[g.slug];
   const decorative = className === "directory-art";
-  return `<div class="${className} tone-${edit.tone}"${decorative ? ' aria-hidden="true"' : ""}><span>${esc(edit.label)}</span><svg class="object-scene" viewBox="0 0 400 280"${decorative ? "" : ` role="img" aria-label="${esc(edit.description)}"`}><use href="/gift-objects.svg#${edit.art}"/></svg></div>`;
+  const sizes = decorative
+    ? "(max-width: 760px) calc(100vw - 48px), (max-width: 1100px) 42vw, 360px"
+    : "(max-width: 760px) calc(100vw - 96px), 480px";
+  return `<div class="${className} tone-${edit.tone}"${decorative ? ' aria-hidden="true"' : ""}><span>${esc(edit.label)}</span><img class="editorial-photo" src="/images/${edit.art}-800.webp" srcset="/images/${edit.art}-400.webp 400w, /images/${edit.art}-800.webp 800w, /images/${edit.art}-1200.webp 1200w" sizes="${sizes}" width="1200" height="840" alt="${decorative ? "" : esc(edit.description)}" loading="${decorative ? "lazy" : "eager"}" decoding="async"></div>`;
 }
 
 function guideLink(g) {
@@ -324,7 +327,7 @@ function guidePage(g) {
 <section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><p class="eyebrow">Before you choose</p><h2 id="choosing-title">A few things<br>worth knowing.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section id="gift-ideas" aria-labelledby="ideas-title">
 <div class="ideas-heading"><div><p class="eyebrow">The possibilities</p><h2 id="ideas-title">Eight ideas to consider</h2></div><p>Gift concepts, not tested products.<br>Check the details before buying.</p></div>
-<p class="disclosure">Ad: we earn a commission from qualifying Amazon purchases. These links search Amazon UK, not a specific verified product. Prices and availability can change.</p>
+<p class="disclosure">Ad: we earn a commission from qualifying Amazon purchases. These links search Amazon UK, not a specific verified product. Prices and availability can change. Editorial imagery is AI-created, not a photograph of a tested product.</p>
 <div class="idea-grid">
 ${g.ideas.map(([name, why, q, note], i) => {
     if (!note) throw new Error(`Missing buying advice: ${g.slug} / ${name}`);
@@ -344,6 +347,7 @@ function indexPage() {
   return head("Gift guides | Santa's Helper", "Original gift guides for children, new babies, hobbyists, mum, dad and Secret Santa.", "/gifts/") +
 `<div class="directory-intro"><div><p class="eyebrow">The Christmas edit</p><h1>The gift guides</h1><p class="standfirst">For the lifelong hobbies, the new arrivals and the people who are impossible to buy for. Start with someone you know.</p></div><p class="directory-count"><strong>${GUIDES.length}</strong> guides to explore<br>Eight possibilities in each.</p></div>
 <nav class="directory-jumps" aria-label="Browse guides by"><a href="#interests">Their interests <span aria-hidden="true">&darr;</span></a><a href="#family">Your people <span aria-hidden="true">&darr;</span></a><a href="#budget">A smaller budget <span aria-hidden="true">&darr;</span></a></nav>
+<p class="disclosure">Editorial imagery is AI-created for inspiration, not a photograph of a tested product.</p>
 ${[["interests", "Start with what they love", "From a garden full of plans to a shelf full of books."], ["family", "For the people on your list", "A few starting points. Their interests make the difference."], ["budget", "A little gift goes a long way", "Secret Santa ideas to check against your agreed limit."]].map(([group, title, description]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2><p>${description}</p></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
 <aside class="finder-cta"><div><p class="eyebrow">For someone specific</p><h2>Tell us a little about them.</h2><p>Combine their interests, age and your budget for a more personal set of AI-generated ideas.</p></div><a href="/#form">Try the gift finder <span aria-hidden="true">&rarr;</span></a></aside>
 </main>

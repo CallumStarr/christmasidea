@@ -83,11 +83,9 @@ test("the homepage keeps a focused finder without an example sidebar or fake pro
   assert.doesNotMatch(styles, /\.example-/);
   assert.match(styles, /\.media\{display:none\}/);
   assert.match(styles, /\.verified \.media\{display:block/);
-  for (const name of ["gift-objects.svg"]) {
-    const svg = await read(name);
-    assert.ok(Buffer.byteLength(svg) < 30000, `${name} exceeds artwork budget`);
-    assert.doesNotMatch(svg, /<script|<image|<foreignObject|https?:\/\/(?!www\.w3\.org)/i);
-  }
+  assert.equal((html.match(/<img class="editorial-photo"/g) || []).length, 3);
+  assert.doesNotMatch(html, /gift-objects\.svg/);
+  assert.match(html, /Editorial imagery is AI-created/);
 });
 
 test("featured recommendation and colophon have readable fixed palettes in either theme", async () => {
@@ -102,11 +100,11 @@ test("featured recommendation and colophon have readable fixed palettes in eithe
   assert.ok(contrast("#cbd2c2", "#1b3b2b") >= 4.5, "footer small print");
 });
 
-test("original artwork captions meet AA on their fixed paper colours", async () => {
+test("editorial image captions meet AA on their existing fixed paper colours", async () => {
   const css = await read("home.css");
   const panels = [...css.matchAll(/\.guide-(?:garden|books|gesture) \.guide-art\{background:(#[\da-f]{6});color:(#[\da-f]{6})/gi)];
   assert.equal(panels.length, 3);
   for (const [, background, foreground] of panels) assert.ok(contrast(foreground, background) >= 4.5);
-  assert.match(await read("theme.css"), /\.object-scene\{[^}]*fill:none/);
-  assert.match(css, /\.guide-art svg\{[^}]*fill:none/);
+  assert.match(await read("theme.css"), /\.editorial-photo\{[^}]*aspect-ratio:10\/7/);
+  assert.match(css, /\.guide-art \.editorial-photo\{/);
 });

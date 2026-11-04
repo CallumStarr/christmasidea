@@ -54,8 +54,8 @@
 .related-shelf li,.guide-directory li{min-width:0}
 .related-shelf a,.guide-directory a{display:block;text-decoration:none}
 .directory-art{padding:18px 22px 2px;overflow:hidden}
-.directory-art .object-scene{transition:transform .25s}
-.related-shelf a:hover .object-scene,.guide-directory a:hover .object-scene{transform:translateY(-3px)}
+.directory-art .editorial-photo{transition:transform .25s}
+.related-shelf a:hover .editorial-photo,.guide-directory a:hover .editorial-photo{transform:translateY(-3px)}
 .directory-copy{position:relative;padding:20px 30px 0 0}
 .directory-arrow{position:absolute;right:0;top:18px;font-size:24px}
 .directory-copy h3{font-size:28px}
@@ -99,7 +99,7 @@
   .guide-directory a{grid-template-columns:1fr;gap:20px}
   .guide-directory .directory-art{padding:16px 24px 0}
   .guide-directory .directory-art>span{padding:0;font-size:12px}
-  .guide-directory .object-scene{max-height:230px}
+  .guide-directory .editorial-photo{max-height:230px}
   .directory-section-heading{align-items:flex-start;flex-direction:column;gap:12px}
   .related-shelf{gap:24px}
   .finder-cta{padding:28px;gap:28px}
@@ -113,7 +113,7 @@
   .guide-intro h1{font-size:clamp(40px,10.5vw,58px);max-width:17ch;margin-bottom:18px}
   .standfirst{font-size:16px;line-height:1.7}
   .guide-illustration{padding:20px 24px 0}
-  .guide-illustration .object-scene{max-height:230px}
+  .guide-illustration .editorial-photo{max-height:230px}
   .guide-jumps{font-size:13px;gap:6px 20px;margin-top:18px}
   .choosing{grid-template-columns:1fr;gap:22px;padding-block:28px;margin-bottom:32px}
   .choosing h2{font-size:28px}
@@ -135,7 +135,7 @@
   .related-shelf a{display:grid;grid-template-columns:34% 1fr;gap:20px;align-items:center}
   .related-shelf .directory-art{padding:0}
   .related-shelf .directory-art>span{display:none}
-  .related-shelf .directory-art svg{width:125%;max-width:none;margin-left:-12.5%}
+  .related-shelf .directory-art .editorial-photo{aspect-ratio:1}
   .related-shelf .directory-copy{padding:0 20px 0 0}
   .related-shelf .directory-copy h3{font-size:23px}
   .related-shelf .directory-arrow{top:0}
@@ -153,7 +153,7 @@
   .guide-directory .directory-copy h3{font-size:30px}
   .guide-directory .directory-copy p{font-size:15px}
   .guide-directory .directory-art{padding:18px 24px 0}
-  .guide-directory .object-scene{max-height:240px}
+  .guide-directory .editorial-photo{max-height:240px}
   .legal-page{padding-block:32px 40px}
   .legal-page h1{font-size:44px}
   .legal-page h2{font-size:27px}

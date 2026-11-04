@@ -27,7 +27,6 @@ test("every page shares the brand shell and exposes a route back to the shortlis
 test("all eighty guide ideas include specific buying advice and descriptive affiliate actions", async () => {
   const guides = (await readdir(new URL("site/gifts/", root))).filter((name) => name !== "index.html");
   assert.equal(guides.length, 10);
-  const sprite = await read("gift-objects.svg");
   const artwork = new Set();
   for (const name of guides) {
     const html = await read(`gifts/${name}`);
@@ -38,13 +37,14 @@ test("all eighty guide ideas include specific buying advice and descriptive affi
       assert.ok(note && note.length > 80, `${name}: missing substantive buying note`);
       assert.match(idea, /aria-label="Search Amazon UK for [^"]+affiliate link, opens in a new tab/);
     }
-    const symbol = html.match(/class="guide-illustration[^"]*"[\s\S]*?gift-objects\.svg#([^"]+)/)?.[1];
-    assert.ok(symbol && sprite.includes(`<symbol id="${symbol}"`), name);
-    artwork.add(symbol);
+    const image = html.match(/class="guide-illustration[^"]*"[\s\S]*?src="\/images\/([a-z]+)-800\.webp"/)?.[1];
+    assert.ok(image, name);
+    await readFile(new URL(`site/images/${image}-800.webp`, root));
+    artwork.add(image);
     assert.match(html, /href="#gift-ideas"/);
     assert.match(html, /href="#choosing"/);
   }
-  assert.equal(artwork.size, 10, "each category needs its own illustration");
+  assert.equal(artwork.size, 10, "each category needs its own editorial image");
 });
 
 test("guide builds are repeatable and preserve authored CSS and legal content", async () => {
