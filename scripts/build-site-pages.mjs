@@ -321,10 +321,10 @@ function guidePage(g) {
     .slice(0, 3);
   return head(title, g.desc, path, `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
 `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/gifts/">Gift guides</a><span aria-hidden="true">/</span><span aria-current="page">${esc(EDITS[g.slug].title)}</span></nav>
-<div class="guide-intro"><div><p class="eyebrow">Ideas and buying advice</p><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
-<section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><p class="eyebrow">Before you choose</p><h2 id="choosing-title">Narrow down<br>the options.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
+<div class="guide-intro"><div><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
+<section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><h2 id="choosing-title">Narrow down<br>the options.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section id="gift-ideas" aria-labelledby="ideas-title">
-<div class="ideas-heading"><div><p class="eyebrow">The gift ideas</p><h2 id="ideas-title">Eight options to consider</h2></div><p>Choose by their interests,<br>not just the gift label.</p></div>
+<div class="ideas-heading"><div><h2 id="ideas-title">Eight options to consider</h2></div></div>
 <p class="disclosure">Ad: Amazon shopping links are affiliate links. We may earn a commission if you buy through affiliate links. eBay links ${EBAY_CAMPAIGN_ID ? "are also affiliate links" : "are ordinary search links until our Partner Network campaign is configured"}. These links search Amazon UK or eBay UK, not a specific product we have checked or tested. Check the listing and total price, including delivery. The images are AI-created illustrations, not photos of products we've tested.</p>
 <div class="idea-grid">
 ${g.ideas.map(([name, why, q, note], i) => {
@@ -332,7 +332,7 @@ ${g.ideas.map(([name, why, q, note], i) => {
     return `<article class="idea"><span class="idea-number">${String(i + 1).padStart(2, "0")}</span><h3>${esc(name)}</h3><p class="idea-why">${esc(why)}</p><p class="buying-note"><strong>What to look for</strong>${esc(note)}</p><div class="merchant-links"><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search Amazon UK for ${name} (affiliate link, opens in a new tab)`)}">Search Amazon UK <span aria-hidden="true">&nearr;</span></a><a href="${esc(ebay(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search eBay UK for ${name} (${EBAY_CAMPAIGN_ID ? "affiliate link, " : ""}opens in a new tab)`)}">Search eBay UK <span aria-hidden="true">&nearr;</span></a></div></article>`;
   }).join("\n")}
 </div></section>
-<aside class="finder-cta"><div><p class="eyebrow">Need a closer match?</p><h2>Tell us what they're like.</h2><p>The gift finder uses their interests, what they already own and your budget to suggest ideas. Leave out names and sensitive details.</p></div><a href="/#form">Find ideas for them <span aria-hidden="true">&rarr;</span></a></aside>
+<aside class="finder-cta"><div><h2>Tell us what they're like.</h2><p>The gift finder uses their interests, what they already own and your budget to suggest ideas. Leave out names and sensitive details.</p></div><a href="/#form">Find ideas for them <span aria-hidden="true">&rarr;</span></a></aside>
 <section class="related-guides" aria-labelledby="more-guides"><div class="ideas-heading"><h2 id="more-guides">Still looking? Try these</h2><a href="/gifts/">Browse all the guides <span aria-hidden="true">&rarr;</span></a></div><ul class="related-shelf">${related.map(guideLink).join("")}</ul></section>
 </main>
 ${FOOTER}
@@ -344,12 +344,12 @@ ${FOOTER}
 function indexPage() {
   return head("Gift guides | Santa's Helper", "Ten gift guides with eight ideas each, plus practical buying advice for interests, family gifts and a £10 Secret Santa budget.", "/gifts/",
     '<link rel="preload" as="image" href="/images/guides-canvas-1000.webp" media="(max-width:1000px)" fetchpriority="high" imagesrcset="/images/guides-canvas-1000.webp 1x, /images/guides-canvas-2048.webp 2x">\n<link rel="preload" as="image" href="/images/guides-canvas-2048.webp" media="(min-width:1001px)" fetchpriority="high">\n').replace('class="wrap guide-page"', 'class="guide-page directory-page"') +
-`<div class="directory-intro wrap"><div class="directory-banner-copy"><p class="eyebrow">Ideas for your gift list</p><h1>Gift guides</h1><p class="standfirst">Thoughtful ideas for their interests, your family and a £10 Secret Santa.</p><p class="directory-count">${GUIDES.length} guides to browse <span aria-hidden="true">&middot;</span> Eight ideas in each.</p></div></div>
+`<div class="directory-intro wrap"><div class="directory-banner-copy"><h1>Gift guides</h1><p class="directory-count">${GUIDES.length} guides to browse</p></div></div>
 <div class="wrap">
 <nav class="directory-jumps" aria-label="Browse guides by"><a href="#interests">Their interests <span aria-hidden="true">&darr;</span></a><a href="#family">Family gifts <span aria-hidden="true">&darr;</span></a><a href="#budget">A £10 budget <span aria-hidden="true">&darr;</span></a></nav>
 <p class="disclosure">The guide images are AI-created illustrations, not photos of products we've tested.</p>
-${[["interests", "Start with what they enjoy", "Books, gardening, space, history and the way they make their favourite drink."], ["family", "Gifts for the family", "Ideas for children, a new arrival, mum or dad. Use their own preferences to narrow the list."], ["budget", "Secret Santa on a £10 budget", "Gift types to look for, not verified offers. Check the price including delivery."]].map(([group, title, description]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2><p>${description}</p></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
-<aside class="finder-cta"><div><p class="eyebrow">Not seeing the right interest?</p><h2>Try the gift finder.</h2><p>Describe what they enjoy, add your budget and mention anything they already own or would rather not receive.</p></div><a href="/#form">Find gift ideas <span aria-hidden="true">&rarr;</span></a></aside>
+${[["interests", "Start with what they enjoy"], ["family", "Gifts for the family"], ["budget", "Secret Santa on a £10 budget"]].map(([group, title]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
+<aside class="finder-cta"><div><h2>Try the gift finder.</h2><p>Describe what they enjoy, add your budget and mention anything they already own or would rather not receive.</p></div><a href="/#form">Find gift ideas <span aria-hidden="true">&rarr;</span></a></aside>
 </div>
 </main>
 ${FOOTER}
@@ -361,7 +361,7 @@ ${FOOTER}
 function notFoundPage() {
   return head("Page not found | Santa's Helper", "That page could not be found.", "/404.html").replace(
     '<link rel="canonical" href="https://christmasidea.co.uk/404.html">\n', "<meta name=\"robots\" content=\"noindex\">\n") +
-`<div class="not-found"><p class="eyebrow">Page not found</p><h1>We can't find<br>that page.</h1><p>The link may be out of date or the address may be mistyped. Use the gift finder or browse the guides below.</p><div class="guide-jumps"><a href="/#form">Find a gift <span aria-hidden="true">&rarr;</span></a><a href="/gifts/">Browse the gift guides</a></div></div>
+`<div class="not-found"><h1>We can't find<br>that page.</h1><div class="guide-jumps"><a href="/#form">Find a gift <span aria-hidden="true">&rarr;</span></a><a href="/gifts/">Browse the gift guides</a></div></div>
 </main>
 ${FOOTER}
 </body>
