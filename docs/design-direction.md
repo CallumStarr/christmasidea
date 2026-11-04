@@ -65,3 +65,15 @@ Interaction checks used browser-only synthetic ideas and a locally disabled Turn
 ## Sidebar removal
 
 Removed the sample collection and its desktop/mobile styles following design feedback. The finder now sits in a centred, 760-pixel maximum-width column; guide illustrations and the small description-prompt buttons remain. Verified the absence of the sidebar and horizontal overflow at all seven widths in both themes, checked the simplified desktop composition, and exercised mode switching and a description prompt. All 282 regression tests pass. Production Turnstile settings remain unchanged; local challenge rejection is not a live-service failure.
+
+## Artwork refinement
+
+The production guide directory was inspected in the browser, and hashes confirmed that the live illustration sprite, favicon, social image and touch icon matched the sources before editing. The older red social assets were inconsistent with the current site palette.
+
+Reworked all ten active guide scenes with recognisable silhouettes, material details and more specific subject matter: telescope and star chart; garden tools and watering can; toy train and blocks; teddy bear and picture book; museum and map; cafetiere and teapot; reading glasses and books; and distinct family and Secret Santa arrangements. Decorative gifts remain illustrations, never substitute product photos. No new homepage section was added.
+
+The social preview now uses the current forest, parchment and sage palette, with a large readable headline and a gift still life. Its editable SVG and the home-screen icon source are rasterised by `npm run build:images`; Sharp is a build-only dependency. The favicon has a deliberately simplified gift silhouette for small sizes. Guide hero illustrations have descriptive accessible labels, while repeated directory scenes remain decorative.
+
+Image tests render every scene at 160 x 112, check clear edges, validate all internal references and category objects, and verify social/icon dimensions, palettes and size budgets. These checks complement browser screenshots; they do not prove subjective visual quality or that every visitor will interpret an illustration identically.
+
+Verification for this iteration: all 286 tests pass; 96 browser layout checks cover the homepage, directory and ten guides at four widths in both themes. Reviewed the interest and family artwork together, all three compact mobile homepage tiles, the mobile astronomy hero and the Secret Santa illustration. The sprite is 25,716 bytes (6,709 gzipped), the social PNG is 85,464 bytes and the touch icon is 7,064 bytes. The Worker deployment dry-run passes; no recommendation or Turnstile behaviour was changed.

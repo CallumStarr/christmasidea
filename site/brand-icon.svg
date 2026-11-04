@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <title>Santa's Helper gift with a botanical ribbon</title>
+  <rect width="180" height="180" rx="32" fill="#1b3b2b"/>
+  <rect x="10" y="10" width="160" height="160" rx="25" stroke="#52715b"/>
+  <path d="M43 81h94v63H43z" fill="#eee5cd"/>
+  <path d="M43 130h94v14H43z" fill="#d2c19b"/>
+  <path d="M38 69h104v19H38z" fill="#fbf9f5"/>
+  <path d="M83 69h14v75H83z" fill="#c59b47"/>
+  <path d="M87 68C45 64 51 35 71 42c11 4 17 20 19 26 3-10 11-27 23-25 23 5 6 25-23 25Z" fill="#c59b47" stroke="#e0c58b" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M64 48c0 8 9 14 19 16m17-2c10-3 15-7 16-12" stroke="#f4e3b9" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="m115 51 14-22m-9 16c-10-1-12-10-12-10 9 0 12 10 12 10Zm4-8c8 2 14-5 14-5-9-3-14 5-14 5Z" fill="#9eaf8c" stroke="#9eaf8c" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="131" cy="50" r="3" fill="#bd7a58"/>
+  <circle cx="139" cy="45" r="2.5" fill="#bd7a58"/>
+  <path d="m111 94 21 5-7 24-21-6Z" fill="#fbf9f5" stroke="#b79965" stroke-width="1"/>
+  <circle cx="114" cy="100" r="1.5" fill="#9e7b36"/>
+  <path d="m114 100-17-20m15 27 12 3m-14 2 10 3" stroke="#9e7b36" stroke-width="1"/>
+</svg>

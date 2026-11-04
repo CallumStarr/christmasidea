@@ -13,9 +13,11 @@
     "benchmark:replay:v3.3": "node scripts/engine-metrics.js --results=benchmarks/baselines/v3.3-pre-refactor/benchmark-results.json --case-set=v3.3-original --expected-cases=30 --replay",
     "benchmark:replay:v3.4": "node scripts/engine-metrics.js --results=benchmarks/v3.4/live-haiku/benchmark-results.json --expected-cases=50 --replay",
     "benchmark:review:prepare": "node scripts/create-paired-review.js",
-    "validate-run": "node scripts/validate-run.js"
+    "validate-run": "node scripts/validate-run.js",
+    "build:images": "node scripts/build-brand-assets.mjs"
   },
   "devDependencies": {
+    "sharp": "^0.35.5",
     "wrangler": "^4"
   }
 }

@@ -238,16 +238,16 @@ const FOOTER = home.match(/<footer class="site-footer">[\s\S]*?<\/footer>/)?.[0]
 if (!HEADER || !FOOTER) throw new Error("The homepage must provide the shared masthead and footer.");
 
 const EDITS = {
-  "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", group: "family", tone: "clay" },
-  "gifts-for-new-babies": { art: "baby", title: "For a new arrival", label: "The first Christmas", group: "family", tone: "clay" },
-  "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", group: "interests", tone: "sage" },
-  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "The outdoor edit", group: "interests", tone: "sage" },
-  "gifts-for-history-lovers": { art: "history", title: "For the history lover", label: "Another time & place", group: "interests", tone: "oat" },
-  "gifts-for-tea-and-coffee-lovers": { art: "coffee", title: "For the tea & coffee lover", label: "The morning ritual", group: "interests", tone: "oat" },
-  "gifts-for-mum": { art: "mum", title: "For mum", label: "Her kind of Christmas", group: "family", tone: "clay" },
-  "gifts-for-dad": { art: "dad", title: "For dad", label: "His kind of Christmas", group: "family", tone: "sage" },
-  "secret-santa-gifts-under-10": { art: "gesture", title: "Secret Santa, under £10", label: "Small budget, good idea", group: "budget", tone: "clay" },
-  "gifts-for-book-lovers": { art: "books", title: "For the book lover", label: "One more chapter", group: "interests", tone: "oat" },
+  "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", description: "Illustration of a wooden toy train, alphabet blocks and colouring pencils", group: "family", tone: "clay" },
+  "gifts-for-new-babies": { art: "baby", title: "For a new arrival", label: "The first Christmas", description: "Illustration of a teddy bear, picture book and wooden rattle on a folded blanket", group: "family", tone: "clay" },
+  "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", description: "Illustration of a telescope on a tripod beside a framed constellation chart", group: "interests", tone: "sage" },
+  "gifts-for-gardeners": { art: "garden", title: "For the gardener", label: "The outdoor edit", description: "Illustration of a watering can, trowel, garden snips and a packet of seeds", group: "interests", tone: "sage" },
+  "gifts-for-history-lovers": { art: "history", title: "For the history lover", label: "Another time & place", description: "Illustration of a classical museum, an old map and a magnifying glass", group: "interests", tone: "oat" },
+  "gifts-for-tea-and-coffee-lovers": { art: "coffee", title: "For the tea & coffee lover", label: "The morning ritual", description: "Illustration of a cafetiere, ceramic teapot and freshly poured cup", group: "interests", tone: "oat" },
+  "gifts-for-mum": { art: "mum", title: "For mum", label: "Her kind of Christmas", description: "Illustration of a ribbon-tied present, journal, candle and cup of tea", group: "family", tone: "clay" },
+  "gifts-for-dad": { art: "dad", title: "For dad", label: "His kind of Christmas", description: "Illustration of a coffee flask, headphones and binoculars", group: "family", tone: "sage" },
+  "secret-santa-gifts-under-10": { art: "gesture", title: "Secret Santa, under £10", label: "Small budget, good idea", description: "Illustration of a small wrapped present, houseplant and mug", group: "budget", tone: "clay" },
+  "gifts-for-book-lovers": { art: "books", title: "For the book lover", label: "One more chapter", description: "Illustration of an open book, reading glasses, lamp and cup of tea", group: "interests", tone: "oat" },
 };
 
 function header(path) {
@@ -260,7 +260,8 @@ function header(path) {
 
 function art(g, className = "guide-illustration") {
   const edit = EDITS[g.slug];
-  return `<div class="${className} tone-${edit.tone}" aria-hidden="true"><span>${esc(edit.label)}</span><svg class="object-scene" viewBox="0 0 400 280"><use href="/gift-objects.svg#${edit.art}"/></svg></div>`;
+  const decorative = className === "directory-art";
+  return `<div class="${className} tone-${edit.tone}"${decorative ? ' aria-hidden="true"' : ""}><span>${esc(edit.label)}</span><svg class="object-scene" viewBox="0 0 400 280"${decorative ? "" : ` role="img" aria-label="${esc(edit.description)}"`}><use href="/gift-objects.svg#${edit.art}"/></svg></div>`;
 }
 
 function guideLink(g) {
@@ -283,6 +284,9 @@ function head(title, desc, path, extra = "") {
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:image" content="${ORIGIN}/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Santa's Helper. They're not just anyone. Illustrated gifts, a book and a houseplant.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#FBF9F5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#12161A" media="(prefers-color-scheme: dark)">
@@ -372,6 +376,9 @@ for (const name of ["about", "privacy"]) {
     .replace(/<header\b[\s\S]*?<\/header>/, header(`/${name}`))
     .replace(/\n?<footer class="site-footer">[\s\S]*?<\/footer>\n?/, "\n")
     .replace(/<script type="module" src="\/site-shell\.js"><\/script>\s*/, "")
+    .replace(/<link rel="icon"[^>]*>\s*/g, "")
+    .replace(/<link rel="apple-touch-icon"[^>]*>\s*/g, "")
+    .replace("</head>", '<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n<link rel="apple-touch-icon" href="/apple-touch-icon.png">\n</head>')
     .replace("</head>", '<script type="module" src="/site-shell.js"></script>\n</head>')
     .replace('class="wrap" id="guide-content"', 'class="wrap legal-page" id="guide-content" tabindex="-1"')
     .replace("</body>", `${FOOTER}\n</body>`);

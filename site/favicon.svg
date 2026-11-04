@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="4" fill="#1b3b2b"/><path d="M16 28V7m0 15C7 21 5 16 5 16c7-1 11 6 11 6Zm0-8C8 13 8 8 8 8c5 0 8 6 8 6Zm0 4c9-2 11-7 11-7-7 0-11 7-11 7Zm0-10c5-3 6-7 6-7-6 1-6 7-6 7Z" stroke="#e0c58b" stroke-width="1.2" fill="none"/><circle cx="7" cy="25" r="1.3" fill="#e0c58b"/><circle cx="24" cy="23" r="1.3" fill="#e0c58b"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <title>Santa's Helper</title>
+  <rect width="32" height="32" rx="6" fill="#1b3b2b"/>
+  <path d="M7 15h18v12H7z" fill="#eee5cd"/>
+  <path d="M6 12h20v4H6z" fill="#fbf9f5"/>
+  <path d="M14.5 12h3v15h-3z" fill="#c59b47"/>
+  <path d="M16 12C3 11 8 2 12 6l4 6c1-3 4-8 7-6 4 3-1 6-7 6Z" fill="#e0c58b"/>
+</svg>
