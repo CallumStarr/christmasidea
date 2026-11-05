@@ -29,14 +29,14 @@ export function selectedValues(root, name) {
 
 export function renderCheckboxGroups(root, name, groups) {
   for (const [title, options] of groups) {
-    const section = document.createElement("details");
+    const section = document.createElement("fieldset");
     section.className = "choice-category";
-    const summary = document.createElement("summary");
+    const legend = document.createElement("legend");
     const heading = document.createElement("span");
     heading.textContent = title;
     const count = document.createElement("span");
     count.className = "choice-count";
-    summary.append(heading, count);
+    legend.append(heading, count);
     const list = document.createElement("div");
     list.className = "checkbox-options";
     for (const value of options) {
@@ -45,17 +45,20 @@ export function renderCheckboxGroups(root, name, groups) {
       input.type = "checkbox"; input.name = name; input.value = value;
       const text = document.createElement("span");
       text.textContent = value;
-      label.append(input, text); list.append(label);
+      const tile = document.createElement("span");
+      tile.className = "checkbox-tile";
+      tile.append(text);
+      label.append(input, tile); list.append(label);
     }
-    section.append(summary, list); root.append(section);
+    section.append(legend, list); root.append(section);
   }
 }
 
 export function updateCheckboxSummary(root, name, output) {
-  for (const section of root.querySelectorAll("details")) {
+  for (const section of root.querySelectorAll(".choice-category")) {
     const count = selectedValues(section, name).length;
     section.querySelector(".choice-count").textContent = count ? `${count} selected` : "";
   }
   const selected = selectedValues(root, name);
-  output.textContent = selected.length ? `${selected.length} selected: ${selected.join("; ")}` : "Nothing selected yet";
+  output.textContent = selected.length ? `${selected.length} selected` : "Tick any that sound like them";
 }

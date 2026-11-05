@@ -85,10 +85,14 @@ test("homepage offers optional feedback between the finder and gift guides", asy
   assert.ok(feedback > home.indexOf("Who are you shopping for?"));
   assert.ok(feedback < guides);
   assert.match(home, /name="site-rating" value="5"/);
-  assert.match(home, /name="site-feedback"/);
+  assert.match(home, /How useful is Santa's Helper\? <span>\(optional\)<\/span>/);
+  assert.match(home, /for="site-feedback-note">What should we work on\? <span>\(optional\)<\/span>/);
   assert.match(home, /id="site-feedback-note"[^>]*maxlength="500"/);
+  assert.doesNotMatch(home, /feedback-checks|name="site-feedback"/);
+  assert.match(home, /leave a rating, a note, both or neither/i);
   assert.match(home, /Nothing is sent until you choose to send the email/);
   assert.match(home, /mailto:support@christmasidea\.co\.uk\?subject=/);
+  assert.match(home, /leave this optional section blank/);
   assert.match(home, /Your email app should open with your feedback/);
   assert.match(await read("privacy.html"), /Santa's Helper does not receive or store them unless you choose to send the email/);
 });

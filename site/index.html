@@ -153,32 +153,28 @@ window.GIFT_CONFIG = {
 
       <fieldset class="full">
         <legend>Budget per gift</legend>
-        <label class="checkbox-inline"><input type="checkbox" id="budget-any" checked> No set budget</label>
-        <div class="budget-controls" id="budget-controls" hidden>
+        <label class="checkbox-inline"><input type="checkbox" id="budget-any"> No set budget</label>
+        <div class="budget-controls" id="budget-controls">
           <label class="sr-only" for="budget-slider">Maximum budget in pounds</label>
-          <input type="range" id="budget-slider" min="1" max="1000" step="1" value="40" disabled aria-describedby="budget-hint">
-          <div class="budget-amount"><span aria-hidden="true">£</span><label class="sr-only" for="budget-amount">Maximum budget in pounds</label><input type="number" id="budget-amount" min="1" max="1000" step="1" value="40" disabled aria-describedby="budget-hint"></div>
+          <input type="range" id="budget-slider" min="1" max="1000" step="1" value="40" aria-describedby="budget-hint">
+          <div class="budget-amount"><span aria-hidden="true">£</span><label class="sr-only" for="budget-amount">Maximum budget in pounds</label><input type="number" id="budget-amount" min="1" max="1000" step="1" value="40" aria-describedby="budget-hint"></div>
         </div>
-        <p class="hint" id="budget-hint" hidden>Slide or enter £1 to £1,000, in £1 steps.</p>
+        <p class="hint" id="budget-hint">Slide or enter £1 to £1,000, in £1 steps.</p>
       </fieldset>
 
-      <details class="guided-picker">
-        <summary>What are they into? <span class="choice-count" id="interests-count"></span></summary>
-        <div class="guided-picker-content">
-        <p class="hint" id="interests-hint">Open a category and tick anything they enjoy. Choose from as many categories as you like.</p>
+      <fieldset class="full guided-choices">
+        <legend>What are they into?</legend>
+        <p class="hint" id="interests-hint">Tick anything they enjoy. All categories are shown below, and you can choose as many as you like.</p>
         <p class="selection-summary" id="interests-selected" aria-live="polite"></p>
         <div id="interests" class="choice-groups" role="group" aria-label="Their interests" aria-describedby="interests-hint"></div>
-        </div>
-      </details>
+      </fieldset>
 
-      <details class="guided-picker">
-        <summary>Anything else about them? <span class="hint">(optional)</span><span class="choice-count" id="about-count"></span></summary>
-        <div class="guided-picker-content">
+      <fieldset class="full guided-choices">
+        <legend>Anything else about them? <span class="hint">(optional)</span></legend>
         <p class="hint" id="about-hint">Tick what sounds like them, what they already have, or gifts to avoid. It's fine to skip this.</p>
         <p class="selection-summary" id="about-selected" aria-live="polite"></p>
         <div id="about" class="choice-groups" role="group" aria-label="More about them" aria-describedby="about-hint"></div>
-        </div>
-      </details>
+      </fieldset>
     </div>
 
     <div class="form-end">
@@ -234,11 +230,11 @@ window.GIFT_CONFIG = {
     <div class="feedback-copy">
       <p class="eyebrow">A note from us</p>
       <h2 id="feedback-title">Still growing, with your help.</h2>
-      <p>Santa's Helper is always being developed, and your feedback helps us make it more useful. A quick rating, a couple of ticks or a note all help.</p>
+      <p>Santa's Helper is always being developed, and your feedback helps us make it more useful. Leave a rating, a note, both or neither — it's entirely up to you.</p>
     </div>
     <form id="website-feedback" class="website-feedback">
       <fieldset>
-        <legend>How useful is Santa's Helper?</legend>
+        <legend>How useful is Santa's Helper? <span>(optional)</span></legend>
         <div class="feedback-rating">
           <label class="feedback-rating-option"><input type="radio" name="site-rating" value="1"><span aria-label="1 out of 5">1</span></label>
           <label class="feedback-rating-option"><input type="radio" name="site-rating" value="2"><span aria-label="2 out of 5">2</span></label>
@@ -248,17 +244,10 @@ window.GIFT_CONFIG = {
         </div>
         <p class="feedback-scale">1 is not very useful; 5 is very useful.</p>
       </fieldset>
-      <fieldset>
-        <legend>What should we work on?</legend>
-        <div class="feedback-checks">
-          <label><input type="checkbox" name="site-feedback" value="More thoughtful gift ideas"> More thoughtful gift ideas</label>
-          <label><input type="checkbox" name="site-feedback" value="A finder that's easier to use"> A finder that's easier to use</label>
-          <label><input type="checkbox" name="site-feedback" value="More gift guides"> More gift guides</label>
-        </div>
-      </fieldset>
       <div>
-        <label class="q" for="site-feedback-note">Anything else you'd like us to know? <span>(optional)</span></label>
-        <textarea id="site-feedback-note" name="note" maxlength="500" rows="3" aria-describedby="feedback-guidance"></textarea>
+        <label class="q" for="site-feedback-note">What should we work on? <span>(optional)</span></label>
+        <p class="hint" id="feedback-prompt">For example, gift ideas, the finder, gift guides or anything else you'd like to share.</p>
+        <textarea id="site-feedback-note" name="note" maxlength="500" rows="3" aria-describedby="feedback-prompt feedback-guidance"></textarea>
         <p class="privacy" id="feedback-guidance">This opens your email app with your feedback filled in. Nothing is sent until you choose to send the email. Please leave out personal or sensitive details. <a href="/privacy">Read our privacy notice</a>.</p>
       </div>
       <button type="submit" class="btn btn-primary">Share your feedback <span class="button-arrow" aria-hidden="true">&rarr;</span></button>
@@ -343,8 +332,6 @@ function updateGuidedFields(){
   $("#budget-controls").hidden = $("#budget-hint").hidden = $("#budget-any").checked;
   for (const name of ["interests", "about"]) {
     updateCheckboxSummary($(`#${name}`), name, $(`#${name}-selected`));
-    const count = selectedValues($(`#${name}`), name).length;
-    $(`#${name}-count`).textContent = count ? `${count} selected` : "";
   }
 }
 $("#guided-fields").addEventListener("change", updateGuidedFields);
@@ -924,8 +911,7 @@ $("#form").addEventListener("submit", (e) => {
   }
   if (input.mode === "guided" && !input.interests && !input.about){
     setStatus("Tick at least one interest or something about them so we can suggest ideas.", true);
-    const category = $("#interests").querySelector("details");
-    category.open = true; category.querySelector("input").focus(); return;
+    $("#interests").querySelector("input").focus(); return;
   }
   current = input; shownTitles = []; rejectedTitles = [];
   void run(input);
@@ -945,7 +931,6 @@ $("#more").addEventListener("click", () => {
 $("#restart").addEventListener("click", () => {
   $("#form").reset();
   updateGuidedFields();
-  document.querySelectorAll(".choice-category, .guided-picker").forEach((category) => { category.open = false; });
   $("#description-count").textContent = "0 / 1,200";
   setMode("describe");
   $("#results").hidden = true; setStatus(""); current = null; shownTitles = []; rejectedTitles = [];
@@ -956,18 +941,16 @@ $("#website-feedback").addEventListener("submit", (event) => {
   event.preventDefault();
   const form = event.currentTarget;
   const rating = form.querySelector('input[name="site-rating"]:checked')?.value;
-  const topics = [...form.querySelectorAll('input[name="site-feedback"]:checked')].map((input) => input.value);
   const note = $("#site-feedback-note").value.trim();
-  if (!rating && !topics.length && !note) {
-    $("#site-feedback-status").textContent = "Choose a rating, tick a suggestion or write a note before sharing.";
+  if (!rating && !note) {
+    $("#site-feedback-status").textContent = "No feedback added. Share a rating or a note if you'd like, or leave this optional section blank.";
     return;
   }
   const message = [
     "Website feedback for Santa's Helper",
     "",
     ...(rating ? [`Rating: ${rating}/5`] : []),
-    ...(topics.length ? ["What to work on:", ...topics.map((topic) => `- ${topic}`)] : []),
-    ...(note ? ["A note:", note] : []),
+    ...(note ? ["What should we work on?", note] : []),
   ].join("\n");
   const subject = encodeURIComponent("Santa's Helper website feedback");
   window.location.href = `mailto:support@christmasidea.co.uk?subject=${subject}&body=${encodeURIComponent(message)}`;

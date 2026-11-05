@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
-import { INTEREST_GROUPS, ABOUT_GROUPS, selectedValues } from "../site/guided-options.js";
+import { INTEREST_GROUPS, ABOUT_GROUPS, renderCheckboxGroups, selectedValues, updateCheckboxSummary } from "../site/guided-options.js";
 import { normaliseInput, buildUserMessage, curateIdeas } from "../src/core.js";
 import { buildUserMessage as baselineMessage } from "../src/prompts/gift-curator-v3.3.js";
 import { deriveRecipient, recipientCorpus } from "../src/recipient.js";
@@ -41,19 +41,26 @@ test("guided mode frames the survey at the top and restores describe mode withou
     assert.equal(classes.has("guided-mode"), false);
     assert.equal(scrolls.length, 1);
   }
-  assert.equal((html.match(/<details class="guided-picker">/g) || []).length, 2);
-  assert.match(html, /querySelectorAll\("\.choice-category, \.guided-picker"\)/);
+  assert.equal((html.match(/<fieldset class="full guided-choices">/g) || []).length, 2);
+  assert.doesNotMatch(html, /guided-picker|category\.open/);
+  const budget = html.match(/<input[^>]*id="budget-any"[^>]*>/)[0];
+  assert.doesNotMatch(budget, /checked/);
+  for (const id of ["budget-controls", "budget-hint", "budget-slider", "budget-amount"]) {
+    const tag = html.match(new RegExp(`<[^>]*id="${id}"[^>]*>`))[0];
+    assert.doesNotMatch(tag, /\bhidden\b|\bdisabled\b/);
+  }
+  assert.match(html, /id="budget-amount"[^>]*value="40"/);
 });
 
-test("guided budget controls appear on demand and collapsed pickers keep selection counts", async () => {
+test("guided budget defaults enabled and can be switched off and restored", async () => {
   const html = await readFile(new URL("../site/index.html", import.meta.url), "utf8");
   const source = html.match(/function updateGuidedFields\(\)\{[\s\S]*?\n\}/)[0];
   const fields = Object.fromEntries([
     "relation-other-field", "relation-other", "budget-slider", "budget-amount", "budget-any",
     "budget-controls", "budget-hint", "interests", "about", "interests-selected",
-    "about-selected", "interests-count", "about-count",
+    "about-selected",
   ].map((id) => [`#${id}`, {}]));
-  fields["#budget-any"].checked = true;
+  fields["#budget-any"].checked = false;
   let other = false;
   let count = 2;
   const update = runInNewContext(`(${source})`, {
@@ -63,10 +70,13 @@ test("guided budget controls appear on demand and collapsed pickers keep selecti
     updateCheckboxSummary: () => {},
   });
   update();
+  assert.equal(fields["#budget-controls"].hidden, false);
+  assert.equal(fields["#budget-hint"].hidden, false);
+  assert.equal(fields["#budget-amount"].disabled, false);
+  fields["#budget-any"].checked = true;
+  update();
   assert.equal(fields["#budget-controls"].hidden, true);
-  assert.equal(fields["#budget-hint"].hidden, true);
   assert.equal(fields["#budget-amount"].disabled, true);
-  assert.equal(fields["#interests-count"].textContent, "2 selected");
   fields["#budget-any"].checked = false;
   other = true;
   count = 0;
@@ -75,9 +85,47 @@ test("guided budget controls appear on demand and collapsed pickers keep selecti
   assert.equal(fields["#budget-hint"].hidden, false);
   assert.equal(fields["#budget-amount"].disabled, false);
   assert.equal(fields["#relation-other"].disabled, false);
-  assert.equal(fields["#about-count"].textContent, "");
 });
 
+test("checkbox tiles render every category as an open fieldset and keep selection counts", () => {
+  const createElement = (tag) => ({
+    tagName: tag, children: [],
+    append(...children) { this.children.push(...children); },
+  });
+  const root = createElement("div");
+  const render = runInNewContext(`(${renderCheckboxGroups})`, { document: { createElement } });
+  render(root, "interests", INTEREST_GROUPS);
+  assert.equal(root.children.length, INTEREST_GROUPS.length);
+  root.children.forEach((section, index) => {
+    assert.equal(section.tagName, "fieldset");
+    const [legend, list] = section.children;
+    assert.equal(legend.tagName, "legend");
+    assert.equal(legend.children[0].textContent, INTEREST_GROUPS[index][0]);
+    assert.equal(list.children.length, INTEREST_GROUPS[index][1].length);
+    for (const [optionIndex, label] of list.children.entries()) {
+      const [input, tile] = label.children;
+      assert.equal(input.type, "checkbox");
+      assert.equal(input.value, INTEREST_GROUPS[index][1][optionIndex]);
+      assert.equal(tile.className, "checkbox-tile");
+      assert.equal(tile.children[0].textContent, input.value);
+    }
+  });
+  const section = root.children[0];
+  const count = section.children[0].children[1];
+  const inputs = section.children[1].children.map((label) => label.children[0]);
+  inputs[0].checked = true;
+  section.querySelectorAll = () => inputs.filter((input) => input.checked);
+  section.querySelector = () => count;
+  root.querySelectorAll = (selector) => selector === ".choice-category" ? [section] : section.querySelectorAll();
+  const output = {};
+  updateCheckboxSummary(root, "interests", output);
+  assert.equal(count.textContent, "1 selected");
+  assert.equal(output.textContent, "1 selected");
+  inputs[0].checked = false;
+  updateCheckboxSummary(root, "interests", output);
+  assert.equal(count.textContent, "");
+  assert.equal(output.textContent, "Tick any that sound like them");
+});
 test("checkbox categories offer broad, unique choices and every selection survives API normalisation", () => {
   const interests = INTEREST_GROUPS.flatMap(([, options]) => options);
   const about = ABOUT_GROUPS.flatMap(([, options]) => options);
