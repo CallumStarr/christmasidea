@@ -82,13 +82,12 @@ legend,label.q{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
 .checkbox-options input:focus-visible+.checkbox-tile,.checkbox-inline input:focus-visible,.budget-controls input:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
 .selection-summary{font-size:12px;line-height:1.6;color:var(--muted);margin:0 0 10px;overflow-wrap:anywhere}
 
-/* Keep the guided finder in the photographic opening, even with long choice lists. */
+/* Start the guided finder in the photographic opening; questions flow down the page. */
 .guided-mode .atelier{padding-top:12px;padding-bottom:12px}
-.guided-mode .panel{display:flex;flex-direction:column;max-height:calc(100svh - 112px);min-height:0}
 .guided-mode .panel>.deck{display:none}
 .guided-mode .panel-heading h2{font-size:28px}
 .guided-mode .mode-options{margin-bottom:0}
-.guided-mode #guided-fields{min-height:0;overflow-y:auto;scrollbar-gutter:stable;gap:12px;margin-block:12px;padding:2px 6px 4px 2px}
+.guided-mode #guided-fields{gap:12px;margin-block:12px;padding:2px 6px 4px 2px}
 .guided-mode #guided-fields>fieldset>legend,.guided-mode label.q{margin-bottom:6px}
 .guided-mode .chips{gap:6px}
 .guided-mode .chip span{padding:7px 10px}
@@ -98,7 +97,6 @@ legend,label.q{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
 .guided-mode .privacy{font-size:11px;margin-top:8px}
 .guided-choices{padding-top:8px}
 @media(max-width:760px){
-  .guided-mode .panel{max-height:calc(100svh - 128px)}
   .guided-mode .panel-heading h2{font-size:26px}
   .guided-mode #relation{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
   .guided-mode #relation .chip span{height:100%;padding:6px 4px;font-size:12px;text-align:center;line-height:1.25;overflow-wrap:anywhere}

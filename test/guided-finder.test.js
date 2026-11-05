@@ -15,7 +15,7 @@ test("guided mode frames the survey at the top and restores describe mode withou
   for (const reduceMotion of [false, true]) {
     const fields = {
       "#quick-fields": { hidden: false },
-      "#guided-fields": { hidden: true, scrollTop: 120 },
+      "#guided-fields": { hidden: true },
       ".seasonal-hero": { hidden: false },
     };
     const classes = new Set();
@@ -31,7 +31,6 @@ test("guided mode frames the survey at the top and restores describe mode withou
     assert.equal(fields["#quick-fields"].hidden, true);
     assert.equal(fields[".seasonal-hero"].hidden, true);
     assert.equal(classes.has("guided-mode"), true);
-    assert.equal(fields["#guided-fields"].scrollTop, 0);
     assert.equal(scrolls[0].top, 0);
     assert.equal(scrolls[0].behavior, reduceMotion ? "instant" : "smooth");
     setMode("describe");
@@ -50,6 +49,15 @@ test("guided mode frames the survey at the top and restores describe mode withou
     assert.doesNotMatch(tag, /\bhidden\b|\bdisabled\b/);
   }
   assert.match(html, /id="budget-amount"[^>]*value="40"/);
+});
+
+test("guided questions flow down the page without an internal scrollbar or height cap", async () => {
+  const css = await readFile(new URL("../site/home.css", import.meta.url), "utf8");
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+  for (const [, selector, declarations] of rules) {
+    if (!selector.includes(".guided-mode")) continue;
+    assert.doesNotMatch(declarations, /max-height|overflow(?:-y)?:\s*(?:auto|scroll)|scrollbar-gutter/, selector);
+  }
 });
 
 test("guided budget defaults enabled and can be switched off and restored", async () => {
