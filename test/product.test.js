@@ -453,6 +453,7 @@ test("weak primary results trigger one budgeted alternative product query", asyn
 
 test("search cache hits skip API calls and stale product cache entries are refreshed", async () => {
   const store = new Map();
+  const pendingWrites = [];
   const cache = {
     match: async (request) => store.has(request.url) ? new Response(store.get(request.url)) : undefined,
     put: async (request, response) => { store.set(request.url, await response.text()); },
@@ -461,7 +462,7 @@ test("search cache hits skip API calls and stale product cache entries are refre
   const deps = {
     cache,
     productBudget: { take: async (_ip, count) => count },
-    waitUntil: (promise) => promise,
+    waitUntil: (promise) => { pendingWrites.push(promise); },
     fetch: async (url) => {
       if (String(url).includes("/auth/")) return tokenResponse();
       searches++;
@@ -470,6 +471,7 @@ test("search cache hits skip API calls and stale product cache entries are refre
   };
   const searchIdea = idea({ title: "Japanese pruning shears", productSpec: { maxPriceGbp: null, budgetMaxGbp: null } });
   await searchProductsForIdeas([searchIdea], env, deps, "visitor");
+  await Promise.all(pendingWrites.splice(0));
   await searchProductsForIdeas([searchIdea], env, deps, "visitor");
   assert.equal(searches, 1);
 
@@ -478,6 +480,7 @@ test("search cache hits skip API calls and stale product cache entries are refre
   stale.products[0].retrievedAt = new Date(Date.now() - 3601_000).toISOString();
   store.set(productKey, JSON.stringify(stale));
   await searchProductsForIdeas([searchIdea], env, deps, "visitor");
+  await Promise.all(pendingWrites.splice(0));
   assert.equal(searches, 2);
 });
 
