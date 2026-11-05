@@ -50,7 +50,7 @@ These replays use stored model outputs and make no API calls. CI runs the same c
 ## Before you publish (checklist)
 
 1. Rotate the Anthropic key and keep keys out of the project folder (set `ANTHROPIC_API_KEY` as an environment variable or Wrangler secret only).
-2. Legal pages are filled in (name, address, email). Check you are happy for your home address to be public; a virtual office or PO-style business address is an alternative, but it must still be a geographic address where you can be reached. Register with the ICO if required.
+2. Legal pages identify the operator by name and email, with a physical postal address available upon legitimate legal request in the privacy notice. Verify applicable address-disclosure requirements before publishing; an on-request clause may not satisfy every legal obligation. Register with the ICO if required.
 3. `npm test` and `npx wrangler deploy --dry-run` must pass.
 4. Re-run the five-case smoke test and review the actual recommendations (see the benchmark section), then the full 30-case run.
 5. Set a monthly spend limit in the Anthropic console. `DAILY_AI_LIMIT` is 500; the stored v3.4 Haiku run averaged about $0.0021 per call, or roughly $1.05/day and $31.50 per 30 days at the cap before cache hits. Actual costs vary with tokens, pricing and traffic. Over the cap, visitors get the recipient-aware fallback.

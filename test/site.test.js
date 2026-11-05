@@ -49,6 +49,20 @@ test("site files are valid UTF-8 without mojibake or a byte-order mark", async (
   }
 });
 
+test("operator contact details use email and offer a postal address on legal request", async () => {
+  const about = await read("about.html");
+  const privacy = await read("privacy.html");
+  const email = '<a href="mailto:support@christmasidea.co.uk">support@christmasidea.co.uk</a>';
+  assert.ok(about.includes(`<p><strong>Callum Starr</strong><br>Email: ${email}</p>`));
+  assert.ok(privacy.includes(`<p>Santa's Helper is operated by <strong>Callum Starr</strong>. Email: ${email}.</p>`));
+  assert.match(privacy, /A physical postal address is available upon legitimate legal request\./);
+  for (const page of [about, privacy]) {
+    const links = [...page.matchAll(/href="mailto:([^"]+)"/g)];
+    assert.ok(links.length > 0);
+    for (const [, address] of links) assert.equal(address, "support@christmasidea.co.uk");
+  }
+});
+
 test("site copy avoids gift-edit jargon and uses clear, friendly finder language", async () => {
   const files = [
     "index.html", "about.html", "privacy.html", "404.html",
