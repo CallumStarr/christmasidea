@@ -10,6 +10,7 @@ import { ENGINE_VERSION, engineFallback, promptHints, runEngine, understand } fr
 import { feedbackKeys } from "./engine/feedback.js";
 import * as baselinePrompt from "./prompts/gift-curator-v3.3.js";
 import { catalogueFallback } from "./catalogue.js";
+import { applyLearning, feedbackCsv } from "./engine/learning.js";
 
 export { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS };
 export { CANDIDATE_COUNT, GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
@@ -66,12 +67,21 @@ export function normaliseInput(body) {
     age: pick(body.age, AGES, "unknown"),
     budget: pick(body.budget, Object.keys(BUDGETS), "any"),
     occasion: pick(body.occasion, OCCASIONS, "christmas"),
-    interests: cleanText(body.interests, MAX.interests),
-    about: cleanText(body.about, MAX.about),
+    interests: cleanText(body.interests, mode === "guided" ? 4000 : MAX.interests),
+    about: cleanText(body.about, mode === "guided" ? 2000 : MAX.about),
     exclude: Array.isArray(body.exclude)
       ? body.exclude.slice(0, MAX.exclude).map((s) => cleanText(s, MAX.excludeItem)).filter(Boolean)
       : [],
   };
+  if (mode === "guided") {
+    if (body.budgetMaxGbp !== undefined) {
+      if (!Number.isInteger(body.budgetMaxGbp) || body.budgetMaxGbp < 1 || body.budgetMaxGbp > 1000) {
+        return { ok: false, error: "Enter a whole-pound budget between £1 and £1,000." };
+      }
+      input.budgetMaxGbp = body.budgetMaxGbp;
+    }
+    if (input.relation === "other" && body.relationOther) input.relationOther = cleanText(body.relationOther, 80);
+  }
   const hasDescription = Boolean(input.description);
   const hasGuidedDetails = Boolean(input.interests || input.about);
   if (mode === "describe" ? !hasDescription : !hasGuidedDetails) {
@@ -319,7 +329,7 @@ function fallbackResponse(input, message, status, origin, env) {
     error: message,
     fallback: true,
     source: "catalogue",
-    ideas: result.ideas,
+    ideas: applyLearning(result.ideas, input, env),
     recipient: result.recipient,
     engine_version: baseline ? "baseline-v3.3" : ENGINE_VERSION,
     shortfall: result.diagnostics.shortfall,
@@ -340,6 +350,40 @@ export async function handleRequest(request, env, deps) {
     const ready = typeof env.IP_SALT === "string" && env.IP_SALT.length >= 32;
     return json({ ok: ready }, ready ? 200 : 503, origin);
   }
+  if (["/api/feedback/export", "/api/feedback/review"].includes(url.pathname)) {
+    if (request.method !== "POST") return json({ error: "Use POST." }, 405, origin);
+    if (!origin) return json({ error: "This site isn't allowed to use the API." }, 403, null);
+    if (typeof env.FEEDBACK_ADMIN_TOKEN !== "string" || env.FEEDBACK_ADMIN_TOKEN.length < 32) {
+      console.error("Feedback export is not configured.");
+      return json({ error: "Feedback export is not configured." }, 503, origin);
+    }
+    const supplied = request.headers.get("Authorization") || "";
+    if (await sha256Hex(supplied) !== await sha256Hex(`Bearer ${env.FEEDBACK_ADMIN_TOKEN}`)) {
+      return json({ error: "Unauthorised." }, 401, origin);
+    }
+    const r = await readJson(request, 2000);
+    if (r.error) return json({ error: r.error }, r.status, origin);
+    if (url.pathname === "/api/feedback/review") {
+      if (!["check", "ack"].includes(r.body?.action) || (r.body.action === "ack"
+        && (typeof r.body.id !== "string" || !/^[a-f0-9-]{36}$/.test(r.body.id)))) {
+        return json({ error: "Send a review check or an acknowledgement with its notification ID." }, 400, origin);
+      }
+      if (!deps.feedback?.review) return json({ error: "Feedback review is unavailable." }, 503, origin);
+      const report = await deps.feedback.review(r.body.action, r.body.id);
+      return json(report, report.ok === false ? 409 : 200, origin);
+    }
+    const after = r.body?.after;
+    if (after !== undefined && (!after || !/^F\d{4}-\d{2}-\d{2}$/.test(after.bucket)
+      || typeof after.key !== "string" || !after.key.startsWith("L|") || after.key.length > 300)) {
+      return json({ error: "Invalid export cursor." }, 400, origin);
+    }
+    if (!deps.feedback?.export) return json({ error: "Feedback export is unavailable." }, 503, origin);
+    const page = await deps.feedback.export(after);
+    const headers = { ...corsHeaders(origin), "Content-Type": "text/csv; charset=utf-8",
+      "Cache-Control": "no-store", "Content-Disposition": 'attachment; filename="gift-feedback.csv"' };
+    if (page.next) headers["X-Feedback-Next"] = encodeURIComponent(JSON.stringify(page.next));
+    return new Response(feedbackCsv(page.rows), { headers });
+  }
   if (!["/api/ideas", "/api/products", "/api/feedback"].includes(url.pathname)) return json({ error: "Not found" }, 404, origin);
   if (request.method !== "POST") return json({ error: "Use POST." }, 405, origin);
   if (!origin) return json({ error: "This site isn't allowed to use the API." }, 403, null);
@@ -356,7 +400,10 @@ export async function handleRequest(request, env, deps) {
     if (r.error) return json({ error: r.error }, r.status, origin);
     const fb = feedbackKeys(r.body);
     if (!fb.ok) return json({ error: fb.error }, 400, origin);
-    if (!deps.feedback) return json({ ok: true, recorded: false }, 202, origin);
+    if (!deps.feedback) {
+      console.error("Feedback storage is unavailable.");
+      return json({ error: "Feedback storage is unavailable." }, 503, origin);
+    }
     const done = await deps.feedback.record(ipHash, fb.keys);
     return done?.ok ? json({ ok: true, recorded: true }, 202, origin) : json({ error: "Too many events." }, 429, origin);
   }
@@ -395,7 +442,7 @@ export async function handleRequest(request, env, deps) {
       const hit = await deps.cache.match(cacheKey);
       if (hit) {
         const data = await hit.json();
-        return json({ ...data, product_discovery_enabled: productDiscoveryAvailable(env), cached: true }, 200, origin);
+        return json({ ...data, ideas: applyLearning(data.ideas, input, env), product_discovery_enabled: productDiscoveryAvailable(env), cached: true }, 200, origin);
       }
     } catch {}
   }
@@ -449,7 +496,7 @@ export async function handleRequest(request, env, deps) {
       .catch(() => {});
     if (deps.waitUntil) deps.waitUntil(p);
   }
-  return json(payload, 200, origin);
+  return json({ ...payload, ideas: applyLearning(payload.ideas, input, env) }, 200, origin);
 }
 
 /** Returns a 301 to the canonical host for www or other aliases, otherwise null. */

@@ -27,6 +27,7 @@ const item = (overrides = {}) => ({
   conditionId: "1000",
   buyingOptions: ["FIXED_PRICE"],
   itemAffiliateWebUrl: "https://www.ebay.co.uk/itm/123456789012?campid=1234567890&mkcid=1&mkevt=1",
+  itemWebUrl: "https://www.ebay.co.uk/itm/123456789012",
   itemEndDate: new Date(now + 7200_000).toISOString(),
   ...overrides,
 });
@@ -34,14 +35,46 @@ const response = (data, status = 200) => new Response(JSON.stringify(data), { st
 const token = () => response({ access_token: "test-token", token_type: "bearer", expires_in: 7200 });
 const idea = { title: "Ceramic coffee mug", query: "ceramic coffee mug", concept: "coffee mug", productSpec: { maxPriceGbp: 20, budgetMaxGbp: 20 } };
 
-test("eBay requires its own opt-in, credentials and campaign independently of Amazon", () => {
+test("eBay requires its own opt-in and credentials but an affiliate campaign is optional", () => {
   assert.equal(productDiscoveryAvailable(env), true);
   for (const patch of [
     { PRODUCT_DISCOVERY_ENABLED: "false" }, { EBAY_PRODUCT_DISCOVERY_ENABLED: "false" },
-    { EBAY_CLIENT_ID: "" }, { EBAY_CLIENT_SECRET: "" }, { EBAY_CAMPAIGN_ID: "" },
+    { EBAY_CLIENT_ID: "" }, { EBAY_CLIENT_SECRET: "" }, { EBAY_CAMPAIGN_ID: "invalid" },
   ]) {
     assert.equal(productDiscoveryAvailable({ ...env, ...patch }), false);
   }
+  assert.equal(productDiscoveryAvailable({ ...env, EBAY_CAMPAIGN_ID: "" }), true);
+});
+
+test("ordinary eBay offers work without EPN and never accept unconfigured affiliate tracking", async () => {
+  const untracked = { ...env, EBAY_CAMPAIGN_ID: "" };
+  const product = normaliseEbayItem(item(), untracked, now);
+  assert.equal(product.productUrl, item().itemWebUrl);
+  assert.equal(validProduct(product, { EBAY_CAMPAIGN_ID: "" }, now), true);
+  assert.equal(validProduct(product, config, now), false);
+  assert.equal(isEbayProductUrl(item().itemAffiliateWebUrl, id, ""), false);
+  assert.equal(normaliseEbayItem(item({ itemWebUrl: item().itemAffiliateWebUrl }), untracked, now), null);
+  assert.equal(normaliseEbayItem(item({ itemAffiliateWebUrl: undefined }), env, now), null);
+  const provider = createEbayProvider({ ...untracked, EBAY_CLIENT_ID: "non-affiliate-test" }, async (url, init) => {
+    if (String(url).includes("/oauth2/")) return token();
+    assert.equal(init.headers["X-EBAY-C-ENDUSERCTX"], undefined);
+    return response({ itemSummaries: [item()] });
+  });
+
+  assert.equal((await provider.searchProducts("coffee mug"))[0].productUrl, item().itemWebUrl);
+});
+
+test("OAuth trims credential whitespace and reports only approved error categories", async () => {
+  const provider = createEbayProvider({
+    ...env, EBAY_CLIENT_ID: " whitespace-client \n", EBAY_CLIENT_SECRET: " test-secret \n",
+  }, async (_url, init) => {
+    assert.equal(init.headers.Authorization, `Basic ${btoa("whitespace-client:test-secret")}`);
+    return response({ error: "invalid_client", error_description: "must never be logged" }, 401);
+  });
+  await assert.rejects(() => provider.searchProducts("mug"), { code: "token_invalid_client", status: 401 });
+  const unknown = createEbayProvider({ ...env, EBAY_CLIENT_ID: "unknown-error-client" },
+    async () => response({ error: "unexpected private response" }, 401));
+  await assert.rejects(() => unknown.searchProducts("mug"), { code: "token_rejected", status: 401 });
 });
 
 test("eBay normalisation binds the listing, image and campaign and includes delivery", () => {
@@ -65,6 +98,36 @@ test("eBay normalisation binds the listing, image and campaign and includes deli
     assert.equal(normaliseEbayItem(item(patch), env, now), null, JSON.stringify(patch));
   }
   assert.equal(normaliseEbayItem(item({ image: { imageUrl: "https://evil.example/photo.jpg" } }), env, now).imageUrl, null);
+});
+
+test("eBay uses the largest API-supplied image without constructing unlicensed URLs", () => {
+  const product = normaliseEbayItem(item({
+    image: { imageUrl: "https://i.ebayimg.com/small.jpg", width: 225, height: 225 },
+    thumbnailImages: [{ imageUrl: "https://i.ebayimg.com/large.jpg", width: 960, height: 960 }],
+  }), env, now);
+  assert.equal(product.imageUrl, "https://i.ebayimg.com/large.jpg");
+});
+
+test("eBay fallback uses a short product type instead of recipient-facing prose", async () => {
+  const queries = [];
+  const searchIdea = {
+    title: "Cooking-themed book on food history",
+    query: "food history book hardback",
+    concept: "food history book",
+    productSpec: {},
+  };
+  const result = await searchProductsForIdeas([searchIdea], env, {
+    productBudget: { take: async (_ip, count) => count },
+    fetch: async (url) => {
+      if (String(url).includes("/oauth2/")) return token();
+      const query = new URL(url).searchParams.get("q");
+      queries.push(query);
+      return query === searchIdea.query ? response({ total: 0 })
+        : response({ itemSummaries: [item({ title: "Food History Book" })] });
+    },
+  }, "visitor");
+  assert.deepEqual(queries, ["food history book hardback", "food history book"]);
+  assert.equal(result.products[0]?.provider, "ebay");
 });
 
 test("listing variants and URL authority are checked on both server and browser", () => {
@@ -125,6 +188,33 @@ test("expired tokens retry once; malformed and failed API responses surface erro
   }
 });
 
+test("every live Browse retry requires an extra reservation and stops when capacity runs out", async () => {
+  for (const capacity of [1, 2]) {
+    let remaining = capacity, searches = 0, reservations = 0;
+    const result = await searchProductsForIdeas([{
+      title: "Coffee mug", query: "coffee mug", concept: "coffee mug", productSpec: {},
+    }], { ...env, EBAY_CLIENT_ID: `budget-retry-${capacity}` }, {
+      productBudget: {
+        take: async (_visitor, count) => {
+          reservations++;
+          const allowed = Math.min(remaining, count);
+          remaining -= allowed;
+          return allowed;
+        },
+      },
+      fetch: async (url) => {
+        if (String(url).includes("/oauth2/")) return token();
+        searches++;
+        return searches === 1 ? response({}, 401) : response({ itemSummaries: [item()] });
+      },
+    }, "visitor");
+    assert.equal(reservations, 2);
+    assert.equal(searches, capacity);
+    assert.equal(result.limited, capacity === 1);
+    assert.equal(Boolean(result.products[0]), capacity === 2);
+  }
+});
+
 test("eBay matching rejects unknown delivery costs for a budget and removes duplicate listings", async () => {
   const deps = {
     productBudget: { take: async (_ip, count) => count },
@@ -167,15 +257,14 @@ test("both providers enrich the same concept independently and failures retain t
   }
 });
 
-test("eBay cache hits avoid requests and different campaigns never share cached affiliate links", async () => {
-  const store = new Map(), pending = [];
+test("eBay listings never read or write persistent caches, including empty search results", async () => {
   let requests = 0;
+  let reads = 0, writes = 0;
   const deps = {
     cache: {
-      match: async (key) => store.has(key.url) ? response(store.get(key.url)) : undefined,
-      put: async (key, value) => { store.set(key.url, await value.json()); },
+      match: async () => { reads++; return undefined; },
+      put: async () => { writes++; },
     },
-    waitUntil: (promise) => pending.push(promise),
     productBudget: { take: async (_ip, count) => count },
     fetch: async (url) => {
       if (String(url).includes("/oauth2/")) return token();
@@ -184,11 +273,16 @@ test("eBay cache hits avoid requests and different campaigns never share cached 
     },
   };
   await searchProductsForIdeas([idea], env, deps, "visitor");
-  await Promise.all(pending);
   await searchProductsForIdeas([idea], env, deps, "visitor");
-  assert.equal(requests, 1);
+  assert.equal(requests, 2);
   await searchProductsForIdeas([idea], { ...env, EBAY_CAMPAIGN_ID: "999" }, deps, "visitor");
-  assert.ok(requests > 1);
+  assert.ok(requests > 2);
+  await searchProductsForIdeas([idea], env, {
+    ...deps,
+    fetch: async (url) => String(url).includes("/oauth2/") ? token() : response({ total: 0 }),
+  }, "visitor");
+  assert.equal(reads, 0);
+  assert.equal(writes, 0);
 });
 
 test("search links work before approval without inventing eBay affiliate tracking", () => {
@@ -227,6 +321,7 @@ test("the product endpoint returns eBay photos without calling Amazon or requiri
     },
   });
   assert.equal(result.status, 200);
+  assert.equal(result.headers.get("Cache-Control"), "no-store");
   const body = await result.json();
   assert.equal(body.enabled, true);
   assert.equal(body.products[0].provider, "ebay");

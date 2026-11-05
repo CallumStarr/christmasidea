@@ -1,6 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { handleRequest, canonicalRedirect } from "./core.js";
-import { pruneUsageBuckets, scheduleBudgetPrune } from "./budget-storage.js";
+import { pruneUsageBuckets, reserveProductSearches, scheduleBudgetPrune, seedProductDailyUsage } from "./budget-storage.js";
+import { acknowledgeFeedbackReview, initialiseFeedbackReview, prepareFeedbackReview, pruneFeedbackReview } from "./engine/feedback-review.js";
 
 // One global counter object enforces daily AI and product lookup limits. Durable Objects handle one request at a time, so
 // check-and-increment is race free.
@@ -11,6 +12,8 @@ export class BudgetCounter extends DurableObject {
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS usage (bucket TEXT NOT NULL, k TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (bucket, k))"
     );
+    seedProductDailyUsage(this.sql);
+    initialiseFeedbackReview(this.sql);
   }
 
   count(bucket, k) {
@@ -27,7 +30,9 @@ export class BudgetCounter extends DurableObject {
 
   // Buckets: "D2026-11-02" (day), "M2026-11-02T21:53" (minute), "H2026-11-02T21" (hour), "S2026-11-02T21:53:00" (second).
   buckets() {
-    return pruneUsageBuckets(this.sql);
+    const buckets = pruneUsageBuckets(this.sql);
+    pruneFeedbackReview(this.sql);
+    return buckets;
   }
 
   async prune() {
@@ -53,24 +58,7 @@ export class BudgetCounter extends DurableObject {
 
   // Reserves bounded per-second, hourly, daily and per-minute capacity for product searches.
   async takeProducts(ipHash, n) {
-    const b = this.buckets();
-    const hourLimit = Number(this.env.PRODUCT_SEARCH_HOURLY_LIMIT) || 120;
-    const secondLimit = Number(this.env.PRODUCT_SEARCH_PER_SECOND_LIMIT) || 1;
-    const ipDayLimit = Number(this.env.PRODUCT_SEARCH_PER_VISITOR_DAILY_LIMIT) || 32;
-    const ipMinuteLimit = Number(this.env.PRODUCT_SEARCH_PER_VISITOR_MINUTE_LIMIT) || 16;
-    const requestCount = Math.max(0, Math.min(16, Math.floor(Number(n) || 0)));
-    const leftGlobal = hourLimit - this.count(b.hour, "product:__global__");
-    const leftSecond = secondLimit - this.count(b.second, "product:__global__");
-    const leftDay = ipDayLimit - this.count(b.day, `product:${ipHash}`);
-    const leftVisitor = ipMinuteLimit - this.count(b.minute, `product:${ipHash}`);
-    const allowed = Math.max(0, Math.min(requestCount, leftGlobal, leftSecond, leftDay, leftVisitor));
-    if (allowed > 0) {
-      this.add(b.hour, "product:__global__", allowed);
-      this.add(b.second, "product:__global__", allowed);
-      this.add(b.day, `product:${ipHash}`, allowed);
-      this.add(b.minute, `product:${ipHash}`, allowed);
-    }
-    return allowed;
+    return reserveProductSearches(this, this.env, ipHash, n);
   }
 
   // Feedback counts live in "F2026-11-02" buckets for 90 days; per-visitor rate limiting uses the short minute bucket.
@@ -82,6 +70,24 @@ export class BudgetCounter extends DurableObject {
     const day = `F${b.day.slice(1)}`;
     for (const k of keys.slice(0, 64)) this.add(day, k);
     return { ok: true };
+  }
+
+  async exportFeedback(after) {
+    this.buckets();
+    const rows = this.sql.exec(
+      "SELECT bucket, k, n FROM usage WHERE bucket LIKE 'F%' AND k LIKE 'L|%' AND (bucket > ? OR (bucket = ? AND k > ?)) ORDER BY bucket, k LIMIT 1001",
+      after?.bucket || "", after?.bucket || "", after?.key || ""
+    ).toArray();
+    const page = rows.slice(0, 1000);
+    const last = page.at(-1);
+    return { rows: page, next: rows.length > 1000 ? { bucket: last.bucket, key: last.k } : null };
+  }
+
+  async reviewFeedback(action, id) {
+    this.buckets();
+    return this.ctx.storage.transactionSync(() => action === "ack"
+      ? acknowledgeFeedbackReview(this.sql, id)
+      : prepareFeedbackReview(this.sql));
   }
 }
 
@@ -129,7 +135,11 @@ export default {
         fetch: (...args) => fetch(...args),
         budget: { consume: (ipHash) => stub.consume(ipHash) },
         productBudget: { take: (ipHash, n) => stub.takeProducts(ipHash, n) },
-        feedback: { record: (ipHash, keys) => stub.recordFeedback(ipHash, keys) },
+        feedback: {
+          record: (ipHash, keys) => stub.recordFeedback(ipHash, keys),
+          export: (after) => stub.exportFeedback(after),
+          review: (action, id) => stub.reviewFeedback(action, id),
+        },
         cache: typeof caches !== "undefined" ? caches.default : null,
         waitUntil: (p) => ctx.waitUntil(p),
       });

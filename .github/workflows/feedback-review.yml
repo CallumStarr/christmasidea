@@ -1,0 +1,30 @@
+name: Feedback review notifications
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: feedback-review-notifications
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    if: github.event.repository.fork == false && vars.FEEDBACK_REVIEW_NOTIFICATIONS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Notify when feedback is ready for human review
+        env:
+          FEEDBACK_ADMIN_TOKEN: ${{ secrets.FEEDBACK_ADMIN_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/notify-feedback.mjs

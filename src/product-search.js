@@ -25,9 +25,12 @@ function normaliseQuery(query) {
   return String(query || "").toLowerCase().replace(QUERY_ALLOWED, " ").replace(/\s+/g, " ").trim().slice(0, 120);
 }
 
-function queryVariants(idea) {
+function queryVariants(idea, provider) {
   const first = normaliseQuery(idea.query);
-  const second = normaliseQuery(idea.title);
+  const second = normaliseQuery(provider.name === "ebay"
+    ? [idea.concept || idea.title, ...idea.productSpec.requiredFeatures, ...idea.productSpec.requiredVariants,
+      ...(idea.productSpec.personalisationRequired ? ["personalised"] : [])].join(" ")
+    : idea.title);
   return [...new Set([first, second].filter((query) => query.length >= 2))].slice(0, SEARCHES_PER_IDEA);
 }
 
@@ -52,7 +55,7 @@ function createLimiter(max) {
 }
 
 async function readProductCache(key, deps, provider) {
-  if (!deps.cache) return undefined;
+  if (!deps.cache || provider.policy?.persistResults === false) return undefined;
   try {
     const response = await deps.cache.match(key);
     if (!response) return undefined;
@@ -67,8 +70,8 @@ async function readProductCache(key, deps, provider) {
   }
 }
 
-function cacheProductResults(key, products, deps) {
-  if (!deps.cache) return;
+function cacheProductResults(key, products, deps, provider) {
+  if (!deps.cache || provider.policy?.persistResults === false) return;
   const put = deps.cache.put(key, new Response(JSON.stringify({ products }), {
     headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${CACHE_TTL}` },
   })).catch(() => console.warn("Product cache write failed"));
@@ -104,7 +107,7 @@ async function searchProvider(values, env, deps, ipHash, provider) {
     return { enabled: false, limited: false, products: results };
   }
 
-  const variants = ideas.map(({ value }) => queryVariants(value));
+  const variants = ideas.map(({ value }) => queryVariants(value, provider));
   const allQueries = [...new Set(variants.flat())];
   const queryResults = new Map();
   for (const query of allQueries) {
@@ -128,11 +131,17 @@ async function searchProvider(values, env, deps, ipHash, provider) {
         return;
       }
       try {
-        const found = await limit(() => provider.searchProducts(query));
+        const found = await limit(() => provider.searchProducts(query, {
+          reserveRetry: async () => {
+            const allowed = Number(await deps.productBudget.take(ipHash, 1)) >= 1;
+            limited ||= !allowed;
+            return allowed;
+          },
+        }));
         if (!Array.isArray(found)) throw new TypeError("Provider returned a malformed product list");
         const products = found.map((item) => provider.validateProduct(item)).filter(Boolean);
         queryResults.set(query, products);
-        cacheProductResults(cacheKey(query, provider), products, deps);
+        cacheProductResults(cacheKey(query, provider), products, deps, provider);
       } catch (error) {
         logProviderError(provider, error);
         unavailable = true;
@@ -176,7 +185,7 @@ export async function getCachedProduct(provider, productId, env, deps) {
   try {
     const found = await provider.getProduct(productId);
     const product = found ? provider.validateProduct(found) : null;
-    if (product) cacheProductResults(key, [product], deps);
+    if (product) cacheProductResults(key, [product], deps, provider);
     return product;
   } catch (error) {
     logProviderError(provider, error);

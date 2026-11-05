@@ -15,6 +15,20 @@ export const BUDGETS = {
 };
 // Upper limit in pounds for each guided budget band (null = no ceiling).
 export const BUDGET_CAPS = { "any": null, "under-15": 15, "15-30": 30, "30-50": 50, "50-100": 100, "100-plus": null };
+export function budgetCap(input) {
+  return input.mode === "guided" && Number.isInteger(input.budgetMaxGbp)
+    ? input.budgetMaxGbp : BUDGET_CAPS[input.budget] ?? null;
+}
+
+export function budgetLabel(input) {
+  return input.mode === "guided" && Number.isInteger(input.budgetMaxGbp)
+    ? `up to £${input.budgetMaxGbp}` : BUDGETS[input.budget];
+}
+
+export function relationLabel(input) {
+  return input.relation === "other" && input.relationOther
+    ? input.relationOther : LABELS.relation[input.relation];
+}
 export const OCCASIONS = ["christmas", "birthday", "secret-santa", "anniversary", "thank-you", "other"];
 export const CATEGORIES = [
   "Tech", "Home", "Kitchen", "Books", "Games & toys", "Hobbies & crafts",

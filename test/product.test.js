@@ -76,6 +76,27 @@ const tokenResponse = () => new Response(JSON.stringify({
   expires_in: 3600,
 }), { status: 200 });
 
+test("cooking listings match product synonyms without accepting conflicting materials or fixed engraving", () => {
+  const cooking = (title, query, concept) => ({ title, query, concept, productSpec: {} });
+  const listing = (title) => product({ title, description: undefined });
+  const cases = [
+    [cooking("Knife sharpening stone", "knife sharpening stone", "sharpening stone"), "Knife whetstone double sided", true],
+    [cooking("Cookery book", "cookery book", "cookery book"), "Cookbook recipes hardback", true],
+    [cooking("Wooden chopping board", "wooden chopping board", "chopping board"), "Bamboo cutting board", true],
+    [cooking("Cotton cooking apron", "heavy cotton cooking apron pockets", "apron"), "Polyester Cooking Apron 2 Pockets", false],
+    [cooking("Personalised engraved chopping board", "engraved wooden chopping board", "chopping board"), "Funny Engraved Bamboo Chopping Board Off My T*ts", false],
+    [cooking("Personalised engraved chopping board", "engraved wooden chopping board", "chopping board"), "Engraved Wooden Chopping Board Fixed Message", false],
+    [cooking("Personalised engraved chopping board", "engraved wooden chopping board", "chopping board"), "Personalised Engraved Wooden Chopping Board Your Name", true],
+    [cooking("Pasta making kit", "home pasta making kit", "pasta making kit"), "Pasta Making Book", false],
+    [cooking("Pasta making kit", "home pasta making kit", "pasta making kit"), "Home Pasta Making Kit", true],
+    [cooking("Oil and vinegar set", "cooking oil vinegar set", "oil vinegar set"), "Cooking Oil With Vinegar", false],
+  ];
+  for (const [idea, title, accepted] of cases) {
+    const match = scoreProductMatch(idea, listing(title));
+    assert.equal(match.accepted, accepted, `${title}: ${JSON.stringify(match)}`);
+  }
+});
+
 test("exact product match receives high confidence and a transparent score", () => {
   const result = scoreProductMatch(idea(), product());
   assert.equal(result.confidence, "high");

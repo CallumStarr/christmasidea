@@ -59,6 +59,54 @@ legend,label.q{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
 .chip span{display:flex;align-items:center;justify-content:center;min-height:44px;padding:9px 13px;border:1px solid var(--muted);font-size:13px;background:var(--surface);transition:color .18s,background .18s}
 .chip input:checked+span{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 #ts:not([hidden]){margin-top:14px;min-height:65px}
+.relation-other{margin-top:16px}
+.relation-other .hint{margin-top:6px}
+.checkbox-inline{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;cursor:pointer}
+.checkbox-inline input,.checkbox-options input{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent)}
+.budget-controls{display:flex;align-items:center;gap:16px;margin:8px 0 12px}
+.budget-controls input[type=range]{flex:1;min-width:0;accent-color:var(--accent);min-height:44px}
+.budget-amount{display:flex;align-items:center;gap:8px}
+.budget-amount input{width:100px;padding:10px;border:1px solid var(--muted);background:var(--surface);color:var(--ink);font:inherit;font-size:16px}
+.budget-controls input:disabled{opacity:.5}
+.choice-groups{border-top:1px solid var(--line)}
+.choice-category{border-bottom:1px solid var(--line)}
+.choice-category summary{cursor:pointer;min-height:44px;padding:12px 4px;font-size:14px;color:var(--accent)}
+.choice-count{float:right;font-size:12px;color:var(--muted);margin-left:8px}
+.checkbox-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;padding:0 4px 12px}
+.checkbox-options label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;line-height:1.4;cursor:pointer}
+.checkbox-options input:focus-visible,.checkbox-inline input:focus-visible,.budget-controls input:focus-visible,.choice-category summary:focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+.selection-summary{font-size:12px;line-height:1.6;color:var(--muted);margin:0 0 10px;overflow-wrap:anywhere}
+@media(max-width:480px){#about .checkbox-options{grid-template-columns:1fr}}
+
+/* Keep the guided finder in the photographic opening, even with long choice lists. */
+.guided-mode .atelier{padding-top:12px;padding-bottom:12px}
+.guided-mode .panel{display:flex;flex-direction:column;max-height:calc(100svh - 112px);min-height:0}
+.guided-mode .panel>.deck{display:none}
+.guided-mode .panel-heading h2{font-size:28px}
+.guided-mode .mode-options{margin-bottom:0}
+.guided-mode #guided-fields{min-height:0;overflow-y:auto;scrollbar-gutter:stable;gap:12px;margin-block:12px;padding:2px 6px 4px 2px}
+.guided-mode #guided-fields>fieldset>legend,.guided-mode label.q{margin-bottom:6px}
+.guided-mode .chips{gap:6px}
+.guided-mode .chip span{padding:7px 10px}
+.guided-mode .budget-controls{margin-block:4px}
+.guided-mode #budget-hint{margin-bottom:0;font-size:12px}
+.guided-mode .form-end{flex-shrink:0;margin-top:4px}
+.guided-mode .privacy{font-size:11px;margin-top:8px}
+.guided-picker{grid-column:1/-1;border:1px solid var(--line);background:var(--surface);min-width:0}
+.guided-picker>summary{cursor:pointer;min-height:44px;padding:10px 12px;font-size:14px;font-weight:500;color:var(--accent)}
+.guided-picker>summary .hint{font-size:12px}
+.guided-picker-content{padding:0 12px 12px}
+.guided-picker .choice-groups{max-height:240px;overflow-y:auto;scrollbar-gutter:stable}
+.guided-picker .selection-summary{max-height:60px;overflow-y:auto}
+@media(max-width:760px){
+  .guided-mode .panel{max-height:calc(100svh - 128px)}
+  .guided-mode .panel-heading h2{font-size:26px}
+  .guided-mode #relation{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+  .guided-mode #relation .chip span{height:100%;padding:6px 4px;font-size:12px;text-align:center;line-height:1.25;overflow-wrap:anywhere}
+  .guided-mode .mode-options{gap:18px}
+  .guided-mode .mode-option span{font-size:13px}
+}
+@media(max-width:359px){.guided-mode #relation{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 /* Waiting is legible, finite and cancellable. */
 .status{margin:16px 0 0;padding:16px 20px;border:1px solid var(--line);border-left:3px solid var(--gold);background:var(--surface);font-size:13px}
@@ -147,6 +195,30 @@ legend,label.q{display:block;font-size:14px;font-weight:500;margin-bottom:8px}
 .feedback-toast{position:fixed;z-index:21;left:24px;bottom:24px;margin:0;max-width:min(420px,calc(100vw - 48px));padding:16px 20px;border:1px solid var(--muted);border-left:3px solid var(--gold);border-radius:3px;background:var(--surface);color:var(--accent);font-size:13px;pointer-events:none}
 .feedback-toast:empty{display:none}
 body:has(.listbar:not([hidden])) .feedback-toast{bottom:94px}
+
+/* Optional visitor feedback is composed locally in their email app. */
+.feedback-section{padding-block:36px 44px}
+.feedback-card{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1fr);gap:32px;padding:clamp(24px,4vw,48px);border-block:1px solid var(--line);background:var(--surface)}
+.feedback-copy .eyebrow{margin:0 0 14px}
+.feedback-copy h2{max-width:14ch;font-size:clamp(30px,3vw,42px);line-height:1.15;font-weight:450;color:var(--accent);margin:0}
+.feedback-copy>p:last-child{max-width:44ch;font-size:14px;line-height:1.7;color:var(--muted);margin:16px 0 0}
+.website-feedback{display:grid;gap:20px}
+.website-feedback legend{margin-bottom:10px}
+.feedback-rating{display:flex;gap:8px}
+.feedback-rating-option{position:relative;cursor:pointer}
+.feedback-rating-option input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.feedback-rating-option span{display:grid;place-items:center;width:44px;min-height:44px;border:1px solid var(--muted);color:var(--accent);font-size:14px;transition:background .18s,color .18s,border-color .18s}
+.feedback-rating-option input:checked+span{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.feedback-rating-option input:focus-visible+span{outline:2px solid var(--focus);outline-offset:3px}
+.feedback-scale{font-size:11px;color:var(--muted);margin:8px 0 0}
+.feedback-checks{display:grid;gap:4px}
+.feedback-checks label{display:flex;align-items:center;gap:10px;min-height:40px;font-size:13px;cursor:pointer}
+.feedback-checks input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+.website-feedback label.q span{font-weight:400;color:var(--muted)}
+.website-feedback textarea{min-height:88px}
+.website-feedback .btn{justify-self:start}
+.feedback-form-status{min-height:1.5em;margin:-12px 0 0;font-size:12px;color:var(--accent)}
+.feedback-form-status:empty{display:none}
 
 /* The guide shelf */
 .browse-band{background:var(--surface);border-block:3px double var(--accent)}
@@ -254,6 +326,10 @@ dialog::backdrop{background:rgb(28 14 20 / .65)}
   .section-heading{flex-direction:column;gap:16px}
   .section-heading h2{font-size:34px}
   .section-heading .eyebrow{font-size:11px}
+  .feedback-section{padding-block:24px 32px}
+  .feedback-card{grid-template-columns:1fr;gap:24px}
+  .feedback-copy h2{font-size:32px}
+  .website-feedback .btn{width:100%;justify-content:space-between}
   .guide-shelf{grid-template-columns:1fr;gap:28px;margin-top:28px}
   .guide-shelf a{display:grid;grid-template-columns:36% 1fr;column-gap:20px;align-items:start}
   .guide-art{grid-row:span 2;aspect-ratio:1}
@@ -276,3 +352,6 @@ dialog::backdrop{background:rgb(28 14 20 / .65)}
   .guide-copy h3{font-size:22px}
   .round-arrow{display:none}
 }
+.idea-feedback { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .75rem; }
+.idea-feedback button { background: transparent; color: var(--accent); border: 1px solid currentColor; border-radius: .4rem; min-height: 44px; padding: .5rem .65rem; font: inherit; font-size: .85rem; cursor: pointer; }
+.idea-feedback button:disabled { opacity: .6; cursor: default; }

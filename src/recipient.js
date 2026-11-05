@@ -2,7 +2,7 @@
 // the facts the validators need. It never calls a model and never guesses beyond what the
 // shopper wrote. Where the text is ambiguous it returns "unknown" rather than inventing.
 
-import { BUDGETS, BUDGET_CAPS, LABELS } from "./constants.js";
+import { budgetCap, budgetLabel, LABELS, relationLabel } from "./constants.js";
 import { DISLIKE_GROUPS } from "./rules.js";
 import { VAGUE, contentStems, splitList, stem } from "./text.js";
 
@@ -33,10 +33,10 @@ const GUIDED_AGE = { baby: 0, toddler: 2, child: 6, tween: 10, teen: 15, "20s": 
 export function recipientCorpus(input) {
   if (input.mode === "describe") return input.description;
   return [
-    `Buying for: ${LABELS.relation[input.relation]}`,
+    `Buying for: ${relationLabel(input)}`,
     `Age: ${LABELS.age[input.age]}`,
     `Occasion: ${LABELS.occasion[input.occasion]}`,
-    `Budget per gift: ${BUDGETS[input.budget]}`,
+    `Budget per gift: ${budgetLabel(input)}`,
     `What they're into: ${input.interests || "(not given)"}`,
     `More about them: ${input.about || "(not given)"}`,
   ].filter(Boolean).join(". ");
@@ -73,7 +73,7 @@ const SOFT_BUDGET = /(?:around|about|approx(?:imately)?|roughly|circa|~)\s*$/;
 
 function parseBudget(input, text) {
   if (input.mode !== "describe") {
-    const max = BUDGET_CAPS[input.budget] ?? null;
+    const max = budgetCap(input);
     return { max, soft: false, scope: "per_gift", source: "form" };
   }
   const lower = text.toLowerCase();

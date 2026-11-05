@@ -4,7 +4,7 @@
 // graph-derived backups, ranks deterministically and writes the grounded "why we thought of this"
 // line (see src/engine/). The previous production prompt is frozen in prompts/gift-curator-v3.3.js.
 
-import { AGE_BANDS, BUDGETS, BUDGET_SCOPES, CATEGORIES, LABELS, STRATEGIES } from "./constants.js";
+import { AGE_BANDS, budgetLabel, BUDGET_SCOPES, CATEGORIES, LABELS, relationLabel, STRATEGIES } from "./constants.js";
 import { LIVE_GIFT_TYPES } from "./engine/gift-types.js";
 
 export const PROMPT_VERSION = "gift-intelligence-v4.0";
@@ -174,10 +174,10 @@ export function buildUserMessage(input, hints = null) {
     lines.push("Shopping mode: freeform description", `Recipient description: ${input.description}`);
   } else {
     lines.push(
-      `Buying for: ${LABELS.relation[input.relation]}`,
+      `Buying for: ${relationLabel(input)}`,
       `Age: ${LABELS.age[input.age]}`,
       `Occasion: ${LABELS.occasion[input.occasion]}`,
-      `Budget per gift: ${BUDGETS[input.budget]}`,
+      `Budget per gift: ${budgetLabel(input)}`,
       `What they're into: ${input.interests || "(not given)"}`,
       `More about them: ${input.about || "(not given)"}`,
     );

@@ -117,6 +117,7 @@ test("example descriptions restore quick mode, update the field and focus the ca
   const elements = new Map([
     ["#quick-fields", { hidden: true }],
     ["#guided-fields", { hidden: false }],
+    [".seasonal-hero", { hidden: false }],
     ["#description", {
       value: "",
       dispatchEvent(event) { this.event = event.type; },
@@ -134,6 +135,7 @@ test("example descriptions restore quick mode, update the field and focus the ca
     $: (selector) => elements.get(selector),
     Event,
     document: {
+      body: { classList: { toggle() {} } },
       querySelector: () => radio,
       querySelectorAll: (selector) => selector === ".prompt-chip" ? [example] : [],
     },

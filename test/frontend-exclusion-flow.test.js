@@ -45,7 +45,8 @@ function frontend(fetchImpl) {
   const rendered = [];
   const gate = createTurnstileTokenGate();
   const context = vm.createContext({
-    $, document: { createElement: element, querySelectorAll: () => [], activeElement: null },
+    $, document: { createElement: element, querySelector: () => null, querySelectorAll: () => [], activeElement: null },
+    rejectedTitles: [],
     AbortController, setTimeout: () => 1, clearTimeout() {}, setInterval: () => 2, clearInterval() {},
     reduceMotion: true, turnstileEnabled: true, tsGate: gate, tsWidget: 1,
     resetTurnstile() {}, apiOn: () => true,

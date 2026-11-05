@@ -6,12 +6,36 @@ const COLOURS = new Set([
   "pink", "purple", "red", "silver", "white", "yellow", "navy", "teal", "tan", "maroon",
 ]);
 const PERSONALISATION = /\b(?:personali[sz]ed|engraved|monogrammed|customi[sz]ed|made to order)\b/i;
+const CUSTOM_PERSONALISATION = /\b(?:personali[sz](?:ed|ation)|custom(?:i[sz]ed)?|your (?:name|text|message)|add (?:a |your )?name|monogrammed)\b/i;
+const MATERIAL_GROUPS = [
+  ["cotton", "polyester", "linen"],
+  ["wooden", "wood", "bamboo", "plastic", "glass", "marble"],
+];
+const UNSUITABLE_LISTING = /\b(?:porn|pornographic|fuck|fucking|shit|cunt|tits)\b|\bt\*ts\b/i;
 const ADD_ON = /\b(?:accessor(?:y|ies)|replacement|spare|compatible|case|cover|sheath|blade|blades|holder|attachment|protector|sharpener|sharpening|cleaner|cleaning|brush|bag|organizer|storage|maintenance)\b/i;
 
 function terms(value) {
-  return contentStems(String(value || ""));
+  const containers = words(value).filter((word) => /^(?:kits?|sets?)$/.test(word))
+    .map((word) => word.replace(/s$/, ""));
+  return [...contentStems(String(value || "")
+    .replace(/\b(?:cookbooks?|cookery books?)\b/gi, "cookbook")
+    .replace(/\b(?:whetstones?|sharpening stones?)\b/gi, "sharpening stone")
+    .replace(/\b(?:cutting|chopping) boards?\b/gi, "chopping board")
+    .replace(/\b(?:culinary|food) history\b/gi, "food history")), ...containers];
 }
 
+function conflictingMaterial(idea, title) {
+  const requested = `${idea.title} ${idea.query}`.toLowerCase();
+  const listed = title.toLowerCase();
+  const contains = (text, material) => new RegExp(`\\b${material}\\b`, "i").test(text);
+  return MATERIAL_GROUPS.some((group) => {
+    const expected = group.filter((material) => contains(requested, material));
+    if (!expected.length) return false;
+    const wood = expected.some((material) => ["wooden", "wood", "bamboo"].includes(material));
+    return group.some((material) => contains(listed, material) && !expected.includes(material)
+      && !(wood && ["wooden", "wood", "bamboo"].includes(material)));
+  });
+}
 function includesPhrase(text, phrase) {
   const expected = terms(phrase);
   if (!expected.length) return false;
@@ -102,6 +126,12 @@ export function scoreProductMatch(idea, product, thresholds = productMatchThresh
     }
   }
   if (spec.personalisationRequired && !PERSONALISATION.test(details)) reasons.push("personalisation_missing");
+  if (/\bpersonali[sz]ed\b/i.test(`${idea.title} ${idea.query}`)
+      && !CUSTOM_PERSONALISATION.test(details)) reasons.push("custom_personalisation_unverified");
+  if (conflictingMaterial(idea, title)) reasons.push("material_mismatch");
+  if (UNSUITABLE_LISTING.test(title) && !UNSUITABLE_LISTING.test(`${idea.title} ${idea.query}`)) {
+    reasons.push("unsuitable_listing_content");
+  }
   reasons.push(...evaluateSuitability(spec, product).reasons);
   if (queryScore < 0.5) reasons.push("low_query_relevance");
 

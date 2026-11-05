@@ -3,7 +3,7 @@
 // responsibility can be reviewed and changed on its own; hard rules are also enforced in code
 // (see validate.js), so the prompt does not have to carry every business rule alone.
 
-import { AGE_BANDS, ANGLES, BUDGETS, BUDGET_SCOPES, CATEGORIES, LABELS } from "../constants.js";
+import { AGE_BANDS, ANGLES, budgetLabel, BUDGET_SCOPES, CATEGORIES, LABELS, relationLabel } from "../constants.js";
 
 export const PROMPT_VERSION = "gift-curator-v3.3";
 export const CANDIDATE_COUNT = 10; // best 8 are shown; the rest are replacements for any idea that fails validation
@@ -150,10 +150,10 @@ export function buildUserMessage(input) {
     lines.push("Shopping mode: freeform description", `Recipient description: ${input.description}`);
   } else {
     lines.push(
-      `Buying for: ${LABELS.relation[input.relation]}`,
+      `Buying for: ${relationLabel(input)}`,
       `Age: ${LABELS.age[input.age]}`,
       `Occasion: ${LABELS.occasion[input.occasion]}`,
-      `Budget per gift: ${BUDGETS[input.budget]}`,
+      `Budget per gift: ${budgetLabel(input)}`,
       `What they're into: ${input.interests || "(not given)"}`,
       `More about them: ${input.about || "(not given)"}`,
     );

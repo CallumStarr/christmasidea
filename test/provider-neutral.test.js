@@ -110,9 +110,11 @@ test("Amazon product-provider, offer-validation and image logic stays inside the
   }
 });
 
-test("retained Amazon fallback link, partner tag and kill switch are unchanged", async () => {
+test("Amazon remains disabled and retains its fallback tag while eBay discovery is enabled", async () => {
   const toml = await readFile(new URL("../wrangler.toml", import.meta.url), "utf8");
-  assert.match(toml, /PRODUCT_DISCOVERY_ENABLED\s*=\s*"false"/);
+  assert.match(toml, /^PRODUCT_DISCOVERY_ENABLED\s*=\s*"true"/m);
+  assert.match(toml, /^AMAZON_PRODUCT_DISCOVERY_ENABLED\s*=\s*"false"/m);
+  assert.match(toml, /^EBAY_PRODUCT_DISCOVERY_ENABLED\s*=\s*"true"/m);
   assert.match(toml, /AMAZON_PARTNER_TAG\s*=\s*"mcstarrstud0c-21"/);
   const html = await readFile(new URL("../site/index.html", import.meta.url), "utf8");
   assert.match(html, /mcstarrstud0c-21/);

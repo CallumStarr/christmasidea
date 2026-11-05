@@ -342,8 +342,8 @@ test("/api/feedback stores only enumerated counters and fails safely", async () 
   assert.equal((await handleRequest(fb(good, { origin: "https://evil.example" }), env, { feedback })).status, 403);
   assert.equal((await handleRequest(fb({ event: "purchase" }), env, { feedback })).status, 400);
   const none = await handleRequest(fb(good), env, {});
-  assert.equal(none.status, 202);
-  assert.deepEqual(await none.json(), { ok: true, recorded: false });
+  assert.equal(none.status, 503);
+  assert.deepEqual(await none.json(), { error: "Feedback storage is unavailable." });
 
   const ok = await handleRequest(fb(good), env, { feedback });
   assert.equal(ok.status, 202);

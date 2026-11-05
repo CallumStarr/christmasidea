@@ -31,23 +31,28 @@ MODEL = "claude-haiku-5-5"
 MAX_OUTPUT_TOKENS = "4500"
 CLAUDE_EFFORT = "low"
 RECOMMENDATION_MODE = "baseline-v3.3"
+# Reviewed feedback policies only; collecting feedback does not automatically change global ranking.
+LEARNING_RANKING_ENABLED = "false"
 # Hard cap on AI searches per day across all visitors (resets 00:00 UTC). Above it the Worker uses the checked catalogue fallback.
 DAILY_AI_LIMIT = "500"
 # Per-visitor caps (visitor = hashed IP, rotated daily; raw IPs are never stored).
 PER_VISITOR_DAILY_LIMIT = "15"
 PER_VISITOR_MINUTE_LIMIT = "4"
 # Global kill switch; each merchant also needs its own approval, flag and credentials.
-PRODUCT_DISCOVERY_ENABLED = "false"
+PRODUCT_DISCOVERY_ENABLED = "true"
 AMAZON_PRODUCT_DISCOVERY_ENABLED = "false"
-EBAY_PRODUCT_DISCOVERY_ENABLED = "false"
+EBAY_PRODUCT_DISCOVERY_ENABLED = "true"
 AMAZON_PARTNER_TAG = "mcstarrstud0c-21"
-# Set EBAY_CLIENT_ID and EBAY_CLIENT_SECRET with wrangler secret put after production approval.
+# Public production App ID; the Cert ID is stored only as the EBAY_CLIENT_SECRET Worker secret.
+EBAY_CLIENT_ID = "CallumSt-SantasHe-PRD-5a2eef3be-4793a07b"
 EBAY_CAMPAIGN_ID = ""
 PRODUCT_API_TIMEOUT_MS = "8000"
-PRODUCT_SEARCH_HOURLY_LIMIT = "120"
-PRODUCT_SEARCH_PER_SECOND_LIMIT = "1"
-PRODUCT_SEARCH_PER_VISITOR_DAILY_LIMIT = "32"
-PRODUCT_SEARCH_PER_VISITOR_MINUTE_LIMIT = "16"
+PRODUCT_SEARCH_DAILY_LIMIT = "4000"
+PRODUCT_SEARCH_HOURLY_LIMIT = "1000"
+# Reserve a whole gift batch; searches execute with concurrency 2. Restore Amazon's confirmed limit before enabling it.
+PRODUCT_SEARCH_PER_SECOND_LIMIT = "32"
+PRODUCT_SEARCH_PER_VISITOR_DAILY_LIMIT = "240"
+PRODUCT_SEARCH_PER_VISITOR_MINUTE_LIMIT = "64"
 PRODUCT_MATCH_HIGH_THRESHOLD = "0.78"
 PRODUCT_MATCH_MEDIUM_THRESHOLD = "0.55"
 

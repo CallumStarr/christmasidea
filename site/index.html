@@ -116,6 +116,11 @@ window.GIFT_CONFIG = {
       <fieldset class="full">
         <legend>Who are you buying for?</legend>
         <div class="chips" id="relation"></div>
+        <div id="relation-other-field" class="relation-other" hidden>
+          <label class="q" for="relation-other">Who are they to you? <span class="hint">(optional)</span></label>
+          <input type="text" id="relation-other" name="relationOther" maxlength="80" autocomplete="off" aria-describedby="relation-other-hint" placeholder="For example, my aunt, neighbour or teacher">
+          <p class="hint" id="relation-other-hint">Their relationship to you, not their name.</p>
+        </div>
       </fieldset>
 
       <div>
@@ -148,21 +153,32 @@ window.GIFT_CONFIG = {
 
       <fieldset class="full">
         <legend>Budget per gift</legend>
-        <div class="chips" id="budget"></div>
+        <label class="checkbox-inline"><input type="checkbox" id="budget-any" checked> No set budget</label>
+        <div class="budget-controls" id="budget-controls" hidden>
+          <label class="sr-only" for="budget-slider">Maximum budget in pounds</label>
+          <input type="range" id="budget-slider" min="1" max="1000" step="1" value="40" disabled aria-describedby="budget-hint">
+          <div class="budget-amount"><span aria-hidden="true">£</span><label class="sr-only" for="budget-amount">Maximum budget in pounds</label><input type="number" id="budget-amount" min="1" max="1000" step="1" value="40" disabled aria-describedby="budget-hint"></div>
+        </div>
+        <p class="hint" id="budget-hint" hidden>Slide or enter £1 to £1,000, in £1 steps.</p>
       </fieldset>
 
-      <div class="full">
-        <label class="q" for="interests">What are they into?</label>
-        <p class="hint" id="interests-hint">Hobbies, favourite shows or the things they love talking about. For example: wild swimming, Taylor Swift or sourdough.</p>
-        <input type="text" id="interests" name="interests" maxlength="200" autocomplete="off" aria-describedby="interests-hint">
-      </div>
+      <details class="guided-picker">
+        <summary>What are they into? <span class="choice-count" id="interests-count"></span></summary>
+        <div class="guided-picker-content">
+        <p class="hint" id="interests-hint">Open a category and tick anything they enjoy. Choose from as many categories as you like.</p>
+        <p class="selection-summary" id="interests-selected" aria-live="polite"></p>
+        <div id="interests" class="choice-groups" role="group" aria-label="Their interests" aria-describedby="interests-hint"></div>
+        </div>
+      </details>
 
-      <div class="full">
-        <label class="q" for="about">Anything else about them? <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-        <p class="hint" id="about-hint">What they're like, what they already own or anything they'd rather not have.</p>
-        <textarea id="about" name="about" maxlength="500" aria-describedby="about-hint about-count"></textarea>
-        <div class="count" id="about-count" aria-live="polite">0 / 500</div>
-      </div>
+      <details class="guided-picker">
+        <summary>Anything else about them? <span class="hint">(optional)</span><span class="choice-count" id="about-count"></span></summary>
+        <div class="guided-picker-content">
+        <p class="hint" id="about-hint">Tick what sounds like them, what they already have, or gifts to avoid. It's fine to skip this.</p>
+        <p class="selection-summary" id="about-selected" aria-live="polite"></p>
+        <div id="about" class="choice-groups" role="group" aria-label="More about them" aria-describedby="about-hint"></div>
+        </div>
+      </details>
     </div>
 
     <div class="form-end">
@@ -213,6 +229,43 @@ window.GIFT_CONFIG = {
     </div>
   </section>
 </div>
+<section class="feedback-section wrap" aria-labelledby="feedback-title">
+  <div class="feedback-card">
+    <div class="feedback-copy">
+      <p class="eyebrow">A note from us</p>
+      <h2 id="feedback-title">Still growing, with your help.</h2>
+      <p>Santa's Helper is always being developed, and your feedback helps us make it more useful. A quick rating, a couple of ticks or a note all help.</p>
+    </div>
+    <form id="website-feedback" class="website-feedback">
+      <fieldset>
+        <legend>How useful is Santa's Helper?</legend>
+        <div class="feedback-rating">
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="1"><span aria-label="1 out of 5">1</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="2"><span aria-label="2 out of 5">2</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="3"><span aria-label="3 out of 5">3</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="4"><span aria-label="4 out of 5">4</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="5"><span aria-label="5 out of 5">5</span></label>
+        </div>
+        <p class="feedback-scale">1 is not very useful; 5 is very useful.</p>
+      </fieldset>
+      <fieldset>
+        <legend>What should we work on?</legend>
+        <div class="feedback-checks">
+          <label><input type="checkbox" name="site-feedback" value="More thoughtful gift ideas"> More thoughtful gift ideas</label>
+          <label><input type="checkbox" name="site-feedback" value="A finder that's easier to use"> A finder that's easier to use</label>
+          <label><input type="checkbox" name="site-feedback" value="More gift guides"> More gift guides</label>
+        </div>
+      </fieldset>
+      <div>
+        <label class="q" for="site-feedback-note">Anything else you'd like us to know? <span>(optional)</span></label>
+        <textarea id="site-feedback-note" name="note" maxlength="500" rows="3" aria-describedby="feedback-guidance"></textarea>
+        <p class="privacy" id="feedback-guidance">This opens your email app with your feedback filled in. Nothing is sent until you choose to send the email. Please leave out personal or sensitive details. <a href="/privacy">Read our privacy notice</a>.</p>
+      </div>
+      <button type="submit" class="btn btn-primary">Share your feedback <span class="button-arrow" aria-hidden="true">&rarr;</span></button>
+      <p class="feedback-form-status" id="site-feedback-status" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
 <div class="browse-band">
   <section class="browse wrap" aria-labelledby="browse-title">
     <div class="section-heading">
@@ -253,9 +306,10 @@ window.GIFT_CONFIG = {
 </footer>
 
 <script type="module">
-import { fetchIdeas, fetchProducts, sendFeedback as postFeedback } from "/api.js";
+import { fetchIdeas, fetchProductBatches, sendFeedback as postFeedback } from "/api.js";
 import { createTurnstileTokenGate, TurnstileTokenError } from "/turnstile-token.js";
 import { amazonUrl as amazonSearchUrl, ebayUrl as ebaySearchUrl, validProduct, validProductImage } from "/merchant-links.js";
+import { INTEREST_GROUPS, ABOUT_GROUPS, renderCheckboxGroups, selectedValues, updateCheckboxSummary } from "/guided-options.js";
 (() => {
 "use strict";
 const CFG = window.GIFT_CONFIG || {};
@@ -269,7 +323,6 @@ const RELATIONS = [
   ["child","Child"],["teen","Teenager"],["grandparent","Grandparent"],["colleague","Colleague"],
   ["secret-santa","Secret Santa"],["other","Someone else"]
 ];
-const BUDGETS = [["any","No set budget"],["under-15","Under £15"],["15-30","£15 to £30"],["30-50","£30 to £50"],["50-100","£50 to £100"],["100-plus","£100+"]];
 
 function chipGroup(el, name, items, checked){
   for (const [value,label] of items){
@@ -281,7 +334,30 @@ function chipGroup(el, name, items, checked){
   }
 }
 chipGroup($("#relation"), "relation", RELATIONS, "");
-chipGroup($("#budget"), "budget", BUDGETS, "any");
+renderCheckboxGroups($("#interests"), "interests", INTEREST_GROUPS);
+renderCheckboxGroups($("#about"), "about", ABOUT_GROUPS);
+function updateGuidedFields(){
+  $("#relation-other-field").hidden = !document.querySelector('input[name="relation"][value="other"]:checked');
+  $("#relation-other").disabled = $("#relation-other-field").hidden;
+  $("#budget-slider").disabled = $("#budget-amount").disabled = $("#budget-any").checked;
+  $("#budget-controls").hidden = $("#budget-hint").hidden = $("#budget-any").checked;
+  for (const name of ["interests", "about"]) {
+    updateCheckboxSummary($(`#${name}`), name, $(`#${name}-selected`));
+    const count = selectedValues($(`#${name}`), name).length;
+    $(`#${name}-count`).textContent = count ? `${count} selected` : "";
+  }
+}
+$("#guided-fields").addEventListener("change", updateGuidedFields);
+$("#budget-slider").addEventListener("input", () => {
+  $("#budget-amount").value = $("#budget-slider").value;
+  $("#budget-amount").setCustomValidity("");
+});
+$("#budget-amount").addEventListener("input", () => {
+  const amount = $("#budget-amount");
+  amount.setCustomValidity("");
+  if (amount.validity.valid) $("#budget-slider").value = amount.value;
+});
+updateGuidedFields();
 
 document.querySelectorAll("input[name=relation]").forEach((r) => r.addEventListener("change", () => {
   const age = $("#age");
@@ -290,7 +366,6 @@ document.querySelectorAll("input[name=relation]").forEach((r) => r.addEventListe
   if (r.value === "grandparent" && !["50s-60s","70-plus"].includes(age.value)) age.value = "70-plus";
   if (r.value === "secret-santa") $("#occasion").value = "secret-santa";
 }));
-$("#about").addEventListener("input", (e) => { $("#about-count").textContent = `${e.target.value.length} / 500`; });
 $("#description").addEventListener("input", (e) => { $("#description-count").textContent = `${e.target.value.length} / 1,200`; });
 document.querySelectorAll(".prompt-chip").forEach((button) => button.addEventListener("click", () => {
   document.querySelector('input[name="mode"][value="describe"]').checked = true;
@@ -306,6 +381,12 @@ function setMode(mode){
   const describe = mode === "describe";
   $("#quick-fields").hidden = !describe;
   $("#guided-fields").hidden = describe;
+  $(".seasonal-hero").hidden = !describe;
+  document.body.classList.toggle("guided-mode", !describe);
+  if (!describe) {
+    $("#guided-fields").scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "instant" : "smooth" });
+  }
 }
 document.querySelectorAll('input[name="mode"]').forEach((radio) => {
   radio.addEventListener("change", () => setMode(radio.value));
@@ -405,21 +486,27 @@ async function fillProducts(ideas){
     title: idea.title, query: idea.query, concept: idea.concept || idea.title, productSpec: idea.productSpec || {}
   }));
   const cards = ideas.map((idea) => cardsByTitle.get(idea.title));
-  const { products, offers, unavailable, limited } = await fetchProducts(request, { enabled: apiOn() });
-  if ((unavailable || limited) && cards.some((card) => card?.isConnected)){
-    showFeedback(unavailable
-      ? "Some product listings couldn't load. You can still search both shops."
-      : "Some product lookups reached their limit. You can still search both shops.");
-  }
-  const matches = offers || products.map((product) => product ? [product] : []);
-  for (const [index, listings] of matches.entries()){
-    if (!Array.isArray(listings)) continue;
-    const card = cards[index];
-    if (!card?.isConnected) continue;
-    for (const product of listings){
-      if (validProduct(product, CFG)) setVerifiedProduct(card, ideas[index], product);
+  const shownProducts = new Set();
+  await fetchProductBatches(request, ({ products, offers, unavailable, limited }, offset) => {
+    if ((unavailable || limited) && cards.some((card) => card?.isConnected)){
+      showFeedback(unavailable
+        ? "Some product listings couldn't load. You can still search both shops."
+        : "Some product lookups reached their limit. You can still search both shops.");
     }
-  }
+    const matches = offers || products.map((product) => product ? [product] : []);
+    for (const [index, listings] of matches.entries()){
+      if (!Array.isArray(listings)) continue;
+      const card = cards[offset + index];
+      if (!card?.isConnected) continue;
+      for (const product of listings){
+        if (!validProduct(product, CFG)) continue;
+        const identity = `${product.provider}:${product.productId}`;
+        if (shownProducts.has(identity)) continue;
+        shownProducts.add(identity);
+        setVerifiedProduct(card, ideas[offset + index], product);
+      }
+    }
+  }, { enabled: apiOn() });
 }
 
 /* ---------- rendering ---------- */
@@ -440,9 +527,10 @@ function setVerifiedProduct(card, idea, product){
   if (!shop) return;
   const disclosure = card.querySelector(".aff");
   const note = media.querySelector(".image-note");
+  const affiliate = product.provider === "amazon" || /^\d+$/.test(CFG.EBAY_CAMPAIGN_ID || "");
   shop.href = product.affiliateUrl;
   shop.textContent = `View on ${merchant}`;
-  shop.setAttribute("aria-label", `View ${product.title} on ${merchant} (affiliate link, opens in new tab)`);
+  shop.setAttribute("aria-label", `View ${product.title} on ${merchant} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
   const listing = document.createElement("p"); listing.className = "offer-detail";
   listing.textContent = `Matched ${merchant} listing: ${product.title}`;
   shop.after(listing);
@@ -461,7 +549,7 @@ function setVerifiedProduct(card, idea, product){
     if (!card.isConnected || shop.href !== product.affiliateUrl) return;
     shop.href = product.provider === "ebay" ? ebayUrl(idea.query) : amazonUrl(idea.query);
     shop.textContent = `Search ${merchant}`;
-    shop.setAttribute("aria-label", `Search ${merchant} for ${idea.title} (affiliate link, opens in new tab)`);
+    shop.setAttribute("aria-label", `Search ${merchant} for ${idea.title} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
     listing.remove(); price?.remove();
     if (photo && media.querySelector(".product-image") === photo){
       photo.remove(); media.querySelector(".product-badge")?.remove();
@@ -501,9 +589,12 @@ function setVerifiedProduct(card, idea, product){
 }
 
 /* ---------- feedback (enumerated fields only, never titles or text) ---------- */
-const fbItem = (idea, position) => ({ strategy: idea.strategy, source: idea.source, discovery: idea.discovery === true, position });
-function sendFeedback(body){
-  return postFeedback(body, { enabled: apiOn() });
+const fbItem = (idea, position) => ({ strategy: idea.strategy, source: idea.source, discovery: idea.discovery === true, position, learning: idea.learning });
+let rejectedTitles = [];
+async function sendFeedback(body){
+  const recorded = await postFeedback(body, { enabled: apiOn() });
+  if (apiOn() && !recorded) showFeedback("We couldn't record feedback just now. You can keep browsing; hidden ideas stay excluded for this search.");
+  return recorded;
 }
 
 function renderUnderstood(recipient){
@@ -559,9 +650,16 @@ function renderCards(ideas){
     const aff = document.createElement("p"); aff.className = "aff"; aff.textContent = "Ad";
     const dismiss = document.createElement("button"); dismiss.type = "button"; dismiss.className = "dismiss"; dismiss.textContent = "Not quite right";
     dismiss.setAttribute("aria-label", `Not for them: ${idea.title}`);
-    dismiss.addEventListener("click", () => {
+    const ratings = document.createElement("div"); ratings.className = "idea-feedback";
+    ratings.setAttribute("role", "group"); ratings.setAttribute("aria-label", `Feedback on ${idea.title}`);
+    const good = document.createElement("button"); good.type = "button"; good.textContent = "Good idea";
+    const bad = document.createElement("button"); bad.type = "button"; bad.textContent = "Poor match";
+    const bought = document.createElement("button"); bought.type = "button"; bought.textContent = "I bought this";
+    bought.title = "Self-reported purchase, not verified by the retailer";
+    function hideIdea(event){
       if (dismiss.disabled) return;
       dismiss.disabled = true;
+      rejectedTitles = [...rejectedTitles.filter((title) => title !== idea.title), idea.title].slice(-24);
       const position = [...ul.querySelectorAll(".card:not([hidden])")].indexOf(li);
       li.hidden = true;
       updateCardLayout();
@@ -571,18 +669,33 @@ function renderCards(ideas){
       showFeedback(`Set aside: ${idea.title}.`);
       setStatus("Idea hidden from this list.", false);
       const revision = statusRevision;
-      void sendFeedback({ event: "dismiss", item: fbItem(idea, idx) }).then((recorded) => {
+      void sendFeedback({ event, item: fbItem(idea, idx) }).then((recorded) => {
         if (apiOn() && !recorded && statusRevision === revision){
           const message = "Idea hidden. We couldn't send feedback about it, but you can keep browsing.";
           setStatus(message, false);
           showFeedback(message);
         }
       });
+    }
+    dismiss.addEventListener("click", () => hideIdea("dismiss"));
+    good.addEventListener("click", () => {
+      good.disabled = true; bad.disabled = true;
+      good.setAttribute("aria-pressed", "true");
+      void sendFeedback({ event: "good", item: fbItem(idea, idx) });
     });
+    bad.addEventListener("click", () => {
+      good.disabled = true; bad.disabled = true;
+      hideIdea("bad");
+    });
+    bought.addEventListener("click", () => {
+      bought.disabled = true; bought.setAttribute("aria-pressed", "true");
+      void sendFeedback({ event: "bought", item: fbItem(idea, idx) });
+    });
+    ratings.append(good, bad, bought);
     row.append(shops, save);
     body.append(kicker, h, why);
     if (connection) body.append(connection);
-    body.append(row, aff, dismiss);
+    body.append(row, aff, ratings, dismiss);
     li.append(media, body);
     ul.append(li);
     cardsByTitle.set(idea.title, li);
@@ -717,9 +830,12 @@ function readForm(){
   return {
     mode, description: "",
     relation: (f.querySelector("input[name=relation]:checked") || {}).value || "other",
-    budget: (f.querySelector("input[name=budget]:checked") || {}).value || "any",
+    budget: "any",
+    ...($("#budget-any").checked ? {} : { budgetMaxGbp: $("#budget-amount").valueAsNumber }),
+    ...(f.querySelector('input[name="relation"][value="other"]:checked') ? { relationOther: $("#relation-other").value.trim() } : {}),
     age: $("#age").value, occasion: $("#occasion").value,
-    interests: $("#interests").value.trim(), about: $("#about").value.trim(), exclude: []
+    interests: selectedValues($("#interests"), "interests").join("; "),
+    about: selectedValues($("#about"), "about").join(". "), exclude: []
   };
 }
 
@@ -797,16 +913,21 @@ async function run(input){
 $("#form").addEventListener("submit", (e) => {
   e.preventDefault();
   if (activeController) return;
+  if (document.querySelector('input[name="mode"][value="guided"]:checked') && !$("#budget-any").checked && !$("#budget-amount").validity.valid){
+    setStatus("Enter a whole-pound budget between £1 and £1,000.", true);
+    $("#budget-amount").reportValidity(); $("#budget-amount").focus(); return;
+  }
   const input = readForm();
   if (input.mode === "describe" && !input.description){
     setStatus("Add an interest, hobby or something they enjoy. Include your budget if you have one.", true);
     $("#description").focus(); return;
   }
   if (input.mode === "guided" && !input.interests && !input.about){
-    setStatus("Share at least one interest or a little more about them so we can suggest ideas.", true);
-    $("#interests").focus(); return;
+    setStatus("Tick at least one interest or something about them so we can suggest ideas.", true);
+    const category = $("#interests").querySelector("details");
+    category.open = true; category.querySelector("input").focus(); return;
   }
-  current = input; shownTitles = [];
+  current = input; shownTitles = []; rejectedTitles = [];
   void run(input);
 });
 $("#cancel").addEventListener("click", () => {
@@ -818,17 +939,39 @@ $("#cancel").addEventListener("click", () => {
 $("#more").addEventListener("click", () => {
   if (current && !activeController){
     void sendFeedback({ event: "more" });
-    void run({ ...current, exclude: shownTitles });
+    void run({ ...current, exclude: [...new Set([...shownTitles.filter((title) => !rejectedTitles.includes(title)), ...rejectedTitles])].slice(-24) });
   }
 });
 $("#restart").addEventListener("click", () => {
   $("#form").reset();
-  $("#about-count").textContent = "0 / 500";
+  updateGuidedFields();
+  document.querySelectorAll(".choice-category, .guided-picker").forEach((category) => { category.open = false; });
   $("#description-count").textContent = "0 / 1,200";
   setMode("describe");
-  $("#results").hidden = true; setStatus(""); current = null; shownTitles = [];
+  $("#results").hidden = true; setStatus(""); current = null; shownTitles = []; rejectedTitles = [];
   showFeedback("");
   window.scrollTo({ top: 0 }); $("#description").focus({ preventScroll: true });
+});
+$("#website-feedback").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const rating = form.querySelector('input[name="site-rating"]:checked')?.value;
+  const topics = [...form.querySelectorAll('input[name="site-feedback"]:checked')].map((input) => input.value);
+  const note = $("#site-feedback-note").value.trim();
+  if (!rating && !topics.length && !note) {
+    $("#site-feedback-status").textContent = "Choose a rating, tick a suggestion or write a note before sharing.";
+    return;
+  }
+  const message = [
+    "Website feedback for Santa's Helper",
+    "",
+    ...(rating ? [`Rating: ${rating}/5`] : []),
+    ...(topics.length ? ["What to work on:", ...topics.map((topic) => `- ${topic}`)] : []),
+    ...(note ? ["A note:", note] : []),
+  ].join("\n");
+  const subject = encodeURIComponent("Santa's Helper website feedback");
+  window.location.href = `mailto:support@christmasidea.co.uk?subject=${subject}&body=${encodeURIComponent(message)}`;
+  $("#site-feedback-status").textContent = "Your email app should open with your feedback. Review it and choose Send when you're ready.";
 });
 renderBar();
 const pageUrl = new URL(location.href);

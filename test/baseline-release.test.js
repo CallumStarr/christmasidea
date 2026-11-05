@@ -20,10 +20,12 @@ const request = (input) => new Request("https://gifts.example.com/api/ideas", {
   body: JSON.stringify(input),
 });
 
-test("release configuration selects baseline and retains disabled product discovery", () => {
+test("release configuration selects baseline with eBay-only product discovery", () => {
   const config = fs.readFileSync(new URL("../wrangler.toml", import.meta.url), "utf8");
   assert.match(config, /RECOMMENDATION_MODE = "baseline-v3.3"/);
-  assert.match(config, /PRODUCT_DISCOVERY_ENABLED = "false"/);
+  assert.match(config, /^PRODUCT_DISCOVERY_ENABLED = "true"/m);
+  assert.match(config, /^AMAZON_PRODUCT_DISCOVERY_ENABLED = "false"/m);
+  assert.match(config, /^EBAY_PRODUCT_DISCOVERY_ENABLED = "true"/m);
 });
 
 test("baseline release preserves 29 reviewed lists and the explicit case-12 consistency correction", async () => {
@@ -93,7 +95,8 @@ test("baseline truncation never caches and empty generation uses original catalo
       assert.equal(response.status, 502);
       assert.equal(data.fallback, true);
       assert.equal(data.source, "catalogue");
-      assert.deepEqual(data.ideas, catalogueFallback(normaliseInput(cases[0].input).value).ideas);
+      assert.deepEqual(data.ideas.map(({ learning, ...idea }) => idea), catalogueFallback(normaliseInput(cases[0].input).value).ideas);
+      assert.ok(data.ideas.every((idea) => idea.learning?.policy === "control-v1"));
     }
   }
 });

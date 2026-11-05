@@ -78,6 +78,21 @@ test("site copy avoids gift-edit jargon and uses clear, friendly finder language
   assert.match(await read("404.html"), /We can't find/);
 });
 
+test("homepage offers optional feedback between the finder and gift guides", async () => {
+  const home = await read("index.html");
+  const feedback = home.indexOf('id="website-feedback"');
+  const guides = home.indexOf('id="browse-title"');
+  assert.ok(feedback > home.indexOf("Who are you shopping for?"));
+  assert.ok(feedback < guides);
+  assert.match(home, /name="site-rating" value="5"/);
+  assert.match(home, /name="site-feedback"/);
+  assert.match(home, /id="site-feedback-note"[^>]*maxlength="500"/);
+  assert.match(home, /Nothing is sent until you choose to send the email/);
+  assert.match(home, /mailto:support@christmasidea\.co\.uk\?subject=/);
+  assert.match(home, /Your email app should open with your feedback/);
+  assert.match(await read("privacy.html"), /Santa's Helper does not receive or store them unless you choose to send the email/);
+});
+
 test("Worker sets CSP and HSTS headers and locks framing", async () => {
   const src = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
   assert.match(src, /Strict-Transport-Security/);
@@ -123,7 +138,7 @@ test("product enrichment updates its original cards, never a later collection wi
     const enrich = runInNewContext(`(${source})`, {
       apiOn: () => true,
       cardsByTitle: cards,
-      fetchProducts: () => pending,
+      fetchProductBatches: async (_request, onBatch) => onBatch(await pending, 0),
       CFG: {},
       validProduct: () => true,
       setVerifiedProduct: (...args) => applied.push(args),
@@ -145,6 +160,27 @@ test("product enrichment updates its original cards, never a later collection wi
   }
 });
 
+test("progressive enrichment does not repeat a listing on cards from different batches", async () => {
+  const html = await read("index.html");
+  const source = html.match(/async function fillProducts\(ideas\)\{[\s\S]*?\n\}/)?.[0];
+  const ideas = [{ title: "First" }, { title: "Second" }, { title: "Third" }];
+  const cards = new Map(ideas.map((idea) => [idea.title, { isConnected: true }]));
+  const applied = [];
+  const product = { provider: "ebay", productId: "v1|123456789012|0" };
+  const enrich = runInNewContext(`(${source})`, {
+    apiOn: () => true, cardsByTitle: cards, CFG: {},
+    validProduct: () => true,
+    setVerifiedProduct: (card, idea, product) => applied.push({ card, idea, product }),
+    fetchProductBatches: async (_request, onBatch) => {
+      onBatch({ products: [product] }, 2);
+      assert.equal(applied.length, 1, "the first completed batch must render immediately");
+      onBatch({ products: [product, null] }, 0);
+    },
+  });
+  await enrich(ideas);
+  assert.equal(applied.length, 1);
+  assert.equal(applied[0].idea, ideas[2]);
+});
 test("shortlist dock is contextual and never covers the finder", async () => {
   const html = await read("index.html");
   const source = html.match(/let collectionInView = false;[\s\S]*?\.observe\(\$\("#results"\)\);/)?.[0];

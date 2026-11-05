@@ -1,9 +1,38 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fetchIdeas, fetchProducts, sendFeedback } from "../site/api.js";
+import { fetchIdeas, fetchProducts, fetchProductBatches, sendFeedback } from "../site/api.js";
 
 const response = (data, status = 200) => new Response(JSON.stringify(data), { status });
 const idea = { title: "A model-making kit", query: "model building kit" };
+
+test("product batches display fast results before a slow batch and cap concurrent requests at two", async () => {
+  const ideas = Array.from({ length: 8 }, (_, index) => ({ ...idea, title: String(index) }));
+  const pending = new Map(), rendered = [];
+  let active = 0, peak = 0;
+  const run = fetchProductBatches(ideas, (result, offset) => rendered.push({ result, offset }), {
+    fetchImpl: async (_url, init) => {
+      const batch = JSON.parse(init.body).ideas;
+      assert.equal(batch.length, 2);
+      const offset = Number(batch[0].title);
+      active++; peak = Math.max(peak, active);
+      await new Promise((resolve) => pending.set(offset, resolve));
+      active--;
+      return response({ products: batch.map((entry) => ({ title: entry.title })) });
+    },
+  });
+  assert.deepEqual([...pending.keys()], [0, 2]);
+  pending.get(2)();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(rendered.map((batch) => batch.offset), [2]);
+  assert.ok(pending.has(4));
+  pending.get(4)();
+  await new Promise((resolve) => setImmediate(resolve));
+  pending.get(6)();
+  pending.get(0)();
+  await run;
+  assert.equal(peak, 2);
+  assert.deepEqual(rendered.map((batch) => batch.offset).sort((a, b) => a - b), [0, 2, 4, 6]);
+});
 
 test("ideas request sends the existing description and Turnstile token", async () => {
   let request;

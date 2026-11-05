@@ -50,6 +50,7 @@ async function fixture() {
   const apply = runInNewContext(`(${source})`, {
     document: { createElement: (tagName) => new Element(tagName) },
     Date, Intl, Number, Math,
+    CFG: {},
     validProductImage,
     setTimeout: (callback) => timers.push(callback),
     showFeedback: (message) => notices.push(message),
@@ -82,6 +83,7 @@ test("eBay example photo is not a merchant link and leaves both shopping choices
   assert.equal(ui.note.textContent, "Example photo: eBay. Amazon product may differ.");
   assert.equal(ui.media.querySelector(".product-badge").textContent, "Example product");
   assert.equal(ui.shops.ebay.href, ebay.affiliateUrl);
+  assert.doesNotMatch(ui.shops.ebay.attributes["aria-label"], /affiliate/);
   assert.equal(ui.shops.amazon.href, "https://search.example/amazon");
   assert.equal(ui.heading.textContent, idea.title);
   assert.equal(ui.shops.ebay.parent.querySelector(".offer-detail").textContent, "Matched eBay listing: ebay coffee mug listing");

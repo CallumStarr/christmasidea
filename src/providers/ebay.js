@@ -17,7 +17,7 @@ export class EbayProviderError extends Error {
 
 export function isEbayProductUrl(value, productId, campaignId) {
   const identity = ITEM_ID.exec(productId);
-  if (!identity || typeof value !== "string" || !/^\d+$/.test(campaignId || "")) return false;
+  if (!identity || typeof value !== "string" || (campaignId && !/^\d+$/.test(campaignId))) return false;
   try {
     const url = new URL(value);
     const listing = url.pathname.match(/^\/itm\/(?:[^/]+\/)?(\d{9,15})\/?$/);
@@ -26,9 +26,10 @@ export function isEbayProductUrl(value, productId, campaignId) {
       && !url.username && !url.password && !url.port
       && listing?.[1] === identity[1]
       && (identity[2] === "0" || url.searchParams.get("var") === identity[2])
-      && url.searchParams.get("campid") === campaignId
-      && url.searchParams.get("mkevt") === "1"
-      && url.searchParams.get("mkcid") === "1";
+      && (campaignId
+        ? url.searchParams.get("campid") === campaignId
+          && url.searchParams.get("mkevt") === "1" && url.searchParams.get("mkcid") === "1"
+        : !["campid", "mkevt", "mkcid"].some((key) => url.searchParams.has(key)));
   } catch {
     return false;
   }
@@ -41,6 +42,7 @@ export function ebayPolicy(campaignId) {
     productIdPattern: ITEM_ID,
     imageHosts: ["i.ebayimg.com"],
     imageRetention: "link-only-24h",
+    persistResults: false,
     imageRights: "eBay API and Partner Network terms; operator-reported approval for attributed, non-clickable examples beside equal merchant links",
     maxOfferAgeMs: 3600_000,
     disclosure: "We may earn a commission from qualifying eBay purchases.",
@@ -51,7 +53,8 @@ export function ebayPolicy(campaignId) {
 
 export function ebayConfigured(env) {
   return Boolean(env.EBAY_PRODUCT_DISCOVERY_ENABLED === "true"
-    && env.EBAY_CLIENT_ID && env.EBAY_CLIENT_SECRET && /^\d+$/.test(env.EBAY_CAMPAIGN_ID || ""));
+    && env.EBAY_CLIENT_ID && env.EBAY_CLIENT_SECRET
+    && (!env.EBAY_CAMPAIGN_ID || /^\d+$/.test(env.EBAY_CAMPAIGN_ID)));
 }
 
 async function request(url, init, env, fetchImpl) {
@@ -74,12 +77,14 @@ async function json(response) {
 }
 
 async function accessToken(env, fetchImpl, refresh = false) {
-  const cached = tokens.get(env.EBAY_CLIENT_ID);
+  const clientId = env.EBAY_CLIENT_ID.trim();
+  const clientSecret = env.EBAY_CLIENT_SECRET.trim();
+  const cached = tokens.get(clientId);
   if (!refresh && cached?.expiresAt > Date.now() + 30000) return cached.value;
   const response = await request(TOKEN_URL, {
     method: "POST",
     headers: {
-      Authorization: `Basic ${btoa(`${env.EBAY_CLIENT_ID}:${env.EBAY_CLIENT_SECRET}`)}`,
+      Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
@@ -87,12 +92,17 @@ async function accessToken(env, fetchImpl, refresh = false) {
       scope: "https://api.ebay.com/oauth/api_scope",
     }).toString(),
   }, env, fetchImpl);
-  if (!response.ok) throw new EbayProviderError("token_rejected", response.status);
+  if (!response.ok) {
+    const data = await json(response);
+    const category = ["invalid_client", "invalid_grant", "invalid_request", "invalid_scope", "unauthorized_client"]
+      .includes(data?.error) ? data.error : "rejected";
+    throw new EbayProviderError(`token_${category}`, response.status);
+  }
   const data = await json(response);
   if (typeof data?.access_token !== "string" || !data.access_token || !(Number(data.expires_in) > 0)) {
     throw new EbayProviderError("malformed_token_response");
   }
-  tokens.set(env.EBAY_CLIENT_ID, {
+  tokens.set(clientId, {
     value: data.access_token,
     expiresAt: Date.now() + Math.min(Number(data.expires_in), 7200) * 1000,
   });
@@ -112,15 +122,20 @@ export function normaliseEbayItem(item, env, now = Date.now()) {
     ? { amount: Math.round((amount + delivery) * 100) / 100, currency: "GBP" }
     : null;
   const policy = ebayPolicy(env.EBAY_CAMPAIGN_ID);
+  const images = [item.image, ...(Array.isArray(item.thumbnailImages) ? item.thumbnailImages : [])]
+    .filter((image) => image?.imageUrl)
+    .sort((a, b) => (Number(b.width) || 0) * (Number(b.height) || 0)
+      - (Number(a.width) || 0) * (Number(a.height) || 0));
   return validateOffer({
     provider: "ebay",
     productId: item.itemId,
     title: cleanText(item.title, 240),
-    imageUrl: item.image?.imageUrl,
+    description: cleanText(item.shortDescription, 1200),
+    imageUrl: images[0]?.imageUrl,
     additionalImages: item.additionalImages?.map((image) => image.imageUrl),
     price,
-    productUrl: item.itemAffiliateWebUrl,
-    affiliateUrl: item.itemAffiliateWebUrl,
+    productUrl: env.EBAY_CAMPAIGN_ID ? item.itemAffiliateWebUrl : item.itemWebUrl,
+    affiliateUrl: env.EBAY_CAMPAIGN_ID ? item.itemAffiliateWebUrl : item.itemWebUrl,
     availability: "IN_STOCK",
     condition: "NEW",
     retrievedAt: new Date(now).toISOString(),
@@ -136,19 +151,23 @@ export function createEbayProvider(env, fetchImpl) {
     cacheScope: `${env.EBAY_CLIENT_ID || ""}:${env.EBAY_CAMPAIGN_ID || ""}`,
     isAvailable: () => env.PRODUCT_DISCOVERY_ENABLED === "true" && ebayConfigured(env),
     validateProduct: (product) => validateOffer(product, policy),
-    async searchProducts(query) {
+    async searchProducts(query, { reserveRetry } = {}) {
       const url = new URL(API_URL);
       url.searchParams.set("q", query);
-      url.searchParams.set("limit", "10");
+      url.searchParams.set("limit", "30");
+      url.searchParams.set("fieldgroups", "EXTENDED");
       url.searchParams.set("filter", "conditions:{NEW},buyingOptions:{FIXED_PRICE},deliveryCountry:GB,itemLocationCountry:GB");
       let response;
       for (let attempt = 0; attempt < 2; attempt++) {
+        if (attempt > 0 && reserveRetry && !await reserveRetry()) {
+          throw new EbayProviderError("rate_limited", 429);
+        }
         const token = await accessToken(env, fetchImpl, attempt > 0);
         response = await request(url.toString(), {
           headers: {
             Authorization: `Bearer ${token}`,
             "X-EBAY-C-MARKETPLACE-ID": "EBAY_GB",
-            "X-EBAY-C-ENDUSERCTX": `affiliateCampaignId=${env.EBAY_CAMPAIGN_ID}`,
+            ...(env.EBAY_CAMPAIGN_ID ? { "X-EBAY-C-ENDUSERCTX": `affiliateCampaignId=${env.EBAY_CAMPAIGN_ID}` } : {}),
           },
         }, env, fetchImpl);
         if (response.status !== 401 || attempt > 0) break;

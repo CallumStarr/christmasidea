@@ -112,6 +112,19 @@ export async function fetchProducts(ideas, { fetchImpl = fetch, enabled = true }
   }
 }
 
+export async function fetchProductBatches(ideas, onBatch, options = {}) {
+  let next = 0;
+  const worker = async () => {
+    while (next < ideas.length) {
+      const offset = next;
+      next += 2;
+      const result = await fetchProducts(ideas.slice(offset, offset + 2), options);
+      onBatch(result, offset);
+    }
+  };
+  await Promise.all([worker(), worker()]);
+}
+
 export async function sendFeedback(body, { fetchImpl = fetch, enabled = true } = {}) {
   if (!enabled) return false;
   try {

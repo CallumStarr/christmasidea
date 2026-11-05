@@ -1,10 +1,11 @@
 // Anonymous learning signals. Events are reduced to a handful of enumerated fields before they reach storage:
 // no IP, no free text, no idea titles, no session ids. Counts are aggregated per UTC day and kept for 90 days.
-// A click is not treated as a good gift; these counts feed offline evaluation, not live ranking (see docs).
+// Clicks are not quality ratings. Reviewed policies can use explicit ratings, never these counters directly.
 
 import { STRATEGIES } from "../constants.js";
+import { learningCounter } from "./learning.js";
 
-export const FEEDBACK_EVENTS = ["shown", "click", "save", "dismiss", "more"];
+export const FEEDBACK_EVENTS = ["shown", "click", "save", "dismiss", "more", "good", "bad", "bought"];
 export const FEEDBACK_SOURCES = ["model", "graph", "catalogue"];
 export const FEEDBACK_RETENTION_DAYS = 90;
 const MAX_ITEMS = 12;
@@ -15,7 +16,7 @@ function item(value) {
   const source = FEEDBACK_SOURCES.includes(value.source) ? value.source : null;
   const position = Number.isInteger(value.position) && value.position >= 0 && value.position < MAX_ITEMS ? value.position : null;
   if (!source || position === null) return null;
-  return { strategy, source, discovery: value.discovery === true, position };
+  return { strategy, source, discovery: value.discovery === true, position, learning: value.learning };
 }
 
 /**
@@ -32,6 +33,8 @@ export function feedbackKeys(body) {
   const keys = [];
   for (const i of items) {
     keys.push(`${event}|s:${i.strategy}`, `${event}|src:${i.source}`, `${event}|d:${i.discovery ? 1 : 0}`, `${event}|p:${i.position}`);
+    const joint = learningCounter(event, i.learning, i.position);
+    if (joint) keys.push(joint);
   }
   return { ok: true, keys };
 }

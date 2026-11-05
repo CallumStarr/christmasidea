@@ -38,12 +38,15 @@ export function validProduct(product, config = {}, now = Date.now()) {
     }
     const identity = /^v1\|(\d{9,15})\|(\d{1,15})$/.exec(product.productId || "");
     const listing = url.pathname.match(/^\/itm\/(?:[^/]+\/)?(\d{9,15})\/?$/);
-    return Boolean(identity && /^\d+$/.test(config.EBAY_CAMPAIGN_ID || "")
+    const campaign = config.EBAY_CAMPAIGN_ID || "";
+    return Boolean(identity && (!campaign || /^\d+$/.test(campaign))
       && ["www.ebay.co.uk", "www.ebay.com"].includes(url.hostname)
       && listing?.[1] === identity[1]
       && (identity[2] === "0" || url.searchParams.get("var") === identity[2])
-      && url.searchParams.get("campid") === config.EBAY_CAMPAIGN_ID
-      && url.searchParams.get("mkevt") === "1" && url.searchParams.get("mkcid") === "1");
+      && (campaign
+        ? url.searchParams.get("campid") === campaign
+          && url.searchParams.get("mkevt") === "1" && url.searchParams.get("mkcid") === "1"
+        : !["campid", "mkevt", "mkcid"].some((key) => url.searchParams.has(key))));
   } catch {
     return false;
   }
