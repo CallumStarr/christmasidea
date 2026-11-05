@@ -22,13 +22,15 @@ function fixture(t) {
   const add = (day, event, n, { category = 3, policy = "control-v1", position = 0, topic = "trains" } = {}) => {
     db.prepare("INSERT INTO usage VALUES (?, ?, ?) ON CONFLICT(bucket, k) DO UPDATE SET n = n + excluded.n")
       .run(`F${day}`, `L|${event}|${topic}|child|15-30|${category}|${policy}|${position}`, n);
+    db.prepare("INSERT INTO usage VALUES (?, ?, ?) ON CONFLICT(bucket, k) DO UPDATE SET n = n + excluded.n")
+      .run(`F${day}`, `${event}|src:model`, n);
   };
   const check = (day = "2026-11-05") => prepareFeedbackReview(sql, new Date(`${day}T04:00:00Z`));
   return { db, sql, add, check };
 }
 
-test("readiness needs exact support thresholds and only control explicit ratings", (t) => {
-  const { add, check } = fixture(t);
+test("usage and quality readiness have independent thresholds", (t) => {
+  const { add, check, sql } = fixture(t);
   add("2026-11-04", "shown", 199);
   add("2026-11-04", "good", 29);
   add("2026-11-04", "click", 500);
@@ -36,7 +38,10 @@ test("readiness needs exact support thresholds and only control explicit ratings
   add("2026-11-04", "good", 500, { policy: "reviewed-v1" });
   assert.equal(check().id, null);
   add("2026-11-04", "shown", 1);
-  assert.equal(check().id, null);
+  const usage = check();
+  assert.equal(usage.usage.shown, 200);
+  assert.equal(usage.cohorts.length, 0);
+  acknowledgeFeedbackReview(sql, usage.id);
   add("2026-11-04", "bad", 1);
   const report = check();
   assert.equal(report.cohorts.length, 1);
@@ -85,9 +90,60 @@ test("reminders require both additional shown cards and additional ratings", (t)
   assert.equal(check("2026-11-06").id, null);
   add("2026-11-05", "shown", 200);
   add("2026-11-05", "bad", 29);
-  assert.equal(check("2026-11-06").id, null);
+  const usage = check("2026-11-06");
+  assert.equal(usage.cohorts.length, 0);
+  assert.equal(usage.usage.new_shown, 200);
+  acknowledgeFeedbackReview(sql, usage.id);
   add("2026-11-05", "bad", 1);
   assert.equal(check("2026-11-06").cohorts[0].last_notified_through, "F2026-11-04");
+});
+
+test("site-wide shown alerts combine small cohorts and do not require ratings", (t) => {
+  const { add, check, sql } = fixture(t);
+  add("2026-11-04", "shown", 100, { category: 0 });
+  add("2026-11-04", "shown", 99, { category: 3, policy: "reviewed-v1" });
+  assert.equal(check().id, null);
+  add("2026-11-04", "shown", 1, { category: 3, policy: "reviewed-v1" });
+  const report = check();
+  assert.equal(report.cohorts.length, 0);
+  assert.equal(report.usage.shown, 200, "marginal and joint counters are not double counted");
+  assert.equal(report.usage.good, 0);
+  acknowledgeFeedbackReview(sql, report.id);
+  assert.equal(check().id, null);
+  add("2026-11-05", "shown", 199);
+  add("2026-11-05", "click", 1000);
+  assert.equal(check("2026-11-06").id, null);
+  add("2026-11-05", "shown", 1);
+  const reminder = check("2026-11-06");
+  assert.equal(reminder.usage.new_shown, 200);
+  assert.equal(reminder.usage.shown, 400);
+  assert.equal(reminder.usage.last_notified_through, "F2026-11-04");
+  assert.equal(reminder.cohorts.length, 0);
+});
+
+test("site alert counts historical cards without learning metadata and ignores duplicated dimensions", (t) => {
+  const { db, check } = fixture(t);
+  const insert = db.prepare("INSERT INTO usage VALUES (?, ?, ?)");
+  insert.run("F2026-11-04", "shown|src:catalogue", 199);
+  insert.run("F2026-11-04", "shown|p:0", 199);
+  insert.run("F2026-11-04", "shown|s:unknown", 199);
+  assert.equal(check().id, null);
+  insert.run("F2026-11-04", "shown|src:graph", 1);
+  assert.equal(check().usage.shown, 200);
+});
+
+test("old pending rated-only reports retain delivery IDs and do not acknowledge new site alerts", (t) => {
+  const { add, check, sql, db } = fixture(t);
+  add("2026-11-04", "shown", 200);
+  add("2026-11-04", "good", 30);
+  const report = check();
+  delete report.usage;
+  db.prepare("UPDATE feedback_review_pending SET payload = ?").run(JSON.stringify(report));
+  assert.deepEqual(check(), report);
+  acknowledgeFeedbackReview(sql, report.id);
+  const usage = check();
+  assert.equal(usage.usage.shown, 200);
+  assert.equal(usage.cohorts.length, 0);
 });
 
 test("independent cohorts notify independently and invalid rating totals do not trigger", (t) => {
@@ -156,7 +212,7 @@ test("review endpoint shares export authentication, validates actions and surfac
 function deliveryFixture(t, options = {}) {
   const { add, check, sql } = fixture(t);
   add("2026-11-04", "shown", 200);
-  add("2026-11-04", "good", 30);
+  if (!options.usageOnly) add("2026-11-04", "good", 30);
   const report = check();
   const issues = [];
   const calls = [];
@@ -217,6 +273,19 @@ test("delivery retries after failed acknowledgement reuse even a closed issue", 
   await notifyFeedback(f);
   assert.equal(f.issues.length, 1);
   assert.equal(f.check().id, null);
+});
+
+test("usage-only delivery triggers without cohorts, explains limitations and deduplicates retries", async (t) => {
+  const f = deliveryFixture(t, { usageOnly: true, failAck: true });
+  assert.equal(f.report.cohorts.length, 0);
+  await assert.rejects(notifyFeedback(f), /Feedback review request failed/);
+  assert.match(f.issues[0].body, /Site-wide usage data ready for analysis/);
+  assert.match(f.issues[0].body, /no ratings are required/);
+  assert.match(f.issues[0].body, /shown cards alone cannot approve ranking updates/);
+  assert.doesNotMatch(f.issues[0].body, /Rated cohorts ready for quality review/);
+  assert.equal((await notifyFeedback(f)).notified, true);
+  assert.equal(f.issues.length, 1);
+  assert.equal((await notifyFeedback(f)).notified, false);
 });
 
 test("issue lookup paginates without using eventually consistent search", async (t) => {
