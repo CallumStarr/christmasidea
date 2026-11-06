@@ -1,9 +1,11 @@
-import { scoreProductMatch, productMatchThresholds } from "./product-matcher.js";
+import { productMatchThresholds } from "./product-matcher.js";
 import { normaliseProductIdea } from "./product-validation.js";
 import { createProviders, configuredProviderId } from "./providers/index.js";
 import { AmazonProviderError } from "./providers/amazon.js";
 import { EbayProviderError } from "./providers/ebay.js";
-import { assignUniqueProducts } from "./engine/product-identity.js";
+import { AwinProviderError } from "./providers/awin.js";
+import { compileProductEvidence, assessProductEvidence } from "./engine/product-evidence.js";
+import { rankProductCandidates, allocateProductCandidates } from "./product-ranking.js";
 
 const CACHE_TTL = 3600;
 const MAX_IDEAS = 8;
@@ -27,7 +29,7 @@ function normaliseQuery(query) {
 
 function queryVariants(idea, provider) {
   const first = normaliseQuery(idea.query);
-  const second = normaliseQuery(provider.name === "ebay"
+  const second = normaliseQuery(provider.name === "ebay" || provider.name === "awin"
     ? [idea.concept || idea.title, ...idea.productSpec.requiredFeatures, ...idea.productSpec.requiredVariants,
       ...(idea.productSpec.personalisationRequired ? ["personalised"] : [])].join(" ")
     : idea.title);
@@ -79,7 +81,7 @@ function cacheProductResults(key, products, deps, provider) {
 }
 
 function logProviderError(provider, error) {
-  const known = error instanceof AmazonProviderError || error instanceof EbayProviderError;
+  const known = error instanceof AmazonProviderError || error instanceof EbayProviderError || error instanceof AwinProviderError;
   const code = known ? error.code : "unexpected_provider_error";
   const status = known ? error.status : 0;
   console.warn(`${provider.name} product search failed`, code, status);
@@ -87,24 +89,33 @@ function logProviderError(provider, error) {
 
 export async function searchProductsForIdeas(values, env, deps, ipHash) {
   const providers = deps.productProvider ? [deps.productProvider] : createProviders(env, deps.fetch);
-  if (providers.length <= 1) return searchProvider(values, env, deps, ipHash, providers[0]);
-  const found = await Promise.all(providers.map((provider) => searchProvider(values, env, deps, ipHash, provider)));
-  const offers = found[0].products.map((_, index) => found.map((result) => result.products[index]).filter(Boolean));
+  const evidence = compileProductEvidence(deps.productEvidencePolicy);
+  const found = await Promise.all((providers.length ? providers : [null])
+    .map((provider) => searchProvider(values, env, deps, ipHash, provider, evidence)));
+  const source = Array.isArray(values) ? values.slice(0, MAX_IDEAS) : [];
+  const pools = source.map((value, index) => {
+    const idea = normaliseProductIdea(value);
+    return idea ? rankProductCandidates(idea, found.flatMap((result) => result.pools[index] || []),
+      { evidence, thresholds: productMatchThresholds(env) }) : [];
+  });
+  const assigned = allocateProductCandidates(pools);
   return {
     enabled: found.some((result) => result.enabled),
     limited: found.some((result) => result.limited),
-    unavailable: found.some((result) => result.unavailable),
-    products: offers.map((items) => items[0] || null),
-    offers,
+    ...(providers.length > 1 || found.some((result) => result.unavailable)
+      ? { unavailable: found.some((result) => result.unavailable) } : {}),
+    products: assigned.products,
+    ...(providers.length > 1 ? { offers: assigned.offers } : {}),
+    ...(assigned.duplicates ? { duplicates_removed: assigned.duplicates } : {}),
   };
 }
 
-async function searchProvider(values, env, deps, ipHash, provider) {
+async function searchProvider(values, env, deps, ipHash, provider, evidence) {
   const source = Array.isArray(values) ? values.slice(0, MAX_IDEAS) : [];
   const ideas = source.map((value, index) => ({ index, value: normaliseProductIdea(value) })).filter((entry) => entry.value);
-  const results = new Array(source.length).fill(null);
+  const pools = Array.from({ length: source.length }, () => []);
   if (!provider || !productDiscoveryAvailable(env, provider) || !ideas.length) {
-    return { enabled: false, limited: false, products: results };
+    return { enabled: false, limited: false, pools };
   }
 
   const variants = ideas.map(({ value }) => queryVariants(value, provider));
@@ -151,44 +162,29 @@ async function searchProvider(values, env, deps, ipHash, provider) {
   };
 
   const thresholds = productMatchThresholds(env);
-  const bestMatch = (idea, query) => {
-    let best = null;
-    for (const candidate of queryResults.get(query) || []) {
-      const match = scoreProductMatch(idea, candidate, thresholds);
-      if (match.accepted && (!best
-          || (candidate.imageUrl && !best.imageUrl)
-          || (Boolean(candidate.imageUrl) === Boolean(best.imageUrl) && match.matchScore > best.matchScore))) {
-        best = { ...candidate, matchScore: match.matchScore };
-      }
-    }
-    return best;
-  };
+  const bestMatch = (idea, query) => rankProductCandidates(idea, queryResults.get(query) || [],
+    { evidence, thresholds })[0];
   await fetchQueries(variants.map(([primary]) => primary).filter(Boolean));
   const primaryMatches = ideas.map(({ value }, index) => bestMatch(value, variants[index][0]));
   const alternativeQueries = variants.flatMap((queries, index) => primaryMatches[index]?.imageUrl ? [] : queries.slice(1));
   await fetchQueries(alternativeQueries);
-  const matched = ideas.map(({ value }, index) => {
-    const best = [primaryMatches[index], ...variants[index].slice(1)
-      .map((query) => bestMatch(value, query))
-    ]
-      .filter(Boolean)
-      .sort((a, b) => Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl))
-        || b.matchScore - a.matchScore)[0];
-    return best ? provider.validateProduct(best) : null;
+  ideas.forEach(({ value, index }, ideaIndex) => {
+    pools[index] = rankProductCandidates(value,
+      variants[ideaIndex].flatMap((query) => queryResults.get(query) || []), { evidence, thresholds });
   });
-  const unique = assignUniqueProducts(matched);
-  unique.products.forEach((product, index) => { results[ideas[index].index] = product; });
-  return { enabled: true, limited, products: results, ...(unavailable ? { unavailable: true } : {}), ...(unique.duplicates ? { duplicates_removed: unique.duplicates } : {}) };
+  return { enabled: true, limited, pools, ...(unavailable ? { unavailable: true } : {}) };
 }
 
 export async function getCachedProduct(provider, productId, env, deps) {
   if (!provider?.getProduct || typeof productId !== "string") return null;
+  const evidence = compileProductEvidence(deps.productEvidencePolicy);
+  const permitted = (product) => product && !assessProductEvidence({}, product, evidence).blocked ? product : null;
   const key = new Request(`https://cache.gift-helper.internal/product-detail/v1/${provider.name}/${encodeURIComponent(productId)}`);
   const cached = await readProductCache(key, deps, provider);
-  if (cached !== undefined) return cached[0] || null;
+  if (cached !== undefined) return permitted(cached[0]);
   try {
     const found = await provider.getProduct(productId);
-    const product = found ? provider.validateProduct(found) : null;
+    const product = permitted(found ? provider.validateProduct(found) : null);
     if (product) cacheProductResults(key, [product], deps, provider);
     return product;
   } catch (error) {

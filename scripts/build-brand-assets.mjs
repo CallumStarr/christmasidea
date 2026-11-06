@@ -74,3 +74,7 @@ await sharp(await readFile(new URL("og-image.svg", site)))
 await sharp(await readFile(new URL("brand-icon.svg", site)))
   .resize(180, 180).png().toFile(fileURLToPath(new URL("apple-touch-icon.png", site)));
 console.log("Rendered integrated finder/guide canvases, linen continuations, sharing image and home-screen icon");
+await sharp(fileURLToPath(new URL("images/finder-canvas-2048.webp", site)))
+  .extract({ left: 1040, top: 110, width: 1008, height: 820 })
+  .webp({ quality: 88, effort: 6 })
+  .toFile(fileURLToPath(new URL("images/app-still-life.webp", site)));

@@ -1,7 +1,13 @@
 import { amazonPolicy, createAmazonProvider } from "./amazon.js";
-import { ebayPolicy, createEbayProvider, ebayConfigured } from "./ebay.js";
+import { ebayPolicy, createEbayProvider, ebayConfigured, ebayCampaignId } from "./ebay.js";
+import { awinPolicy, createAwinProvider, awinConfigured } from "./awin.js";
 
 const PROVIDERS = {
+  awin: {
+    create: createAwinProvider,
+    policy: (env) => awinPolicy(env),
+    configured: awinConfigured,
+  },
   amazon: {
     create: createAmazonProvider,
     policy: (env) => amazonPolicy(env.AMAZON_PARTNER_TAG),
@@ -10,7 +16,7 @@ const PROVIDERS = {
   },
   ebay: {
     create: createEbayProvider,
-    policy: (env) => ebayPolicy(env.EBAY_CAMPAIGN_ID),
+    policy: (env) => ebayPolicy(ebayCampaignId(env)),
     configured: ebayConfigured,
   },
 };
@@ -24,8 +30,12 @@ export function createProviders(env, fetchImpl) {
     .map((id) => PROVIDERS[id].create(env, fetchImpl));
 }
 
+export function configuredProviderIds(env = {}) {
+  return providerIds().filter((id) => PROVIDERS[id].configured(env));
+}
+
 export function configuredProviderId(env = {}) {
-  return providerIds().find((id) => PROVIDERS[id].configured(env)) || null;
+  return configuredProviderIds(env)[0] || null;
 }
 
 export function createProvider(env, fetchImpl) {

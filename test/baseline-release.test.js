@@ -95,8 +95,9 @@ test("baseline truncation never caches and empty generation uses original catalo
       assert.equal(response.status, 502);
       assert.equal(data.fallback, true);
       assert.equal(data.source, "catalogue");
-      assert.deepEqual(data.ideas.map(({ learning, ...idea }) => idea), catalogueFallback(normaliseInput(cases[0].input).value).ideas);
+      assert.deepEqual(data.ideas.map(({ learning, feedbackToken, source, ...idea }) => idea), catalogueFallback(normaliseInput(cases[0].input).value).ideas);
       assert.ok(data.ideas.every((idea) => idea.learning?.policy === "control-v1"));
+      assert.ok(data.ideas.every((idea) => idea.source === "catalogue" && idea.feedbackToken));
     }
   }
 });

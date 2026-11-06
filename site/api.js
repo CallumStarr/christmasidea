@@ -1,5 +1,10 @@
 const NO_IDEAS = () => ({ ideas: [], source: "none", productDiscoveryEnabled: false });
 
+export function apiEndpoint(path) {
+  const base = globalThis.GIFT_APP_API_BASE;
+  return base ? new URL(path, base).href : path;
+}
+
 function failure(notice, { error = true } = {}) {
   return { ...NO_IDEAS(), notice, error };
 }
@@ -25,7 +30,7 @@ export async function fetchIdeas(input, {
 
   let response;
   try {
-    response = await fetchImpl("/api/ideas", {
+    response = await fetchImpl(apiEndpoint("/api/ideas"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...input, turnstileToken }),
@@ -96,10 +101,10 @@ export async function fetchIdeas(input, {
 export async function fetchProducts(ideas, { fetchImpl = fetch, enabled = true, signal } = {}) {
   if (!enabled || !ideas.length) return { products: [], unavailable: false };
   try {
-    const response = await fetchImpl("/api/products", {
+    const response = await fetchImpl(apiEndpoint("/api/products"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ideas }),
+      body: JSON.stringify({ ideas: ideas.map(({ feedbackToken, learning, ...idea }) => idea) }),
       signal,
     });
     if (!response.ok) return { products: [], unavailable: true };
@@ -133,7 +138,7 @@ export async function fetchProductBatches(ideas, onBatch, options = {}) {
 export async function sendFeedback(body, { fetchImpl = fetch, enabled = true } = {}) {
   if (!enabled) return false;
   try {
-    const response = await fetchImpl("/api/feedback", {
+    const response = await fetchImpl(apiEndpoint("/api/feedback"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

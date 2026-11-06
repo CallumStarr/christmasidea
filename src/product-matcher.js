@@ -144,6 +144,9 @@ export function scoreProductMatch(idea, product, thresholds = productMatchThresh
   if (spec.personalisationRequired && !PERSONALISATION.test(details)) reasons.push("personalisation_missing");
   if (/\bpersonali[sz]ed\b/i.test(`${idea.title} ${idea.query}`)
       && !CUSTOM_PERSONALISATION.test(details)) reasons.push("custom_personalisation_unverified");
+  if (product.provider === "awin"
+      && (Number(spec.maxPriceGbp) > 0 || Number(spec.budgetMaxGbp) > 0)
+      && product.deliveryIncluded !== true) reasons.push("delivery_cost_unverified");
   if (conflictingMaterial(idea, title)) reasons.push("material_mismatch");
   if (UNSUITABLE_LISTING.test(title) && !UNSUITABLE_LISTING.test(`${idea.title} ${idea.query}`)) {
     reasons.push("unsuitable_listing_content");

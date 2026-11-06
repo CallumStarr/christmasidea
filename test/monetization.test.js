@@ -64,6 +64,11 @@ test("Amazon and eBay routing preserves exact existing URL builders and campaign
   assert.equal(approved[0].merchantId, "etsy");
 });
 
+test("public eBay configuration accepts the EBAY_CAMPAIGNID environment alias", () => {
+  const config = publicMonetizationConfig({ EBAY_CAMPAIGNID: "12345" });
+  assert.equal(config.EBAY_CAMPAIGN_ID, "12345");
+});
+
 test("approved network wrappers encode destination exactly once and rank verified programme terms", () => {
   const destination = "https://www.etsy.com/uk/search?q=coffee+%26+tea";
   const config = { MERCHANT_PROGRAMMES: { etsy: [
@@ -100,7 +105,7 @@ test("public environment build excludes secret credentials and disables external
   assert.equal(DEFAULT_MONETIZATION_CONFIG.ENABLE_SPONSORED_DEMOS, false);
 });
 
-test("verified public Awin IDs survive clean builds without activating pending applications", () => {
+test("verified public Awin IDs survive builds with the joined Virginia Hayward programme enabled", () => {
   const config = publicMonetizationConfig({});
   assert.equal(AWIN_ACCOUNT.affiliateId, "3146453");
   assert.deepEqual(Object.fromEntries(Object.entries(AWIN_ACCOUNT.programmes)
@@ -117,11 +122,11 @@ test("verified public Awin IDs survive clean builds without activating pending a
     const programme = config.MERCHANT_PROGRAMMES[id][0];
     assert.equal(programme.affiliateId, "3146453");
     assert.equal(programme.merchantId, AWIN_ACCOUNT.programmes[id].merchantId);
-    assert.equal(programme.approved, false);
+    assert.equal(programme.approved, id === "virginiahayward");
     assert.equal(programme.cookieDays, 30);
     assert.equal(programme.commissionRate, 0);
-    assert.equal(affiliateRouter(id, destination, config).href, destination);
-    assert.equal(affiliateRouter(id, destination, config).affiliate, false);
+    assert.equal(affiliateRouter(id, destination, config).affiliate, id === "virginiahayward");
+    if (id !== "virginiahayward") assert.equal(affiliateRouter(id, destination, config).href, destination);
     const approved = publicMonetizationConfig({ [`${id.toUpperCase()}_AWIN_APPROVED`]: "true" });
     const url = new URL(affiliateRouter(id, destination, approved).href);
     assert.equal(url.hostname, "www.awin1.com");

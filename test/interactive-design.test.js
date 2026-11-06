@@ -106,3 +106,98 @@ test("shared controls support reduced motion, forced colours and field validatio
   assert.match(html, /id="site-feedback-status" role="status" aria-live="polite"/);
   assert.match(html, /Nothing is sent until you choose to send the email/);
 });
+
+test("website and app share compact accessible finder controls without sharing app navigation", async () => {
+  const html = await read("index.html");
+  for (const [value, number, title] of [["describe", "01", "Describe them"], ["guided", "02", "Answer a few questions"]]) {
+    assert.match(html, new RegExp(`<input type="radio" name="mode" value="${value}"`));
+    assert.match(html, new RegExp(`<small class="mode-index" aria-hidden="true">${number}</small><strong class="mode-title">${title}</strong><small class="mode-note">`));
+  }
+  const css = await read("home.css");
+  assert.match(css, /\.mode-title\{[^}]*var\(--display\)/);
+  assert.match(css, /\.mode-option input:checked\+\.mode-copy[^}]*border-bottom-style:solid/);
+  assert.match(css, /\.chip>span\{[^}]*border-radius:0[^}]*var\(--display\)/);
+  assert.match(css, /\.chip input:checked\+span::after\{[^}]*scale\(1\)/);
+  assert.match(css, /\.mode-option input:focus-visible\+span,\.chip input:focus-visible\+span\{outline:2px/);
+  assert.match(css, /\.mode-option input:disabled\+span,\.chip input:disabled\+span\{opacity:/);
+  const app = await read("app.css");
+  assert.match(app, /\.gift-controls \.mode-copy\{[^}]*min-height:44px/);
+  assert.match(app, /\.gift-controls \.mode-option input:checked\+\.mode-copy\{[^}]*color:var\(--accent\)/);
+  assert.match(app, /\.gift-controls \.mode-index,\.gift-controls \.mode-note\{display:none\}/);
+  const panel = app.match(/\.gift-app \.atelier>\.panel\{([^}]+)\}/)[1];
+  assert.match(panel, /background:transparent/);
+  assert.match(panel, /box-shadow:none/);
+  const controls = await read("finder-controls.js");
+  assert.match(controls, /mode-option.*\.mode-title.*textContent = "A few questions"/);
+  const entry = await read("app.js");
+  assert.match(entry, /import \{ initialiseFinderControls \} from "\.\/finder-controls.js"/);
+  assert.ok(entry.indexOf("initialiseFinderControls();") < entry.indexOf('if (document.documentElement.classList.contains("gift-app"))'));
+  assert.doesNotMatch(controls, /app-tabbar|app-discovery|seasonal-hero/);
+  assert.match(app, /\.gift-controls \.app-category-toggle\{[^}]*min-height:48px/);
+  assert.match(app, /\.gift-controls \.actions \.btn\{[^}]*min-height:54px/);
+  assert.match(app, /prefers-reduced-motion:reduce[\s\S]*\.gift-controls \.loading::before\{animation:none\}/);
+});
+
+test("shared questionnaire advances locally, validates visible choices and only submits its final step", async () => {
+  const source = (await read("finder-controls.js")).match(/\$\("#form"\)\.addEventListener\("submit", \(event\) => \{([\s\S]*?)\n  \}, true\);/)[1];
+  for (const scenario of [
+    { step: 0, validBudget: false, selected: false, next: null, blocked: true },
+    { step: 0, validBudget: true, selected: false, next: 1, blocked: true },
+    { step: 1, validBudget: true, selected: false, next: null, blocked: true },
+    { step: 1, validBudget: true, selected: true, next: 2, blocked: true },
+    { step: 2, validBudget: true, selected: true, next: null, blocked: false },
+  ]) {
+    let next = null, prevented = false, stopped = false, focused = false, filtered = true;
+    const options = { hidden: true, closest: () => ({ querySelector: () => ({ setAttribute() {} }) }) };
+    const elements = {
+      "#budget-any": { checked: false },
+      "#budget-amount": { validity: { valid: scenario.validBudget }, setAttribute() {}, reportValidity() {}, focus() { focused = true; } },
+      "#interests": { setAttribute() {}, querySelector: () => ({ focus() { focused = true; } }) },
+      "#interests-selected": {},
+      "#app-search-interests": { value: "nonmatching query", dispatchEvent() { filtered = false; } },
+      "#interests .checkbox-options": options,
+    };
+    runInNewContext(`(() => {${source}})()`, {
+      $: (selector) => elements[selector], guided: () => true, step: scenario.step,
+      fields: { querySelector: () => scenario.selected ? {} : null },
+      showStep: (value) => { next = value; }, Event,
+      event: { preventDefault() { prevented = true; }, stopImmediatePropagation() { stopped = true; } },
+    });
+
+    assert.equal(next, scenario.next);
+    assert.equal(prevented, scenario.blocked);
+    assert.equal(stopped, scenario.blocked);
+    if (scenario.step === 0 && !scenario.validBudget) assert.equal(focused, true);
+    if (scenario.step === 1 && !scenario.selected) {
+      assert.equal(filtered, false);
+      assert.equal(elements["#app-search-interests"].value, "");
+      assert.equal(options.hidden, false);
+      assert.equal(focused, true);
+    }
+  }
+});
+
+test("sitewide controls, guide actions and surfaces use the same rounded design tokens", async () => {
+  const theme = await read("theme.css");
+  for (const [name, value] of [["control", 12], ["action", 13], ["writing", 16], ["surface", 24], ["pill", 999]]) {
+    assert.match(theme, new RegExp(`--${name}-radius:${value}px`));
+  }
+  assert.match(theme, /\.btn\{[^}]*min-height:54px[^}]*border-radius:var\(--action-radius\)/);
+  assert.match(theme, /\.writing-field\{[^}]*border-radius:var\(--writing-radius\)/);
+  assert.match(theme, /:where\(dialog\)\{[^}]*border-radius:var\(--surface-radius\)/);
+  assert.match(theme, /\.nav-links a\{[^}]*min-height:44px[^}]*border-radius:var\(--pill-radius\)/);
+  assert.match(theme, /\.footer-top nav a\{[^}]*min-height:44px/);
+  const guide = await read("guide.css");
+  assert.match(guide, /\.idea \.merchant-links a\{[^}]*min-height:54px[^}]*border-radius:var\(--action-radius\)/);
+  assert.match(guide, /\.finder-cta\{[^}]*border-radius:var\(--surface-radius\)/);
+  assert.match(guide, /\.guide-jumps a,\.directory-jumps a\{[^}]*border-radius:var\(--pill-radius\)/);
+  assert.match(guide, /\.notice\{[^}]*border-radius:var\(--writing-radius\)/);
+  const monetization = await read("monetization.css");
+  assert.match(monetization, /\.guide-save\{[^}]*border-radius:var\(--control-radius\)/);
+  assert.match(monetization, /#resume-items li\{[^}]*border-radius:var\(--writing-radius\)/);
+  const home = await read("home.css");
+  assert.match(home, /\.feedback-card\{[^}]*border-radius:var\(--surface-radius\)/);
+  assert.match(home, /\.shop\{[^}]*border-radius:var\(--action-radius\)/);
+  assert.doesNotMatch(home, /\.curation-steps/);
+  assert.match(await read("swipe-deck.css"), /\.gift-detail,\.deck-about-dialog\{[^}]*border-radius:var\(--surface-radius\)/);
+});

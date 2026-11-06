@@ -3,6 +3,7 @@
 // `policy`; nothing here knows about a particular retailer.
 
 import { cleanText } from "./text.js";
+import { normaliseGtin } from "./engine/product-identity.js";
 
 const UNAVAILABLE = new Set(["OUT_OF_STOCK", "UNAVAILABLE"]);
 
@@ -66,11 +67,13 @@ export function validateOffer(product, policy, { now = Date.now() } = {}) {
     productId,
     ...(policy.legacyIdField ? { [policy.legacyIdField]: productId } : {}),
     title,
+    ...(normaliseGtin(product.gtin) ? { gtin: normaliseGtin(product.gtin) } : {}),
     ...(cleanText(product.brand, 80) ? { brand: cleanText(product.brand, 80) } : {}),
     ...(cleanText(product.description, 1200) ? { description: cleanText(product.description, 1200) } : {}),
     imageUrl,
     additionalImages,
     price: validPrice,
+    ...(product.priceIncludesDelivery === true ? { priceIncludesDelivery: true } : {}),
     ...(typeof product.currency === "string" && product.currency === "GBP" ? { currency: "GBP" } : {}),
     productUrl,
     affiliateUrl,

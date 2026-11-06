@@ -86,7 +86,11 @@ test("photo-first mode supplies bounded, recipient-validated replacements withou
   assert.equal(captured.length, 1);
   const hit = await (await handleRequest(req(body), enabled, deps)).json();
   assert.equal(hit.cached, true);
-  assert.deepEqual(hit.replacement_ideas, result.replacement_ideas);
+  const withoutReceipts = (ideas) => ideas.map(({ feedbackToken, ...idea }) => idea);
+  assert.deepEqual(withoutReceipts(hit.replacement_ideas), withoutReceipts(result.replacement_ideas));
+  assert.ok([...result.ideas, ...result.replacement_ideas, ...hit.ideas, ...hit.replacement_ideas].every((idea) => idea.feedbackToken));
+  assert.notEqual(hit.ideas[0].feedbackToken, result.ideas[0].feedbackToken, "cache hits mint fresh receipts");
+  assert.ok(!JSON.parse(cached).ideas.some((idea) => idea.feedbackToken), "receipts never enter the shared result cache");
   assert.equal(captured.length, 1);
 });
 
@@ -97,6 +101,21 @@ test("catalogue failure responses retain photo-first policy and validated replac
   assert.equal(result.fallback, true);
   assert.equal(result.photo_first, true);
   assert.ok(Array.isArray(result.replacement_ideas) && result.replacement_ideas.length <= 4);
+});
+
+test("malformed cached payloads use the normal path instead of failing during receipt issuance", async () => {
+  for (const cached of [{ ideas: null }, { ideas: [], replacement_ideas: "invalid" }]) {
+    const captured = [];
+    const response = await handleRequest(req({ interests: "climbing and coffee" }), env, {
+      budget: okBudget, fetch: fakeFetch(captured),
+      cache: { match: async () => Response.json(cached), put: async () => {} },
+    });
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.equal(data.cached, undefined);
+    assert.equal(captured.length, 1);
+    assert.ok(data.ideas.every((idea) => idea.feedbackToken));
+  }
 });
 
 test("happy path calls Claude with forced tool and returns sanitised ideas", async () => {
@@ -368,7 +387,7 @@ test("JSON requests are bounded by bytes actually streamed, not just Content-Len
   const unsupported = await handleRequest(streamedReq([input], { contentType: "text/plain" }), env, {});
   assert.equal(unsupported.status, 415);
 
-  const feedbackBody = JSON.stringify({ event: "shown", padding: "x".repeat(4100) });
+  const feedbackBody = JSON.stringify({ event: "shown", padding: "x".repeat(16100) });
   const feedback = await handleRequest(streamedReq(
     [feedbackBody.slice(0, 2000), feedbackBody.slice(2000)],
     { path: "/api/feedback" },

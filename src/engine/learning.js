@@ -1,7 +1,9 @@
 import { AGE_BANDS, BUDGETS, CATEGORIES } from "../constants.js";
 import { deriveRecipient, recipientCorpus } from "../recipient.js";
-import { detectInterests, INTERESTS } from "./interest-graph.js";
+import { detectInterests, GRAPH_VERSION, INTERESTS } from "./interest-graph.js";
 import { LEARNING_POLICY } from "./learning-policy.js";
+import { matchConcept } from "./concepts.js";
+import { KNOWLEDGE_POLICY } from "./knowledge-policy.js";
 
 export const LEARNING_CONTROL = "control-v1";
 export const LEARNING_TOPICS = ["unknown", ...INTERESTS.filter((i) => !i.trait).map((i) => i.id)];
@@ -20,7 +22,7 @@ export function learningContext(input) {
 export function validLearning(value) {
   return value && LEARNING_TOPICS.includes(value.topic) && AGE_BANDS.includes(value.age)
     && Object.hasOwn(BUDGETS, value.budget) && CATEGORIES.includes(value.category)
-    && [LEARNING_CONTROL, LEARNING_POLICY.version].includes(value.policy);
+    && [LEARNING_CONTROL, LEARNING_POLICY.version, KNOWLEDGE_POLICY.version].includes(value.policy);
 }
 
 export function cellKey(value) {
@@ -35,6 +37,8 @@ export function ratingScore({ shown, good, bad }) {
 
 export function applyLearning(ideas, input, env = {}, policy = LEARNING_POLICY) {
   const context = learningContext(input);
+  const interests = detectInterests(recipientCorpus(input));
+  const singleTopic = interests.length === 1 && !interests[0].trait;
   const active = env.LEARNING_RANKING_ENABLED === "true" && policy.approved === true;
   const scores = new Map();
   if (active) {
@@ -43,10 +47,14 @@ export function applyLearning(ideas, input, env = {}, policy = LEARNING_POLICY) 
       if (score !== null && validLearning({ ...cell, policy: LEARNING_POLICY.version })) scores.set(cellKey(cell), score);
     }
   }
-  const output = ideas.map((idea) => ({
-    ...idea,
-    learning: { ...context, category: idea.category, policy: active ? policy.version : LEARNING_CONTROL },
-  }));
+  const output = ideas.map((idea) => {
+    const concept = matchConcept(idea);
+    return {
+      ...idea,
+      learning: { ...context, category: idea.category, policy: active ? policy.version : LEARNING_CONTROL,
+        ...(concept ? { concept, graph: GRAPH_VERSION, singleTopic } : {}) },
+    };
+  });
   // Only swap disjoint adjacent pairs; never add candidates or bypass suitability/variety validation.
   for (let i = 0; active && i + 1 < output.length; i++) {
     const first = scores.get(cellKey(output[i].learning)) || 0;

@@ -21,6 +21,7 @@ class Element {
   prepend(child) { this.children.unshift(child); child.parent = this; }
   after(child) { this.parent.append(child); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter((child) => child !== this); }
+  get parentElement() { return this.parent || null; }
   setAttribute(key, value) { this.attributes[key] = value; }
   addEventListener(event, callback) { this.listeners[event] = callback; }
   querySelector(selector) {
@@ -39,10 +40,12 @@ async function fixture() {
     shop.href = `https://search.example/${id}`; offer.append(shop);
     return [id, shop];
   }));
+  const merchantLinks = new Element();
   const card = new Element();
   card.isConnected = true;
   card.querySelector = (selector) => ({
     ".media": media, ".aff": disclosure, "h3": heading,
+    ".merchant-links": merchantLinks,
     '.shop[data-provider="amazon"]': shops.amazon,
     '.shop[data-provider="ebay"]': shops.ebay,
   })[selector];
@@ -50,7 +53,7 @@ async function fixture() {
   const apply = runInNewContext(`(${source})`, {
     document: { createElement: (tagName) => new Element(tagName) },
     Date, Intl, Number, Math,
-    CFG: {},
+    CFG: { AWIN_AFFILIATE_ID: "3146453", AWIN_IMAGE_HOSTS: ["images.example.com"] },
     validProductImage,
     setTimeout: (callback) => timers.push(callback),
     showFeedback: (message) => notices.push(message),
@@ -58,7 +61,7 @@ async function fixture() {
     ebayUrl: () => "https://search.example/ebay",
     amazonUrl: () => "https://search.example/amazon",
   });
-  return { apply, card, media, shops, note, heading, timers, notices };
+  return { apply, card, media, shops, merchantLinks, note, heading, timers, notices };
 }
 
 const idea = { title: "Coffee mug gift idea", query: "coffee mug" };
@@ -66,10 +69,15 @@ const product = (provider, overrides = {}) => ({
   provider,
   title: `${provider} coffee mug listing`,
   affiliateUrl: `https://${provider}.example/listing`,
-  imageUrl: provider === "ebay" ? "https://i.ebayimg.com/photo.jpg" : "https://m.media-amazon.com/photo.jpg",
+  imageUrl: provider === "ebay" ? "https://i.ebayimg.com/photo.jpg"
+    : provider === "awin" ? "https://images.example.com/photo.jpg" : "https://m.media-amazon.com/photo.jpg",
   price: { amount: 14.5, currency: "GBP" },
   retrievedAt: new Date().toISOString(),
   expiresAt: new Date(Date.now() + 3600000).toISOString(),
+  ...(provider === "awin" ? {
+    merchantName: "Awin Shop", merchantProductUrl: "https://merchant.example/listing",
+    productId: "488:coffee-mug", deliveryIncluded: true,
+  } : {}),
   ...overrides,
 });
 
@@ -101,6 +109,21 @@ test("eBay example photo is not a merchant link and leaves both shopping choices
   assert.equal(ui.heading.textContent, idea.title);
   assert.equal(ui.shops.ebay.parent.querySelector(".offer-detail").textContent, "Matched eBay listing: ebay coffee mug listing");
   assert.equal(ui.shops.ebay.parent.querySelector(".product-price").textContent, "eBay: £14.50 incl. listed delivery");
+});
+
+test("Awin products add an attributed retailer link and remove it with the expiring offer", async () => {
+  const ui = await fixture(), awin = product("awin");
+  ui.apply(ui.card, idea, awin);
+  const link = ui.merchantLinks.children[0].children[0];
+  assert.equal(link.href, awin.affiliateUrl);
+  assert.equal(link.textContent, "View on Awin Shop");
+  assert.match(link.attributes["aria-label"], /affiliate link/);
+  assert.equal(ui.media.querySelector(".product-image").tagName, "a");
+  assert.equal(ui.media.querySelector(".product-badge").textContent, "Matched retailer product");
+  assert.match(ui.note.textContent, /Awin Shop product feed/);
+  ui.timers[0]();
+  assert.equal(ui.merchantLinks.children.length, 0);
+  assert.equal(ui.media.querySelector(".product-image"), null);
 });
 
 test("Amazon photos replace eBay examples without old expiry or error callbacks removing them", async () => {

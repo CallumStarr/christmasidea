@@ -8,7 +8,70 @@ One Cloudflare Worker that serves the website and its small API:
 
 If the AI is unavailable or its daily cap is reached, the Worker selects from `src/catalogue.js` and runs the candidates through the same recipient-aware validator as AI ideas. It uses stated age, explicit exclusions, owned items and budget bands, and returns fewer than eight when that is all that survives. The catalogue has only coarse price bands (not verified product prices), so a strict budget below £10 may have no verified fallback idea. Product discovery is optional; when unavailable or disabled, the site shows typographic idea cards without pretend product photographs and keeps the Amazon search link.
 
+## Cross-platform updates
+
+Website, iOS and Android changes are cross-platform by default. [AGENTS.md](AGENTS.md) records the project-wide instructions for future development: implement applicable changes on all three unless explicitly scoped otherwise, and ask for confirmation before making a new platform-specific exception.
+
+| Change | How it reaches users |
+|---|---|
+| Shared server-side recommendation engine, validation or product matching | Deploy the Worker; all platforms use the same production APIs on subsequent requests. Existing caches and in-flight requests may retain earlier results, so assess cache invalidation/versioning when changing recommendation behaviour. |
+| Website/frontend logic, styling, bundled content or assets | Deploy the website and run `npm run app:sync`; build, test and distribute new iOS/Android versions. Installed apps retain their bundled frontend until updated. |
+| Native plugins or platform code | Update affected native projects, validate and distribute new app versions. Confirm intentional platform-specific behaviour with the user when not explicitly requested. |
+
+Shared source makes consistent implementation possible; it is not automatic app-store delivery or an over-the-air update system. Keep API changes compatible with installed versions. Release reports must distinguish source implementation, website/backend deployment, native testing and app distribution, including any Mac/signing/store-access blockers.
+
+## iPhone and Android app
+
+The Capacitor app bundles the same finder, retailer validation, swipe deck and wishlist storage, with a cream-and-burgundy interface. `site/app.js` removes the marketing hero in favour of a finder-first app composition: controls beside the still life on wider screens, with a quiet illustration beside the question on phones, not a banner. The website retains its desktop composition, photography and navigation. Both versions use `site/finder-controls.js` for compact segmented modes, the three-step questionnaire, a native relationship picker, searchable interest/preferences categories and selected-answer summaries. Native radio semantics, focus and selection behaviour remain. `site/app.css` shares these interactive styles under `.gift-controls`; layout and bottom navigation remain scoped to `.gift-app`. The questionnaire scrolls choices independently of its Continue action; short website viewports can also scroll the page rather than compressing the choices away. Bottom navigation and offline messaging remain app-only. Both versions share a cancellable, truthful loading overlay and lead to the same full-screen deck. Pass, save, like/shop and details keep their existing behaviour and disclosures.
+
+Design references: [Apple layout guidance](https://developer.apple.com/design/human-interface-guidelines/layout), [data entry](https://developer.apple.com/design/human-interface-guidelines/entering-data), [tab labels and hierarchy](https://developer.apple.com/design/human-interface-guidelines/tab-bars), [Airbnb's 2025 app redesign](https://news.airbnb.com/airbnb-2025-summer-release/), and [NN/g recognition rather than recall](https://www.nngroup.com/articles/recognition-and-recall/). These inform progressive disclosure, image-led composition, restrained navigation, explicit system status and examples, not copied assets or claims of equivalent quality. Decorative art yields to form readability on small screens; accessibility text enlargement and a visible security challenge can legitimately require scrolling. No fabricated urgency, social proof or guaranteed gift matches are used.
+
+- `capacitor.config.json`: app identity `uk.co.christmasidea.santashelper`; bundled assets, not a remote website wrapper.
+- `mobile/native-bridge.js`: native share sheet, clipboard, light haptics, in-app shopping browser, status bar and Android back navigation.
+- `android/` and `ios/`: persistent native projects, branded icons and launch screens. Android backups are disabled. The app requests no camera, location, contacts or advertising permissions.
+- `scripts/build-mobile.mjs`: copies website assets and bundles native plugins into ignored `mobile/www/`, adding a restrictive native CSP. No server credentials are bundled.
+
+**Preview:** run `npm run dev`, then open `http://127.0.0.1:8787/?app=1` at a phone-sized viewport. Without `?app=1`, the website retains its normal layout with the same updated interactive controls. Production Turnstile rejects localhost; use browser-only request/Turnstile fixtures for local success-path QA, never disable the deployed security check.
+
+**Prepare both native projects:**
+
+```powershell
+npm ci
+npm run app:sync
+# Only needed after changing the brand icon:
+npm run build:app:icons
+```
+
+**Android:** use Android Studio with SDK 36 and JDK 21 (Gradle 8.14.3). Ensure `JAVA_HOME` points to that JDK and `ANDROID_HOME` points to your SDK; an older JDK cannot compile the plugins, and JDK 25 is not supported by this Gradle version. `npm run app:android` opens the project. To build a development APK:
+
+```powershell
+Set-Location android
+.\gradlew.bat assembleDebug --console=plain
+```
+
+The APK is `android/app/build/outputs/apk/debug/app-debug.apk`. Install it on a connected test phone with `adb install -r` followed by that path. Google Play distribution requires a signed release AAB, your own keystore and developer account. Keep signing keys outside source control.
+
+**iPhone/iPad:** on a Mac with current Xcode, run `npm ci`, `npm run app:sync`, then `npm run app:ios`. Select your Apple development team, verify the bundle ID, test a physical device and archive for TestFlight/App Store Connect. iOS compilation and signing cannot run on Windows. The app targets iOS 16.4+ to support the deck's native dialogs, inert cards and dynamic viewport layout without polyfills. Test the minimum-supported WebKit as well as current iPhones.
+
+**Backend deployment:** the accompanying Worker/site changes are deployed to production. Future changes must use the normal release process. The bundle calls `https://christmasidea.co.uk/api/*`; `wrangler.toml` allows only the exact additional app origins `capacitor://localhost` and `https://localhost`. The app embeds the hosted `/app-verify` page for Turnstile because the provider cannot verify a local Capacitor hostname. Only that page may be framed by those two app origins; other pages retain `DENY`/`frame-ancestors 'none'`. Messages are checked against both the production origin and the exact iframe window. The existing server token verification, request limits, cancellations and product checks remain enabled. Real hosted verification, a successful production ideas request returning eight cards, and product enrichment were verified in the Android emulator without fixtures. Interactive challenge escalation, renewal and iOS still require device QA.
+
+Wishlists remain on the device, survive app restarts, and can be opened offline. Descriptions are not persisted by the app. New suggestions and shopping require a connection. Sharing creates public website links rather than unusable Capacitor-local URLs, and only shares the saved list, not the description or local wishlist name. Calendar-file downloads remain a website feature and are hidden in the native app. The privacy notice also applies to the app; complete App Store privacy/Google Play Data Safety declarations from the actual enabled providers before release. Store acceptance is not guaranteed by packaging.
+
+Run `node --test test\mobile-app.test.js test\frontend-api.test.js test\swipe-deck.test.js test\frontend-exclusion-flow.test.js` for focused regressions. Device QA must cover real Turnstile renewal, safe areas, keyboard opening/closing, shopping return, cancelled sharing, offline wishlists, Android back, large text, reduced motion and both screen orientations.
+
+The revised description view and all three survey steps were browser-measured at 320x568, 375x667, 390x844, 430x932, 844x390, 936x706 and 768x1024: no page or horizontal overflow, with the primary action and disclosure above navigation. Survey search reset and hidden-choice validation, loading focus, Escape cancellation and error recovery were exercised. Short landscape uses a dedicated two-column survey, rather than clipping the choices. These checks are not a physical-device accessibility certification or a claim of perfection.
+
+The final Android debug APK builds successfully. Native emulator regression checks cover description and guided searches, exact budget transmission, saving, Android back, clipboard, cancelled system sharing, offline wishlists and deck geometry. Text inputs blur on submission to dismiss the keyboard; known native share cancellation is normalised to `AbortError`, while real failures remain visible. The focused regression suite passes 89 tests. iOS projects are synced but not compiled or signed; neither app has been submitted to a store.
+
 ## Interactive visual language
+
+The website and app now share segmented finder modes, rounded writing surfaces, example chips, primary actions, choice tiles and dialogs. The original radios remain the source of truth behind the relationship picker, preserving inferred age/occasion and optional custom relationships. Shared questionnaire logic handles validation, back navigation, search reset and answer persistence; it does not duplicate API requests or change request fields. Without JavaScript enhancement, the original editorial markup remains available. App-only composition and navigation do not appear on the website. Browser and emulator validation do not replace physical-device visual sign-off.
+
+The same visual language applies sitewide through `theme.css`: 12px controls, 13px actions, 16px writing/notices, 24px surfaces/dialogs and pill navigation. Guides share rounded shopping/save actions, jump links, featured surfaces and finder calls to action; mobile retailer buttons stack below 480px to avoid cramped labels. Feedback, wishlist sharing, reminders, recent items, partner dialogs and legal notices inherit the same tokens. Typography, photography, inverse burgundy palettes, affiliate prominence and disclosures stay intact. These styles are loaded by every public page, including generated guides, about/privacy and 404; no per-page JavaScript enhancement is required for the shared design.
+
+Sitewide rollout validation covers 18 public pages at 320px, 390px and 1440px widths (54 checks with no horizontal overflow or clipped navigation), guide-save persistence, partner/wishlist dialogs, representative app layouts and 91 focused regression tests. Shared editorial CSS remains below its existing 11,000-byte gzip budget.
+
+Website rollout checks cover all three survey steps at seven viewport sizes from 320x568 to 1440x1000, both input routes reaching an eight-card fixture deck, exact budget/relationship transmission, search, hidden-choice validation, reset, loading cancellation and explicit API-error recovery. The shared-control regression suite passes 90 tests; the app's seven description layouts and 21 survey layouts were also rechecked after extraction. Local browser success-path checks use fixtures, not a bypass of production verification.
 
 `site/theme.css` owns the shared paper, control-border, selected, success and warning tokens, native text/select controls, writing surfaces, buttons and base dialogs. `site/home.css` composes the guided choice cards, correspondence-style feedback and finder messages; `site/swipe-deck.css` adapts these to the results canvas. Guides and sponsor dialogs use the same shared actions rather than a separate button system.
 
@@ -53,7 +116,7 @@ Merchant profiles have separate Awin/CJ/Skimlinks approval flags. No example imp
 
 The public publisher ID `3146453` and the following advertiser IDs persist in [`AWIN_ACCOUNT`](site/config/affiliates.config.js), so an ordinary build retains them. Explicit environment values override these defaults; empty IDs disable tracking. No Awin API token, login cookie or account contact details are stored in the repository.
 
-Applications were submitted through the publisher dashboard and all four were confirmed **pending advertiser approval**, with **zero joined programmes** at the time of checking:
+At the previous account review, applications for these four programmes were **pending advertiser approval**, with **zero joined programmes**. That is historical account state, not a current check:
 
 | Programme | Awin advertiser ID | Advertised commission, not yet assigned | Attribution window |
 | --- | --- | --- | --- |
@@ -64,7 +127,15 @@ Applications were submitted through the publisher dashboard and all four were co
 
 These are programme overview figures, not guaranteed earnings or confirmation of an assigned commission group. In particular, Ethical Superstore showed a payment-exposure warning and a long average payment time; monitor payment status before prioritising it. Applications disclose the site's AI-assisted recommendations and editorial promotion without making traffic claims. No brand bidding, unauthorised voucher promotion or email marketing was proposed.
 
-All four remain `approved: false`. Once an advertiser is genuinely **Joined**, check its assigned commission group, current terms and deep-link permissions, then update that programme's public approval default or export its `<MERCHANT>_AWIN_APPROVED=true` flag. Set the verified commission rate via `<MERCHANT>_AWIN_COMMISSION_RATE` and rebuild with `npm run build:pages`. Do not enable pending applications. Rates remain zero in routing until explicitly configured.
+The account owner has since reported joining the advertiser programmes in the expanded shortlist. Virginia Hayward Hampers (also in the table above) is now enabled for static routed links; the other legacy entries remain disabled until individually confirmed in Awin. Check each advertiser's assigned commission group, current terms and deep-link permissions before enabling it. Set commission rates only from assigned terms; rates remain zero in routing until explicitly configured.
+
+The feed-backed product catalogue and its D1/import setup are documented in [Awin product catalogue](docs/awin-product-catalogue.md). Product discovery remains disabled until its database, a fresh feed and reviewed image-host allowlist are configured.
+
+The shared [cold-start product ranker and research review](docs/product-evidence-ranking.md) add reviewed product
+evidence, conservative review weighting, safety exclusions, equivalent-product landed-price ordering and
+collision backfilling. Its external-evidence registry is intentionally empty until permitted, identity-matched
+sources are reviewed. `node scripts/evaluate-products.mjs cases.json [evidence-policy.json]` evaluates product
+coverage and optional graded relevance judgments without network calls; it does not claim proven gift quality.
 
 Not On The High Street already participates in personalised-gift alternatives. The three new merchant profiles accept reviewed same-merchant product/collection URLs through the shared router; they do not automatically add generic buttons or unverified inventory. Before adding placements, enforce programme restrictions: Virginia Hayward hampers are adult-only; Green Tulip delivers only to mainland UK and excludes gift vouchers from commission; only authorised voucher codes may be promoted. Review these restrictions again when enabling inventory.
 
@@ -116,11 +187,15 @@ Opening the guided finder hides the introductory headline and deck and returns t
 
 The finder records structured daily feedback totals, including explicit good/poor-match ratings and self-reported purchases. Dislikes immediately affect the current search's bounded exclusions. An admin-only paginated CSV export and offline policy-proposal command support reviewed category ranking for similar interest/age/budget cohorts, without storing raw descriptions, generated titles or per-user histories in feedback. Global learning is disabled until sufficient evidence and a quality review approve a versioned policy; it does not retrain Claude or treat clicks as purchases. See [the learning workflow](docs/gift-intelligence-engine.md#learning-from-feedback) for setup, thresholds, export, activation and rollback.
 
+Concept-level feedback now also records controlled gift-concept keys and graph versions, never a recipient-description archive. A fresh, human-approved library can skip Claude only for supported requests with eight validated, grounded ideas, at least three categories and direct coverage of every detected interest. Recent explicit ratings, minimum support and a Wilson lower-bound guard inform unapproved proposals; clicks are not quality labels. The shipped library is empty/unapproved, so the baseline remains unchanged until real evidence passes review. Export with `node scripts\export-feedback.mjs gift-knowledge.csv --knowledge`, then run `node scripts\review-knowledge.mjs gift-knowledge.csv`. See [reviewed concept memory](docs/gift-intelligence-engine.md#reviewed-concept-memory-and-api-free-reuse) for the research, limitations, acceptance gates, activation and rollback.
+
+Reuse evidence now requires server-signed, 24-hour card receipts and transactional replay deduplication: copied requests cannot repeatedly rate the same card or submit both a good and bad rating. Only single-topic, trait-free requests contribute verified concept evidence; legacy clients retain category/usage feedback without affecting reuse approval. Random replay markers expire within 24 hours, while controlled aggregate counts retain the existing 90-day limit. This proves an issued card, not an independent human or a retailer purchase. `node scripts\evaluate-knowledge.mjs` reports API-bypass coverage, explicit abstention reasons and structural checks without paid calls or a recommendation-quality claim.
+
 A daily GitHub Actions check can open a usage-analysis issue after 200 additional shown cards across the site, even without ratings. Separately, rated cohorts qualify after 200 shown cards and 30 explicit ratings, with equivalent fresh evidence required for rated-cohort reminders. Both triggers are combined into one issue when ready together; deliveries retry without duplicating issues. Notifications require the Worker/admin secret and repository Actions setup; see [notification setup](docs/gift-intelligence-engine.md#feedback-readiness-notifications). No ranking changes are made by this workflow.
 
 ### Release recommendation selection
 
-Production selects `RECOMMENDATION_MODE = "baseline-v3.3"` in `wrangler.toml`, following the completed paired review's preference for the preserved baseline. This uses the frozen v3.3 prompt/tool, its ten candidates, and the validator's original-order variety selection. It does not run graph top-ups, discovery hints or v3.4 reranking. Current safety and product-only validation remain in place. The preserved baseline keeps identical titles and ordering on 29/30 cases; case-12 intentionally replaces the inconsistent "Garden kneeling pad and tool apron" (title/concept name an apron, while its query and explanation describe a kneeler with pockets) with the next valid candidate, "Personalised herb garden marker set". `test/baseline-release.test.js` asserts that exact rejection and replacement, and exact parity for the other 29. Catalogue fallback also uses the original catalogue curation.
+Production selects `RECOMMENDATION_MODE = "baseline-v3.3"` in `wrangler.toml`, following the completed paired review's preference for the preserved baseline. The normal AI path uses the frozen v3.3 prompt/tool, its ten candidates, and the validator's original-order variety selection. It does not run graph top-ups, discovery hints or v3.4 reranking. A separately approved knowledge library may bypass this AI path as described above; it is initially empty/unapproved. Current safety and product-only validation remain in place. The preserved baseline keeps identical titles and ordering on 29/30 cases; case-12 intentionally replaces the inconsistent "Garden kneeling pad and tool apron" (title/concept name an apron, while its query and explanation describe a kneeler with pockets) with the next valid candidate, "Personalised herb garden marker set". `test/baseline-release.test.js` asserts that exact rejection and replacement, and exact parity for the other 29. Catalogue fallback also uses the original catalogue curation.
 
 The shared validator rejects explicit product-identity conflicts between kneeling aids and aprons, and between enamel camping coffee pots and moka/stovetop espresso makers. It checks title, concept, raw and cleaned query, the leading product description in the explanation, and feature/variant specs. It never rewrites a product to force agreement: the next validated candidate is used, or an honest shortfall is returned. These are narrow deterministic guards, not comprehensive natural-language consistency verification; unknown types and incidental explanatory mentions retain the existing checks. Explicit synonyms can satisfy query/title agreement without sharing literal words.
 

@@ -1,7 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
+import { appFrameHeaders } from "./app-headers.js";
 import { handleRequest, canonicalRedirect } from "./core.js";
 import { pruneUsageBuckets, reserveProductSearches, scheduleBudgetPrune, seedProductDailyUsage } from "./budget-storage.js";
 import { acknowledgeFeedbackReview, initialiseFeedbackReview, prepareFeedbackReview, pruneFeedbackReview } from "./engine/feedback-review.js";
+import { initialiseFeedbackReceipts, pruneFeedbackReceipts, recordVerifiedFeedback } from "./engine/feedback-storage.js";
 
 // One global counter object enforces daily AI and product lookup limits. Durable Objects handle one request at a time, so
 // check-and-increment is race free.
@@ -14,6 +16,7 @@ export class BudgetCounter extends DurableObject {
     );
     seedProductDailyUsage(this.sql);
     initialiseFeedbackReview(this.sql);
+    initialiseFeedbackReceipts(this.sql);
   }
 
   count(bucket, k) {
@@ -32,6 +35,7 @@ export class BudgetCounter extends DurableObject {
   buckets() {
     const buckets = pruneUsageBuckets(this.sql);
     pruneFeedbackReview(this.sql);
+    pruneFeedbackReceipts(this.sql);
     return buckets;
   }
 
@@ -56,27 +60,43 @@ export class BudgetCounter extends DurableObject {
     return { ok: true };
   }
 
+  async takeKnowledge(ipHash) {
+    const b = this.buckets();
+    if (this.count(b.minute, `knowledge:${ipHash}`) >= (Number(this.env.PER_VISITOR_MINUTE_LIMIT) || 4)
+      || this.count(b.day, `knowledge:${ipHash}`) >= (Number(this.env.PER_VISITOR_DAILY_LIMIT) || 15)) return { ok: false };
+    this.add(b.minute, `knowledge:${ipHash}`);
+    this.add(b.day, `knowledge:${ipHash}`);
+    return { ok: true };
+  }
+
   // Reserves bounded per-second, hourly, daily and per-minute capacity for product searches.
   async takeProducts(ipHash, n) {
     return reserveProductSearches(this, this.env, ipHash, n);
   }
 
   // Feedback counts live in "F2026-11-02" buckets for 90 days; per-visitor rate limiting uses the short minute bucket.
-  async recordFeedback(ipHash, keys) {
+  async recordFeedback(ipHash, keys, records) {
     const b = this.buckets();
     const minuteLimit = Number(this.env.FEEDBACK_PER_VISITOR_MINUTE_LIMIT) || 40;
-    if (this.count(b.minute, `fb:${ipHash}`) >= minuteLimit) return { ok: false };
+    const dailyLimit = Number(this.env.FEEDBACK_PER_VISITOR_DAILY_LIMIT) || 600;
+    if (this.count(b.minute, `fb:${ipHash}`) >= minuteLimit
+      || this.count(b.day, `fb:${ipHash}`) >= dailyLimit) return { ok: false };
     this.add(b.minute, `fb:${ipHash}`);
+    this.add(b.day, `fb:${ipHash}`);
     const day = `F${b.day.slice(1)}`;
-    for (const k of keys.slice(0, 64)) this.add(day, k);
+    if (records) return this.ctx.storage.transactionSync(() => recordVerifiedFeedback(
+      this.sql, records, day, (bucket, key) => this.add(bucket, key),
+    ));
+    for (const k of keys.slice(0, 80)) this.add(day, k);
     return { ok: true };
   }
 
-  async exportFeedback(after) {
+  async exportFeedback(after, kind = "L") {
     this.buckets();
+    if (!["L", "V"].includes(kind)) throw new Error("Invalid feedback export kind.");
     const rows = this.sql.exec(
-      "SELECT bucket, k, n FROM usage WHERE bucket LIKE 'F%' AND k LIKE 'L|%' AND (bucket > ? OR (bucket = ? AND k > ?)) ORDER BY bucket, k LIMIT 1001",
-      after?.bucket || "", after?.bucket || "", after?.key || ""
+      "SELECT bucket, k, n FROM usage WHERE bucket LIKE 'F%' AND k LIKE ? AND (bucket > ? OR (bucket = ? AND k > ?)) ORDER BY bucket, k LIMIT 1001",
+      `${kind}|%`, after?.bucket || "", after?.bucket || "", after?.key || ""
     ).toArray();
     const page = rows.slice(0, 1000);
     const last = page.at(-1);
@@ -116,6 +136,12 @@ const SECURITY_HEADERS = {
 function withHeaders(res, extra, env = {}) {
   const out = new Response(res.body, res);
   for (const [k, v] of Object.entries(extra)) out.headers.set(k, v);
+  const imageHosts = [...new Set(String(env.AWIN_IMAGE_HOSTS || "").split(",").map((host) => host.trim().toLowerCase())
+    .filter((host) => /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/.test(host)))];
+  if (imageHosts.length) {
+    const csp = out.headers.get("Content-Security-Policy");
+    out.headers.set("Content-Security-Policy", csp.replace(/img-src ([^;]+)/, `$& ${imageHosts.map((host) => `https://${host}`).join(" ")}`));
+  }
   const hosts = [env.MONETIZATION_AD_HOST, env.MONETIZATION_ANALYTICS_HOST]
     .filter((host) => typeof host === "string" && /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i.test(host))
     .map((host) => `https://${host.toLowerCase()}`);
@@ -141,11 +167,11 @@ export default {
       const stub = env.BUDGET.get(env.BUDGET.idFromName("global"));
       const res = await handleRequest(request, env, {
         fetch: (...args) => fetch(...args),
-        budget: { consume: (ipHash) => stub.consume(ipHash) },
+        budget: { consume: (ipHash) => stub.consume(ipHash), reuse: (ipHash) => stub.takeKnowledge(ipHash) },
         productBudget: { take: (ipHash, n) => stub.takeProducts(ipHash, n) },
         feedback: {
-          record: (ipHash, keys) => stub.recordFeedback(ipHash, keys),
-          export: (after) => stub.exportFeedback(after),
+          record: (ipHash, keys, records) => stub.recordFeedback(ipHash, keys, records),
+          export: (after, kind) => stub.exportFeedback(after, kind),
           review: (action, id) => stub.reviewFeedback(action, id),
         },
         cache: typeof caches !== "undefined" ? caches.default : null,
@@ -155,6 +181,6 @@ export default {
     }
 
     const res = await env.ASSETS.fetch(request);
-    return withHeaders(res, SECURITY_HEADERS, env);
+    return withHeaders(res, appFrameHeaders(url.pathname, SECURITY_HEADERS), env);
   },
 };

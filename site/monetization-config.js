@@ -1,5 +1,7 @@
 // Generated public settings; secret API credentials never belong in this file.
 export const MONETIZATION_CONFIG = {
+  "AWIN_AFFILIATE_ID": "3146453",
+  "AWIN_IMAGE_HOSTS": [],
   "ENABLE_ADS": false,
   "ENABLE_EXTERNAL_TELEMETRY": false,
   "ENABLE_SPONSORED_DEMOS": false,
@@ -180,7 +182,7 @@ export const MONETIZATION_CONFIG = {
     "virginiahayward": [
       {
         "network": "awin",
-        "approved": false,
+        "approved": true,
         "merchantId": "2500",
         "affiliateId": "3146453",
         "commissionRate": 0,

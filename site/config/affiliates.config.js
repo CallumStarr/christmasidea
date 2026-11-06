@@ -11,18 +11,20 @@ export const MERCHANTS = {
   virginiahayward: { name: "Virginia Hayward Hampers", host: "www.virginiahayward.com" },
 };
 
-// Public IDs only. Applications are pending; approval must be verified before enabling.
+// Public IDs only. Enable only programmes confirmed as Joined in the publisher account.
 export const AWIN_ACCOUNT = {
   affiliateId: "3146453",
   programmes: {
     noths: { merchantId: "18484", approved: false, cookieDays: 30 },
     ethicalsuperstore: { merchantId: "3651", approved: false, cookieDays: 30 },
     greentulip: { merchantId: "48159", approved: false, cookieDays: 30 },
-    virginiahayward: { merchantId: "2500", approved: false, cookieDays: 30 },
+    virginiahayward: { merchantId: "2500", approved: true, cookieDays: 30 },
   },
 };
 
 export const DEFAULT_MONETIZATION_CONFIG = {
+  AWIN_AFFILIATE_ID: AWIN_ACCOUNT.affiliateId,
+  AWIN_IMAGE_HOSTS: [],
   ENABLE_ADS: false,
   ENABLE_EXTERNAL_TELEMETRY: false,
   ENABLE_SPONSORED_DEMOS: false,

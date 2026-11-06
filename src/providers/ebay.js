@@ -6,6 +6,10 @@ const tokens = new Map();
 const API_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
 const TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token";
 
+export function ebayCampaignId(env = {}) {
+  return String(env.EBAY_CAMPAIGN_ID || env.EBAY_CAMPAIGNID || "").trim();
+}
+
 export class EbayProviderError extends Error {
   constructor(code, status = 0) {
     super(code);
@@ -52,9 +56,10 @@ export function ebayPolicy(campaignId) {
 }
 
 export function ebayConfigured(env) {
+  const campaignId = ebayCampaignId(env);
   return Boolean(env.EBAY_PRODUCT_DISCOVERY_ENABLED === "true"
     && env.EBAY_CLIENT_ID && env.EBAY_CLIENT_SECRET
-    && (!env.EBAY_CAMPAIGN_ID || /^\d+$/.test(env.EBAY_CAMPAIGN_ID)));
+    && (!campaignId || /^\d+$/.test(campaignId)));
 }
 
 async function request(url, init, env, fetchImpl) {
@@ -121,7 +126,8 @@ export function normaliseEbayItem(item, env, now = Date.now()) {
     && shipping && Number.isFinite(delivery) && delivery >= 0
     ? { amount: Math.round((amount + delivery) * 100) / 100, currency: "GBP" }
     : null;
-  const policy = ebayPolicy(env.EBAY_CAMPAIGN_ID);
+  const campaignId = ebayCampaignId(env);
+  const policy = ebayPolicy(campaignId);
   const images = [item.image, ...(Array.isArray(item.thumbnailImages) ? item.thumbnailImages : [])]
     .filter((image) => image?.imageUrl)
     .sort((a, b) => (Number(b.width) || 0) * (Number(b.height) || 0)
@@ -134,8 +140,9 @@ export function normaliseEbayItem(item, env, now = Date.now()) {
     imageUrl: images[0]?.imageUrl,
     additionalImages: item.additionalImages?.map((image) => image.imageUrl),
     price,
-    productUrl: env.EBAY_CAMPAIGN_ID ? item.itemAffiliateWebUrl : item.itemWebUrl,
-    affiliateUrl: env.EBAY_CAMPAIGN_ID ? item.itemAffiliateWebUrl : item.itemWebUrl,
+    priceIncludesDelivery: price !== null,
+    productUrl: campaignId ? item.itemAffiliateWebUrl : item.itemWebUrl,
+    affiliateUrl: campaignId ? item.itemAffiliateWebUrl : item.itemWebUrl,
     availability: "IN_STOCK",
     condition: "NEW",
     retrievedAt: new Date(now).toISOString(),
@@ -144,11 +151,12 @@ export function normaliseEbayItem(item, env, now = Date.now()) {
 }
 
 export function createEbayProvider(env, fetchImpl) {
-  const policy = ebayPolicy(env.EBAY_CAMPAIGN_ID);
+  const campaignId = ebayCampaignId(env);
+  const policy = ebayPolicy(campaignId);
   return {
     name: "ebay",
     policy,
-    cacheScope: `${env.EBAY_CLIENT_ID || ""}:${env.EBAY_CAMPAIGN_ID || ""}`,
+    cacheScope: `${env.EBAY_CLIENT_ID || ""}:${campaignId}`,
     isAvailable: () => env.PRODUCT_DISCOVERY_ENABLED === "true" && ebayConfigured(env),
     validateProduct: (product) => validateOffer(product, policy),
     async searchProducts(query, { reserveRetry } = {}) {
@@ -167,7 +175,7 @@ export function createEbayProvider(env, fetchImpl) {
           headers: {
             Authorization: `Bearer ${token}`,
             "X-EBAY-C-MARKETPLACE-ID": "EBAY_GB",
-            ...(env.EBAY_CAMPAIGN_ID ? { "X-EBAY-C-ENDUSERCTX": `affiliateCampaignId=${env.EBAY_CAMPAIGN_ID}` } : {}),
+            ...(campaignId ? { "X-EBAY-C-ENDUSERCTX": `affiliateCampaignId=${campaignId}` } : {}),
           },
         }, env, fetchImpl);
         if (response.status !== 401 || attempt > 0) break;

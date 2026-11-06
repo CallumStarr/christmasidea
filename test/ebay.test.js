@@ -44,6 +44,19 @@ test("eBay requires its own opt-in and credentials but an affiliate campaign is 
     assert.equal(productDiscoveryAvailable({ ...env, ...patch }), false);
   }
   assert.equal(productDiscoveryAvailable({ ...env, EBAY_CAMPAIGN_ID: "" }), true);
+  assert.equal(productDiscoveryAvailable({
+    ...env, EBAY_CAMPAIGN_ID: "", EBAY_CAMPAIGNID: "1234567890",
+  }), true);
+  assert.equal(productDiscoveryAvailable({
+    ...env, EBAY_CAMPAIGN_ID: "", EBAY_CAMPAIGNID: "invalid",
+  }), false);
+});
+
+test("eBay accepts the legacy EBAY_CAMPAIGNID spelling for tracked listings", () => {
+  const configured = { ...env, EBAY_CAMPAIGN_ID: "", EBAY_CAMPAIGNID: "1234567890" };
+  const product = normaliseEbayItem(item(), configured, now);
+  assert.equal(product.affiliateUrl, item().itemAffiliateWebUrl);
+  assert.equal(isEbayProductUrl(product.affiliateUrl, id, configured.EBAY_CAMPAIGNID), true);
 });
 
 test("ordinary eBay offers work without EPN and never accept unconfigured affiliate tracking", async () => {
@@ -303,9 +316,9 @@ test("both providers enrich the same concept independently and failures retain t
         return response({ searchResult: { items: [amazonItem] } });
       },
     }, "visitor");
-    assert.deepEqual(result.offers[0].map((offer) => offer.provider), failEbay ? ["amazon"] : ["amazon", "ebay"]);
+    assert.deepEqual(result.offers[0].map((offer) => offer.provider), failEbay ? ["amazon"] : ["ebay", "amazon"]);
     assert.equal(result.unavailable, failEbay);
-    assert.equal(result.products[0].provider, "amazon");
+    assert.equal(result.products[0].provider, failEbay ? "amazon" : "ebay");
   }
 });
 

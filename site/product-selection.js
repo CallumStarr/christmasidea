@@ -50,7 +50,7 @@ export async function selectPhotographedIdeas(ideas, replacements = [], {
       for (const product of found[index] || []) {
         const identity = `${product.provider}:${product.productId}`;
         if (used.has(identity) || !validProduct(product, config)
-            || !validProductImage(product.imageUrl, product.provider)) continue;
+            || !validProductImage(product.imageUrl, product.provider, config)) continue;
         const loaded = await loadImage(product.imageUrl, signal);
         signal?.throwIfAborted();
         if (!loaded) {

@@ -2,6 +2,9 @@ import { AWIN_ACCOUNT, MERCHANTS } from "../site/config/affiliates.config.js";
 
 export function publicMonetizationConfig(env = process.env) {
   const config = {
+    AWIN_AFFILIATE_ID: env.AWIN_AFFILIATE_ID ?? AWIN_ACCOUNT.affiliateId,
+    AWIN_IMAGE_HOSTS: String(env.AWIN_IMAGE_HOSTS || "").split(",")
+      .map((host) => host.trim().toLowerCase()).filter((host) => /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/.test(host)),
     ENABLE_ADS: env.ENABLE_ADS === "true",
     ENABLE_EXTERNAL_TELEMETRY: env.ENABLE_EXTERNAL_TELEMETRY === "true",
     ENABLE_SPONSORED_DEMOS: env.ENABLE_SPONSORED_DEMOS === "true",
@@ -13,7 +16,9 @@ export function publicMonetizationConfig(env = process.env) {
     MERCHANT_PROGRAMMES: {},
   };
   if (env.AMAZON_PARTNER_TAG) config.AMAZON_TAG = env.AMAZON_PARTNER_TAG;
-  if (env.EBAY_CAMPAIGN_ID) config.EBAY_CAMPAIGN_ID = env.EBAY_CAMPAIGN_ID;
+  if (env.EBAY_CAMPAIGN_ID || env.EBAY_CAMPAIGNID) {
+    config.EBAY_CAMPAIGN_ID = env.EBAY_CAMPAIGN_ID || env.EBAY_CAMPAIGNID;
+  }
   for (const id of Object.keys(MERCHANTS).filter((id) => !["amazon", "ebay"].includes(id))) {
     const prefix = id.toUpperCase();
     const awin = AWIN_ACCOUNT.programmes[id];

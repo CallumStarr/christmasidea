@@ -1,7 +1,9 @@
 // Registry of every source the engine draws on or has evaluated. Status is deliberately conservative: only sources
 // that run in production today are "live". Nothing here enables a source; it documents what each one is allowed to do.
 
-import { configuredProviderId } from "../providers/index.js";
+import { configuredProviderIds } from "../providers/index.js";
+import { awinConfigured } from "../providers/awin.js";
+import { PRODUCT_EVIDENCE_POLICY } from "./product-evidence-policy.js";
 
 export const SOURCE_STATUS = ["live", "conditional", "designed", "evaluated", "rejected"];
 
@@ -40,6 +42,34 @@ export const SOURCES = [
     requires: ["PRODUCT_DISCOVERY_ENABLED=true", "AMAZON_CREATORS_CLIENT_ID", "AMAZON_CREATORS_CLIENT_SECRET", "AMAZON_PARTNER_TAG"],
   },
   {
+    id: "ebay-browse-api",
+    kind: "product",
+    status: "conditional",
+    provides: ["new UK listings", "GBP prices including listed delivery", "listing images", "campaign-bound affiliate links when configured"],
+    trust: "eBay Browse API; listing, condition, delivery, campaign and image host are validated",
+    cost: "eBay Browse API calls under per-visitor and account limits",
+    requires: ["PRODUCT_DISCOVERY_ENABLED=true", "EBAY_PRODUCT_DISCOVERY_ENABLED=true", "eBay production credentials"],
+  },
+  {
+    id: "awin-product-feeds",
+    kind: "product",
+    status: "conditional",
+    provides: ["matched retailer products", "GBP prices", "Awin-tracked product links", "feed images from approved hosts"],
+    trust: "approved advertiser feeds, strict advertiser/link/image allowlists, and a 24-hour freshness limit",
+    cost: "D1 full-text lookup; feed imports are operator-triggered",
+    requires: ["AWIN_PRODUCT_DISCOVERY_ENABLED=true", "AWIN_CATALOG D1 binding", "approved advertiser feed imports"],
+  },
+  {
+    id: "reviewed-product-evidence",
+    kind: "knowledge",
+    status: "conditional",
+    provides: ["identity-matched independent assessments", "product review aggregates", "reviewed safety exclusions"],
+    trust: "reviewed provenance, permission, comparison scope and expiry; missing evidence is unassessed, not poor quality",
+    cost: "in-process ranking; external evidence acquisition and licensing are separate",
+    requires: ["reviewed permitted-use evidence in product-evidence-policy.js"],
+    note: "The shipped evidence registry is empty. No independent product-quality or recall-coverage claim is made.",
+  },
+  {
     id: "feedback-counters",
     kind: "learning",
     status: "live",
@@ -65,15 +95,6 @@ export const SOURCES = [
     note: "Deferred: the curated graph is small enough for lexical plus alias retrieval; revisit with a product index.",
   },
   {
-    id: "awin-rakuten-feeds",
-    kind: "product",
-    status: "evaluated",
-    provides: ["multi-retailer product feeds with GTINs"],
-    trust: "authorised affiliate feeds",
-    cost: "approval per advertiser; feed ingestion pipeline",
-    note: "Needs advertiser approval and a feed store before it can be used.",
-  },
-  {
     id: "trend-signals",
     kind: "trend",
     status: "rejected",
@@ -86,11 +107,17 @@ export const SOURCES = [
 
 /** Registry entries with their runtime status for this environment. Never exposes secret values. */
 export function sourceStatus(env = {}) {
-  const productLive = env.PRODUCT_DISCOVERY_ENABLED === "true" && configuredProviderId(env) === "amazon";
+  const configured = configuredProviderIds(env);
+  const productLive = env.PRODUCT_DISCOVERY_ENABLED === "true" && configured.includes("amazon");
   return SOURCES.map((s) => ({
     id: s.id,
     kind: s.kind,
     status: s.status,
-    active: s.status === "live" || (s.id === "amazon-creators-api" && productLive),
+    active: s.status === "live"
+      || (s.id === "amazon-creators-api" && productLive)
+      || (s.id === "ebay-browse-api" && env.PRODUCT_DISCOVERY_ENABLED === "true" && configured.includes("ebay"))
+      || (s.id === "awin-product-feeds" && awinConfigured(env))
+      || (s.id === "reviewed-product-evidence" && (PRODUCT_EVIDENCE_POLICY.exclusions.length > 0
+        || PRODUCT_EVIDENCE_POLICY.assessments.some((record) => Date.parse(record.expiresAt) > Date.now()))),
   }));
 }

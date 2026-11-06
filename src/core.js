@@ -11,6 +11,9 @@ import { feedbackKeys } from "./engine/feedback.js";
 import * as baselinePrompt from "./prompts/gift-curator-v3.3.js";
 import { catalogueFallback } from "./catalogue.js";
 import { applyLearning, feedbackCsv } from "./engine/learning.js";
+import { assessKnowledge, knowledgeCsv } from "./engine/knowledge.js";
+import { KNOWLEDGE_POLICY } from "./engine/knowledge-policy.js";
+import { issueFeedbackReceipts, verifyFeedbackReceipts } from "./engine/feedback-receipts.js";
 
 export { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS };
 export { CANDIDATE_COUNT, GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
@@ -335,11 +338,20 @@ function photoSelectionFields(input, ideas, env, raw = null) {
   return { photo_first: true, replacement_ideas: replacements };
 }
 
-function fallbackResponse(input, message, status, origin, env) {
+async function feedbackPayload(payload, input, env) {
+  const withSource = (idea) => ({ ...idea, source: idea.source || "catalogue" });
+  const replacements = applyLearning((payload.replacement_ideas || []).map(withSource), input, env).map((idea) => payload.source === "knowledge"
+    ? { ...idea, learning: { ...idea.learning, policy: KNOWLEDGE_POLICY.version } } : idea);
+  const signed = await issueFeedbackReceipts([...payload.ideas.map(withSource), ...replacements], env);
+  return { ...payload, ideas: signed.slice(0, payload.ideas.length),
+    ...(payload.replacement_ideas ? { replacement_ideas: signed.slice(payload.ideas.length) } : {}) };
+}
+
+async function fallbackResponse(input, message, status, origin, env) {
   const baseline = env.RECOMMENDATION_MODE === "baseline-v3.3";
   const result = baseline ? catalogueFallback(input) : engineFallback(input);
   logCuration(result.diagnostics, "catalogue_fallback", baseline);
-  return json({
+  return json(await feedbackPayload({
     error: message,
     fallback: true,
     source: "catalogue",
@@ -350,7 +362,7 @@ function fallbackResponse(input, message, status, origin, env) {
     product_discovery_enabled: productDiscoveryAvailable(env),
     ...photoSelectionFields(input, result.ideas, env),
     note: result.ideas.length ? "" : "We couldn't find suitable catalogue ideas for these details. Try another interest or a different budget.",
-  }, status, origin);
+  }, input, env), status, origin);
 }
 
 export async function handleRequest(request, env, deps) {
@@ -365,7 +377,7 @@ export async function handleRequest(request, env, deps) {
     const ready = typeof env.IP_SALT === "string" && env.IP_SALT.length >= 32;
     return json({ ok: ready }, ready ? 200 : 503, origin);
   }
-  if (["/api/feedback/export", "/api/feedback/review"].includes(url.pathname)) {
+  if (["/api/feedback/export", "/api/feedback/review", "/api/knowledge/export"].includes(url.pathname)) {
     if (request.method !== "POST") return json({ error: "Use POST." }, 405, origin);
     if (!origin) return json({ error: "This site isn't allowed to use the API." }, 403, null);
     if (typeof env.FEEDBACK_ADMIN_TOKEN !== "string" || env.FEEDBACK_ADMIN_TOKEN.length < 32) {
@@ -388,16 +400,18 @@ export async function handleRequest(request, env, deps) {
       return json(report, report.ok === false ? 409 : 200, origin);
     }
     const after = r.body?.after;
+    const knowledgeExport = url.pathname === "/api/knowledge/export";
+    const kind = knowledgeExport ? "V" : "L";
     if (after !== undefined && (!after || !/^F\d{4}-\d{2}-\d{2}$/.test(after.bucket)
-      || typeof after.key !== "string" || !after.key.startsWith("L|") || after.key.length > 300)) {
+      || typeof after.key !== "string" || !after.key.startsWith(`${kind}|`) || after.key.length > 300)) {
       return json({ error: "Invalid export cursor." }, 400, origin);
     }
     if (!deps.feedback?.export) return json({ error: "Feedback export is unavailable." }, 503, origin);
-    const page = await deps.feedback.export(after);
+    const page = await deps.feedback.export(after, kind);
     const headers = { ...corsHeaders(origin), "Content-Type": "text/csv; charset=utf-8",
-      "Cache-Control": "no-store", "Content-Disposition": 'attachment; filename="gift-feedback.csv"' };
+      "Cache-Control": "no-store", "Content-Disposition": `attachment; filename="gift-${knowledgeExport ? "knowledge" : "feedback"}.csv"` };
     if (page.next) headers["X-Feedback-Next"] = encodeURIComponent(JSON.stringify(page.next));
-    return new Response(feedbackCsv(page.rows), { headers });
+    return new Response(knowledgeExport ? knowledgeCsv(page.rows) : feedbackCsv(page.rows), { headers });
   }
   if (!["/api/ideas", "/api/products", "/api/feedback"].includes(url.pathname)) return json({ error: "Not found" }, 404, origin);
   if (request.method !== "POST") return json({ error: "Use POST." }, 405, origin);
@@ -411,15 +425,18 @@ export async function handleRequest(request, env, deps) {
 
   /* ---- anonymous, aggregate feedback counters ---- */
   if (url.pathname === "/api/feedback") {
-    const r = await readJson(request, 4000);
+    const r = await readJson(request, 16000);
     if (r.error) return json({ error: r.error }, r.status, origin);
-    const fb = feedbackKeys(r.body);
+    const verified = await verifyFeedbackReceipts(r.body, env);
+    if (!verified.ok) return json({ error: verified.error }, 400, origin);
+    const fb = verified.legacy ? feedbackKeys(verified.body) : { ok: true, keys: [] };
     if (!fb.ok) return json({ error: fb.error }, 400, origin);
     if (!deps.feedback) {
       console.error("Feedback storage is unavailable.");
       return json({ error: "Feedback storage is unavailable." }, 503, origin);
     }
-    const done = await deps.feedback.record(ipHash, fb.keys);
+    const done = await deps.feedback.record(ipHash, fb.keys, verified.records);
+    if (done?.reason === "expired") return json({ error: "Feedback receipt has expired. Please request fresh ideas." }, 400, origin);
     return done?.ok ? json({ ok: true, recorded: true }, 202, origin) : json({ error: "Too many events." }, 429, origin);
   }
 
@@ -441,26 +458,58 @@ export async function handleRequest(request, env, deps) {
   const baseline = env.RECOMMENDATION_MODE === "baseline-v3.3";
   const promptVersion = baseline ? baselinePrompt.PROMPT_VERSION : PROMPT_VERSION;
   const engineVersion = baseline ? "baseline-v3.3" : ENGINE_VERSION;
+  const human = await verifyTurnstile(parsed.token, ip, env, deps.fetch);
+  if (!human) return json({ error: "Please complete the check and try again.", retryTurnstile: true }, 403, origin);
+
+  const decision = assessKnowledge(input, env);
+  const knowledge = decision.result;
+  if (env.KNOWLEDGE_REUSE_ENABLED === "true") console.log("Knowledge routing", JSON.stringify({
+    reason: decision.reason, policy: KNOWLEDGE_POLICY.version,
+  }));
+  if (knowledge) {
+    if (!deps.budget?.reuse) {
+      console.error("Knowledge reuse rate limiter is unavailable; using the normal recommendation path.");
+    } else {
+      const allowance = await deps.budget.reuse(ipHash);
+      if (!allowance.ok) return json({ error: "Too many searches. Please try again later.", fallback: false }, 429, origin);
+      logCuration(knowledge.diagnostics, "reviewed_knowledge");
+      const ideas = applyLearning(knowledge.ideas, input, env).map((idea) => ({
+        ...idea, learning: { ...idea.learning, policy: KNOWLEDGE_POLICY.version },
+      }));
+      return json(await feedbackPayload({
+        ideas, note: "", recipient_summary: knowledge.recipientSummary, recipient: knowledge.recipient,
+        source: "knowledge", knowledge_version: knowledge.knowledgeVersion, engine_version: ENGINE_VERSION,
+        shortfall: false, product_discovery_enabled: productDiscoveryAvailable(env),
+        ...photoSelectionFields(input, knowledge.ideas, env),
+      }, input, env), 200, origin);
+    }
+  }
+
   if (!env.ANTHROPIC_API_KEY) {
     return fallbackResponse(input, "The AI finder is unavailable. These ideas come from our catalogue, filtered using your answers.", 503, origin, env);
   }
-
-  const human = await verifyTurnstile(parsed.token, ip, env, deps.fetch);
-  if (!human) return json({ error: "Please complete the check and try again.", retryTurnstile: true }, 403, origin);
 
   // Identical requests are served from cache and cost nothing. The key covers everything that
   // changes the answer: prompt, validator rules, model and the visitor's input.
   const cacheKeyHash = await sha256Hex(JSON.stringify([promptVersion, VALIDATOR_VERSION, engineVersion, env.MODEL || "", generationFingerprint(env), env.PRODUCT_PHOTO_FIRST === "true" ? "photo-first-v1" : "", input]));
   const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v7/${cacheKeyHash}`);
+  let cached;
   if (deps.cache) {
     try {
       const hit = await deps.cache.match(cacheKey);
       if (hit) {
         const data = await hit.json();
-        return json({ ...data, ideas: applyLearning(data.ideas, input, env), product_discovery_enabled: productDiscoveryAvailable(env), cached: true }, 200, origin);
+        if (!Array.isArray(data?.ideas) || (data.replacement_ideas !== undefined && !Array.isArray(data.replacement_ideas))) {
+          throw new Error("Invalid cached idea response.");
+        }
+        cached = data;
       }
-    } catch {}
+    } catch {
+      console.warn("Idea cache read failed; using the normal recommendation path.");
+    }
   }
+  if (cached) return json(await feedbackPayload({ ...cached, ideas: applyLearning(cached.ideas, input, env),
+    product_discovery_enabled: productDiscoveryAvailable(env), cached: true }, input, env), 200, origin);
 
   const allowance = await deps.budget.consume(ipHash);
   if (!allowance.ok) {
@@ -511,10 +560,10 @@ export async function handleRequest(request, env, deps) {
       .put(cacheKey, new Response(JSON.stringify(payload), {
         headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${ttl}` },
       }))
-      .catch(() => {});
+      .catch(() => { console.warn("Idea cache write failed; recommendations remain available."); });
     if (deps.waitUntil) deps.waitUntil(p);
   }
-  return json({ ...payload, ideas: applyLearning(payload.ideas, input, env) }, 200, origin);
+  return json(await feedbackPayload({ ...payload, ideas: applyLearning(payload.ideas, input, env) }, input, env), 200, origin);
 }
 
 /** Returns a 301 to the canonical host for www or other aliases, otherwise null. */

@@ -37,6 +37,7 @@ export function canonicalKey(product) {
   const id = String(product.productId ?? product.asin ?? "").trim().toUpperCase();
   if (provider === "amazon" || (!provider && product.asin)) return isValidAsin(id) ? `amazon:${id}` : null;
   if (provider === "ebay") return /^V1\|\d{9,15}\|\d{1,15}$/.test(id) ? `ebay:${id}` : null;
+  if (provider === "awin") return /^\d{1,8}:[A-Z0-9._-]{1,80}$/.test(id) ? `awin:${id}` : null;
   return provider && /^[A-Z0-9._-]{3,64}$/.test(id) ? `${provider}:${id}` : null;
 }
 

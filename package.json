@@ -7,6 +7,7 @@
     "deploy": "wrangler deploy",
     "test": "node --test",
     "build:pages": "node scripts/build-site-pages.mjs",
+    "awin:sync": "node scripts/sync-awin-catalogue.mjs",
     "benchmark": "node scripts/run-benchmark.js",
     "benchmark:score": "node scripts/score-benchmark.js",
     "benchmark:compare": "node scripts/compare-prompts.js",
@@ -14,9 +15,28 @@
     "benchmark:replay:v3.4": "node scripts/engine-metrics.js --results=benchmarks/v3.4/live-haiku/benchmark-results.json --expected-cases=50 --replay",
     "benchmark:review:prepare": "node scripts/create-paired-review.js",
     "validate-run": "node scripts/validate-run.js",
-    "build:images": "node scripts/build-brand-assets.mjs"
+    "build:images": "node scripts/build-brand-assets.mjs",
+    "build:app": "node scripts/build-mobile.mjs",
+    "build:app:icons": "node scripts/build-mobile-icons.mjs",
+    "app:sync": "npm run build:app && cap sync",
+    "app:android": "cap open android",
+    "app:ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/browser": "^8.0.0",
+    "@capacitor/clipboard": "^8.0.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/ios": "^8.6.0",
+    "@capacitor/share": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
+    "esbuild": "^0.28.2",
     "sharp": "^0.35.5",
     "wrangler": "^4"
   }

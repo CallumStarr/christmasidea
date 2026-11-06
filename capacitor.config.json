@@ -1,0 +1,21 @@
+{
+  "appId": "uk.co.christmasidea.santashelper",
+  "appName": "Santa's Helper",
+  "webDir": "mobile/www",
+  "backgroundColor": "#fbf7f0",
+  "server": {
+    "hostname": "localhost",
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#fbf7f0",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#fbf7f0"
+    }
+  }
+}

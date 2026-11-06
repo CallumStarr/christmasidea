@@ -5,7 +5,10 @@ recommendation pipeline. Claude reads the shopper's words and proposes candidate
 what is shown, in what order, and why.
 
 - Engine: `gift-engine-v1` · Ranker: `ranker-v1` · Prompt: `gift-intelligence-v4.0` (v3.3 frozen in `src/prompts/`)
-- Still **one LLM call per uncached search**. Everything else runs in-process in the Worker in a few milliseconds.
+- The default AI path still makes **one LLM call per uncached search**. A separately approved, fresh knowledge library can now bypass that call for supported requests; the shipped library is unapproved and empty.
+- Accepted retailer offers additionally use the shared [cold-start product evidence ranker](product-evidence-ranking.md).
+  This separate layer adds reviewed external evidence and safety exclusions without changing baseline idea generation.
+  The linked research review covers further improvements that do not require first-party live feedback.
 
 ## Pipeline
 
@@ -75,9 +78,10 @@ shopper still gets a reasoned list.
 | Deterministic multi-objective ranking + MMR | **Selected** | Carraro & Bridge found LLM diversity re-ranking inferior to greedy re-rankers on the cost/quality trade-off. MMR is cheap, stable and unit-testable. |
 | xQuAD-style aspect coverage | **Selected (lightweight)** | Implemented as the MMR coverage bonus over stated interests and motivation facets. |
 | DPP diversity | Evaluated, deferred | Better in theory, but with 8 items from about 15 candidates it adds complexity without a measurable gain over MMR. |
-| Workers AI embeddings + Vectorize | **Designed, not enabled** | Cheap: bge-small costs $0.0202/M tokens, and the Vectorize free tier covers 30M queried dimensions a month. It only pays off with a real product catalogue to search. Today's candidates come from Claude and a 103-concept graph, where BM25 + graph retrieval suffices. It is the next step once product feeds land. |
-| Amazon Creators API | Conditional (existing) | The only authorised product source wired in. Access needs 10 qualifying sales in 30 days. It stays off in production (`PRODUCT_DISCOVERY_ENABLED=false`). |
-| eBay Browse API, Awin, CJ, Rakuten | Evaluated | Possible future feeds. Each needs approval per programme or advertiser. They are recorded in the source registry. |
+| Workers AI embeddings + Vectorize | **Designed, not enabled** | The Awin feed catalogue now provides a real product index, but its full-text search plus the existing strict matcher should be measured before adding an embedding service. Revisit only if the populated index shows a retrieval gap. |
+| Amazon Creators API | Conditional (existing) | The provider is wired in but remains off in production until account access and permitted use are confirmed. |
+| eBay Browse API | Conditional (existing) | The provider is wired in and configured independently, subject to production credentials, campaign approval and per-account limits. |
+| Awin product feeds | Conditional (new) | Feed ingestion, D1 full-text retrieval and retailer-specific offer validation are implemented. They remain off until a D1 binding and fresh approved feeds are configured; see [Awin product catalogue](awin-product-catalogue.md). |
 | Trend/popularity signals | Not built | No authorised timestamped data source is connected. The engine and prompt **must not** claim anything is "trending". |
 | LLM re-ranking, LLM-built knowledge graph | Rejected | Adds cost and latency per search, and is non-deterministic. |
 | Contextual bandit (LinUCB, Li et al. 2010) | Designed | See below. |
@@ -103,7 +107,158 @@ A click is **not** treated as a good gift. The initial implementation is a revie
 
 The ranker only swaps disjoint adjacent pairs when their scores differ by more than 0.1. Each idea moves at most one position; it never adds candidates, removes age/budget/owned-item/exclusion guards or changes the selected variety. It runs after validation on model results, catalogue fallback and cache hits. Cached candidates remain unranked, so current policy changes take effect without stale learned ordering. The default flag is off and the shipped policy is unapproved: existing recommendation order is preserved until real evidence has been reviewed.
 
-Counters are rate-limited but client reports are not authenticated conversion evidence and a determined visitor can submit repeated ratings. The admin export is protected by a secret, not publicly accessible. Merchant-specific attribution or verified purchases need a separately authorised affiliate reporting integration; do not infer a purchase from an outbound click. Per-gift-concept learning and real-time bandits remain future work; this first release deliberately learns only broad category preferences in controlled cohorts.
+Counters are rate-limited but client reports are not authenticated conversion evidence. Current clients return signed card receipts; repeated events and conflicting ratings for the same receipt are deduplicated. Legacy category totals still accept unsigned reports and are not trusted reuse evidence. A determined visitor can obtain additional legitimate receipts: this is not proof of unique humans. The admin export is protected by a secret, not publicly accessible. Merchant-specific attribution or verified purchases need a separately authorised affiliate reporting integration; do not infer a purchase from an outbound click. Concept-level evidence and reviewed reuse are described below; real-time bandits remain future work.
+
+## Reviewed concept memory and API-free reuse
+
+This is a structured knowledge library, **not a document of people's descriptions** and not training Claude. It separates
+model proposals, human feedback and approved knowledge. Data accumulation alone never proves that a gift worked.
+The existing baseline release remains the normal AI path.
+
+### What evolves
+
+- `concepts.js` maps a displayed idea onto the controlled graph vocabulary: exact canonical title/query, or stem
+  similarity of at least .8 with a .1 margin over the runner-up. Ambiguous and unfamiliar concepts remain unmapped.
+  Conflicting exact title/query identities are rejected; a single exact field also requires at least .5 overlap with
+  the other non-empty field. An exact query must not attribute feedback from an unrelated title.
+  Query-derived keys survive insertions into the position-numbered graph; every observation also carries the graph version.
+- `learning.js` attaches only that controlled key/version to existing cohort metadata. The existing web and mobile feedback
+  transport carries it without sending descriptions, generated explanations, names or arbitrary new titles.
+- `feedback.js` adds daily **verified `V|` counters** for concept, topic, age/budget bands, category, ranking policy and position,
+  separately for shown/click/save/dismiss/good/bad/bought events. They use the existing Durable Object database and
+  **90-day retention**; no D1 database, paid embeddings, additional model call or new service is needed.
+- `feedback-receipts.js` signs only controlled server-produced metadata using domain-separated HMAC-SHA256 with the
+  existing Worker-only `IP_SALT`. Each card has an independent random ID, a signature and a **24-hour expiry**; receipts
+  contain no recipient text, titles, user identifier or IP. They are freshly minted after cache reads, never shared
+  inside cached responses, and also cover catalogue fallbacks and photo-first replacements. Rotating the secret invalidates
+  outstanding receipts. Signing is not encryption: the controlled labels are readable.
+- Verification ignores browser changes to concept/cohort/source/policy. Display position remains a validated **browser
+  report**, because photo selection can compact or reorder the issued candidates; signing does not verify viewport exposure.
+  An explicit interaction establishes one shown-card observation if the shown request has not arrived yet.
+- `feedback-storage.js` commits replay markers and counters in one synchronous SQLite transaction. One card can contribute
+  each event only once, and `good`/`bad` share a single rating slot. Duplicate retries succeed without incrementing counts.
+  Failed writes roll back markers too. Only random receipt IDs, event slots and expiry are stored in the indexed replay
+  table, never their cohort, IP or text; expired markers are removed during ordinary activity and the daily schedule.
+- The signed endpoint accepts bounded 16 KB bodies and up to 12 items. Both category and concept counters are retained.
+  Unsigned legacy reports still support old clients' category/usage counters but **cannot create verified concept evidence**.
+  Old `K|` counters are neither exported as verified evidence nor accepted by current proposals. The CSV schema carries
+  `evidence = signed-card-v1`; an approved policy must explicitly declare this evidence scheme.
+- Concept evidence is collected only for **exactly one recognised topic and no recognised traits**. Multi-interest or
+  trait-influenced descriptions still receive normal AI recommendations and category feedback, but their results cannot be
+  relabelled as evidence for one topic. This reduces coverage deliberately until a reviewed multi-topic representation exists.
+- `review-knowledge.mjs` proposes reusable cohort/concept pairs from the **last 60 complete UTC days**, control-policy
+  observations only, with at least **200 shown cards, 30 explicit good/bad ratings**, and a **Wilson lower bound >= .6**
+  using z=1.96. Ratings must not exceed shown cards. The last rating must be within 30 days.
+  Clicks, saves, dismissals and self-reported purchases do not qualify a concept.
+- The proposal retains position-level counts for inspection, rejects duplicate CSV rows and invalid dimensions, excludes
+  current/future days and other graph/policy versions, and always sets `approved: false`. It does not write policy code.
+  Wilson is a conservative prioritisation heuristic here, **not a valid confidence guarantee about independent shoppers**:
+  counts can include multiple legitimate cards from one person, exposure bias and malicious input.
+
+This deliberately learns only concepts already in the reviewed vocabulary. It does **not** automatically retain or promote
+novel model-generated text. To expand the vocabulary, curate new generic physical-gift concepts in `interest-graph.js`,
+review their audience/budget/facet mappings, bump `GRAPH_VERSION`, test and deploy. Old-version evidence is excluded
+until reviewed/migrated separately. No sensitive recipient text should be copied into the graph or policy.
+
+### Activation and rollback
+
+1. Deploy these changes to begin concept-level collection. Existing caches gain current concept metadata when served.
+   The shipped `knowledge-policy.js` is empty/unapproved; normal AI results and ordering are unchanged.
+2. With the existing admin secret configured, export locally:
+
+   ```powershell
+   node scripts\export-feedback.mjs gift-knowledge.csv --knowledge
+   node scripts\review-knowledge.mjs gift-knowledge.csv
+   node scripts\evaluate-knowledge.mjs
+   ```
+
+   This uses the admin-only paginated `POST /api/knowledge/export` and existing `X-Feedback-Next` cursor convention.
+   The concept cursor now uses `V|`; the category export remains unchanged. Old concept CSV headers are rejected rather
+   than silently mixing unverified evidence. Keep exported files private and delete them when no longer needed;
+   the default CSV filenames are ignored by Git. Server retention does not delete local exports.
+3. Inspect the proposal and position counts; investigate repeated feedback, bias and seasonal changes. Complete the
+   deterministic tests/replays and a **blind paired review against the selected baseline**, including unusual interests,
+   children, tight budgets, owned/avoided gifts and repeat-search exclusions. Do not copy synthetic test evidence.
+4. Copy accepted cells into `knowledge-policy.js`, preserve the graph/cutoff/expiry, give the policy a new version, and
+   set `approved: true` only for an accepted release. Never extend expiry merely to keep reuse running.
+   The release flag `KNOWLEDGE_REUSE_ENABLED = "true"` still requires an approved, valid policy.
+5. Disable that flag to roll back reuse immediately on the next deployment. An expired policy automatically abstains.
+   Category ranking has its separate approval/flag and is not enabled by concept collection.
+
+### Request-time quality and privacy gates
+
+The router checks Turnstile first, then attempts reuse **before consuming AI allowance or calling Claude**, including
+when no Anthropic key is configured. Successful reuse is separately rate-limited with the existing per-visitor day/minute
+limits and does not consume the global paid-AI budget. The policy must match the graph and expire within 30 days of its
+evidence cutoff (inclusive of the following day); future, stale or invalid dates are rejected.
+
+Known age (4+) and budget are required. The initial recogniser accepts only requests composed of **one recognised interest,
+no recognised traits**, and a narrow set of ordinary relationship/age/budget words. Unknown words, names, nuanced requirements, non-recognised
+languages, owned items and dislikes cause abstention rather than being ignored. It is intentionally conservative, not a
+general natural-language confidence estimator. More requests can bypass Claude as supported cohorts/concepts accumulate;
+unsupported long-tail requests still need Claude.
+
+Only reviewed concepts for the exact topic/age/budget cohort and recent rating date enter the pool. Age and strict concept
+price-cap checks run before the **existing validator, exclusions, ranker, MMR and grounded explanation pipeline**.
+Unreviewed graph backups are disabled for this route. Reuse requires **8 surviving ideas, at least 3 categories, a grounded
+connection for every card, and direct selected-concept coverage of every detected non-trait interest**. Otherwise the normal
+AI/cache/fallback path runs. Existing variety-cap relaxation is preserved; three categories is the additional library gate.
+Gift prices are estimates, not verified offers: the existing live product matcher still checks current retailer listings.
+
+The API labels results `source: "knowledge"` with the policy version; individual cards truthfully remain graph-sourced.
+Feedback from this route uses the knowledge-policy version, **not control-v1**, preventing it from feeding its own approval
+evidence. The UI explains that no new AI call was needed and pauses automatic prefetch for this finite library.
+Photo-first replacement candidates retain the existing validated catalogue behavior; they are not claimed to be reviewed
+library selections, and they inherit the knowledge-policy feedback label to prevent control-evidence contamination.
+
+### Readiness and production observability
+
+`assessKnowledge` returns bounded reason codes, shared by runtime routing and the offline evaluator: disabled, unapproved,
+invalid policy, graph mismatch, stale policy, unsupported profile, insufficient evidence, validation shortfall, ungrounded
+explanations, insufficient diversity, missing interest coverage or reused. Enabled production requests log only the reason
+and controlled policy version, never request text or a recipient model.
+
+```powershell
+node scripts\evaluate-knowledge.mjs
+# Optional custom cases and a JSON policy:
+node scripts\evaluate-knowledge.mjs cases.json policy.json
+```
+
+The evaluator never approves policies or makes paid API calls. It reports exact bypass/abstention counts, reasons and
+case-set slices, plus existing structural metrics for reused lists. Inputs must be valid and case IDs unique. It does
+not output descriptions or recommended titles. An unapproved shipped policy correctly reports **zero bypass**, not a
+success-shaped demonstration made from synthetic ratings. Keep proposals unapproved until human quality review; use
+an explicitly approved evaluation copy only when assessing a reviewed candidate policy. These structural reports are
+not prediction accuracy, user satisfaction, conversion uplift or a substitute for an experiment.
+
+The current deployment remains a small-site Worker with one shared Durable Object. This work does not establish
+high-traffic capacity, independent-human sampling, native-device quality or top-company-equivalent relevance.
+Production launch still needs real traffic monitoring, end-to-end device checks, an accepted blind paired review and a
+later held-out/appropriately randomised quality evaluation. Do not remove abstention or fabricate support to raise bypass.
+
+### Research decisions and evaluation (6 November 2026)
+
+Primary/official sources were checked directly; this is a staged engineering design, not a claim of state-of-the-art quality.
+
+| Method / evidence | Decision and implementation consequence |
+|---|---|
+| [Google: candidate generation, scoring and re-ranking](https://developers.google.com/machine-learning/recommendation/overview) and [freshness/diversity guidance](https://developers.google.com/machine-learning/recommendation/dnn/re-ranking) | Keep retrieval separate from final eligibility/diversity. Reuse passes through the existing graph/BM25/MMR system rather than replaying another shopper's explanation. Add fresh-evidence expiry and category/interest coverage gates. |
+| [NIST: Wilson interval](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm) | Use the lower bound rather than raw approval percentage when proposing concepts. Minimum support and human review remain mandatory; dependent/biased feedback invalidates a literal confidence interpretation. |
+| [Schnabel et al., ICML 2016: Recommendations as Treatments](https://arxiv.org/abs/1602.05352) | Separate policy versions and retain position strata. Do not claim unbiased uplift from observational counts, pool treatment outcomes into control, or optimise purchases inferred from clicks. |
+| [Ji et al., TOIS: data leakage in offline evaluation](https://arxiv.org/abs/2010.11060) | Complete-day cutoffs and recent windows are enforced. For acceptance, train/propose before a fixed cutoff and evaluate on later held-out evidence; never shuffle future observations into the policy being evaluated. |
+| [Li et al., WWW 2010: contextual bandits](https://arxiv.org/abs/1003.0146) | Defer automatic exploration until sufficient traffic, a defined quality reward, an approved experiment, action probabilities and randomised logging exist. The paper's click lift in news is not evidence of gift suitability. |
+| [Google: negative examples and representation folding](https://developers.google.com/machine-learning/recommendation/dnn/training) | Preserve explicit poor-match feedback, not just successes. Defer collaborative filtering/two-tower training: there is no suitable consented user-item history, and sparse gift traffic makes cold start important. Never treat unshown gifts as negative ratings. |
+| [Shumailov et al.: recursive generated-data training](https://arxiv.org/abs/2305.17493) | Model suggestions are proposals, not ground truth. Require human feedback and reviewed vocabulary, keep human evidence distinct, and prevent reuse-policy observations from self-promoting. This paper concerns generative training; it is motivation, not proof this deterministic library would suffer model collapse. |
+| [ICO: data minimisation](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/data-protection-principles/a-guide-to-the-data-protection-principles/data-minimisation/) | No raw-description archive, persistent user profile or model-output document. Controlled aggregates, bounded retention, authenticated exports and updated privacy notice instead. |
+
+Before enabling an approved library, measure the **actual API-bypass fraction**, abstention/shortfall rates, latency and
+cost per successful search; concept-mapping coverage can be estimated by comparing K-shown counts with L-shown counts.
+Assess explicit rating outcomes by policy/position and broad age/budget/topic cohorts, plus ILD, direct-interest coverage,
+budget failures, duplicate concepts and human paired preference. Do not count rendered cards as viewport impressions or
+unique recipients, and do not infer causal improvement from higher engagement.
+Existing benchmark replays are API-free structural regression checks, not a learned-quality evaluation.
+Verified affiliate conversion ingestion, embeddings over an authorised catalogue, and a randomised holdout remain
+separate follow-ups requiring evidence/access or experimental approval; none is silently enabled here.
 
 ### Feedback readiness notifications
 

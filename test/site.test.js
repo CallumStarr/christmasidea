@@ -257,8 +257,11 @@ test("site privacy text describes optional Amazon product search without Pexels 
 
 test("privacy notice explains feedback minimisation and scheduled retention cleanup", async () => {
   const privacy = await read("privacy.html");
-  assert.match(privacy, /does not receive your recipient description, generated idea text or a session identifier/);
-  assert.match(privacy, /daily aggregate counters/);
+  assert.match(privacy, /contains no recipient description, generated idea text, IP address or user\/session identifier/);
+  assert.match(privacy, /Aggregate counts remain stored per day for 90 days/);
+  assert.match(privacy, /Receipts are valid for 24 hours/);
+  assert.match(privacy, /expired markers are deleted during normal service activity or the next daily cleanup/);
+  assert.match(privacy, /Good and poor-match ratings share one slot per receipt/);
   assert.match(privacy, /daily scheduled cleanup prunes feedback aggregate counters once they are 90 days old/);
   assert.match(privacy, /pseudonymous processing, not a guarantee of anonymity/);
   assert.match(privacy, /daily and minute buckets/);

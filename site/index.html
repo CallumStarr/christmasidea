@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="/app-config.js"></script>
 <title>Christmas Gift Ideas for Anyone on Your List | Santa's Helper</title>
 <meta name="description" content="Find gift ideas for family, friends or Secret Santa. Share their interests and your budget, or browse guides with practical buying advice.">
 <link rel="canonical" href="https://christmasidea.co.uk/">
@@ -26,6 +27,7 @@
 <link rel="stylesheet" href="/home.css">
 <link rel="stylesheet" href="/monetization.css">
 <link rel="stylesheet" href="/swipe-deck.css">
+<link rel="stylesheet" href="/app.css">
 <link rel="preload" as="image" href="/images/finder-canvas-1000.webp" media="(max-width:1000px)" fetchpriority="high" imagesrcset="/images/finder-canvas-1000.webp 1x, /images/finder-canvas-2048.webp 2x">
 <link rel="preload" as="image" href="/images/finder-canvas-2048.webp" media="(min-width:1001px)" fetchpriority="high">
 <script type="module" src="/site-shell.js"></script>
@@ -86,11 +88,11 @@ window.GIFT_CONFIG = {
         <div class="mode-options" role="radiogroup" aria-label="How to describe the gift recipient">
           <label class="mode-option">
             <input type="radio" name="mode" value="describe" checked>
-            <span>Describe them</span>
+            <span class="mode-copy"><small class="mode-index" aria-hidden="true">01</small><strong class="mode-title">Describe them</strong><small class="mode-note">A few words, in your own way.</small></span>
           </label>
           <label class="mode-option">
             <input type="radio" name="mode" value="guided">
-            <span>Answer a few questions</span>
+            <span class="mode-copy"><small class="mode-index" aria-hidden="true">02</small><strong class="mode-title">Answer a few questions</strong><small class="mode-note">A little guidance, detail by detail.</small></span>
           </label>
         </div>
       </fieldset>
@@ -389,6 +391,7 @@ import { retailerLinks } from "/affiliateRouter.js";
 import { savedIdea, savedKey, RECIPIENT_LABELS, verifiedGiftDisclosure } from "/monetization-data.js";
 import { createMonetizationUI } from "/monetization-ui.js";
 import { createSwipeDeck, shouldPrefetch } from "/swipe-deck.js";
+import { createAppVerification } from "/app-verification.js";
 import { WISHLISTS_KEY, readWishlists, writeWishlists, activeWishlist, addWishlist } from "/wishlists.js";
 (() => {
 "use strict";
@@ -522,11 +525,13 @@ function ebayUrl(query){
 
 /* ---------- Turnstile (optional) ---------- */
 let tsWidget = null;
+let appVerification = null;
 const turnstileEnabled = Boolean(CFG.USE_API && CFG.TURNSTILE_SITE_KEY);
 const tsGate = createTurnstileTokenGate();
 function resetTurnstile(){
   tsGate.recover();
   $("#ts").classList.remove("turnstile-interactive");
+  if (appVerification) { appVerification.reset(); return; }
   if (tsWidget === null) {
     tsGate.fail("The security check isn't available. Refresh the page and try again.");
     throw new TurnstileTokenError("The security check isn't available. Refresh the page and try again.");
@@ -538,7 +543,16 @@ function resetTurnstile(){
     throw new TurnstileTokenError("The security check couldn't be refreshed. Refresh the page and try again.");
   }
 }
-if (CFG.USE_API && CFG.TURNSTILE_SITE_KEY){
+if (turnstileEnabled && window.GIFT_APP_NATIVE) {
+  appVerification = createAppVerification({
+    container: $("#ts"),
+    siteKey: CFG.TURNSTILE_SITE_KEY,
+    onToken: (token) => tsGate.provide(token),
+    onError: (message) => { tsGate.fail(message); setStatus(message, true); },
+    onExpire: () => tsGate.invalidate(),
+  });
+  tsWidget = "app";
+} else if (CFG.USE_API && CFG.TURNSTILE_SITE_KEY){
   const turnstileError = () => {
     $("#ts").classList.remove("turnstile-interactive");
     const message = "The security check couldn't load. Check your connection or refresh the page, then try again.";
@@ -578,7 +592,7 @@ if (CFG.USE_API && CFG.TURNSTILE_SITE_KEY){
 }
 
 /* ---------- API ---------- */
-const apiOn = () => CFG.USE_API && location.protocol.startsWith("http");
+const apiOn = () => CFG.USE_API && (window.GIFT_APP_NATIVE || location.protocol.startsWith("http"));
 
 async function fillProducts(ideas){
   if (!ideas.length || !apiOn()) return;
@@ -627,20 +641,31 @@ function showFeedback(message, tone = "info"){
 }
 
 function setVerifiedProduct(card, idea, product){
-  const merchant = product.provider === "ebay" ? "eBay" : "Amazon";
+  const merchant = product.provider === "ebay" ? "eBay"
+    : product.provider === "awin" ? product.merchantName || "retailer" : "Amazon";
   const media = card.querySelector(".media");
-  const shop = card.querySelector(`.shop[data-provider="${product.provider}"]`);
+  let shop = card.querySelector(`.shop[data-provider="${product.provider}"]`);
+  if (!shop && product.provider === "awin") {
+    const links = card.querySelector(".merchant-links");
+    const offer = document.createElement("div"); offer.className = "merchant-offer";
+    shop = document.createElement("a"); shop.className = "shop"; shop.dataset.provider = "awin";
+    shop.dataset.network = "awin"; shop.target = "_blank"; shop.rel = "sponsored noopener noreferrer";
+    offer.append(shop); links.append(offer);
+  }
   if (!shop) return;
   const disclosure = card.querySelector(".aff");
   const note = media.querySelector(".image-note");
-  const affiliate = product.provider === "amazon" || /^\d+$/.test(CFG.EBAY_CAMPAIGN_ID || "");
+  const affiliate = product.provider === "amazon" || product.provider === "awin"
+    || /^\d+$/.test(CFG.EBAY_CAMPAIGN_ID || "");
   shop.href = product.affiliateUrl;
   shop.textContent = `View on ${merchant}`;
   shop.setAttribute("aria-label", `View ${product.title} on ${merchant} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
   const listing = document.createElement("p"); listing.className = "offer-detail";
   listing.textContent = `Matched ${merchant} listing: ${product.title}`;
   shop.after(listing);
-  disclosure.textContent = "Ad · Matched offers are retailer-specific; other buttons remain searches.";
+  disclosure.textContent = product.provider === "awin"
+    ? "Ad · This retailer link may earn us a commission; other buttons remain searches."
+    : "Ad · Matched offers are retailer-specific; other buttons remain searches.";
 
   const retrieved = Date.parse(product.retrievedAt), expires = Date.parse(product.expiresAt);
   let price = null;
@@ -651,14 +676,17 @@ function setVerifiedProduct(card, idea, product){
     price.dataset.amount = product.price.amount;
     price.dataset.retrievedAt = product.retrievedAt;
     price.dataset.expiresAt = expires;
-    price.textContent = `${merchant}: ${new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(product.price.amount)}${product.provider === "ebay" ? " incl. listed delivery" : ""}`;
+    price.textContent = `${merchant}: ${new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(product.price.amount)}${product.provider === "ebay" || product.deliveryIncluded ? " incl. listed delivery" : product.provider === "awin" ? " + delivery" : ""}`;
     listing.after(price);
   }
   setTimeout(() => {
     if (!card.isConnected || shop.href !== product.affiliateUrl) return;
-    shop.href = product.provider === "ebay" ? ebayUrl(idea.query) : amazonUrl(idea.query);
-    shop.textContent = `Search ${merchant}`;
-    shop.setAttribute("aria-label", `Search ${merchant} for ${idea.title} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
+    if (product.provider === "awin") shop.parentElement.remove();
+    else {
+      shop.href = product.provider === "ebay" ? ebayUrl(idea.query) : amazonUrl(idea.query);
+      shop.textContent = `Search ${merchant}`;
+      shop.setAttribute("aria-label", `Search ${merchant} for ${idea.title} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
+    }
     listing.remove(); price?.remove();
     if (photo && media.querySelector(".product-image") === photo){
       photo.remove(); media.querySelector(".product-badge")?.remove();
@@ -668,23 +696,24 @@ function setVerifiedProduct(card, idea, product){
         showFeedback("An expired product photo was removed from your ideas.");
       }
     }
-    disclosure.textContent = "Ad · Check both shops for current listings and prices.";
+    disclosure.textContent = "Ad · Check the shopping links for current listings and prices.";
   }, Math.max(0, expires - Date.now()));
 
-  if (!validProductImage(product.imageUrl, product.provider)) return;
+  if (!validProductImage(product.imageUrl, product.provider, CFG)) return;
   const previous = media.querySelector(".product-image");
   if (previous && (product.provider !== "amazon" || previous.dataset.provider === "amazon")) return;
   previous?.remove();
   media.querySelector(".product-badge")?.remove();
   card.classList.add("verified");
   const badge = document.createElement("span"); badge.className = "product-badge";
-  badge.textContent = product.provider === "ebay" ? "Example product" : "Matched Amazon listing";
+  badge.textContent = product.provider === "ebay" ? "Example product"
+    : product.provider === "awin" ? "Matched retailer product" : "Matched Amazon listing";
   media.append(badge);
   photo = document.createElement(product.provider === "ebay" ? "div" : "a");
   photo.className = "product-image"; photo.dataset.provider = product.provider;
-  if (product.provider === "amazon"){
+  if (product.provider !== "ebay"){
     photo.href = product.affiliateUrl; photo.target = "_blank"; photo.rel = "sponsored noopener noreferrer";
-    photo.setAttribute("aria-label", `View ${product.title} on Amazon (affiliate link, opens in new tab)`);
+    photo.setAttribute("aria-label", `View ${product.title} on ${merchant} (affiliate link, opens in new tab)`);
   }
   const image = document.createElement("img"); image.className = "image-loading";
   image.alt = product.provider === "ebay" ? `Example of ${idea.title}: ${product.title}` : product.title;
@@ -701,11 +730,12 @@ function setVerifiedProduct(card, idea, product){
     } else showFeedback(`The ${merchant} photo couldn't load. The shop links are still available.`);
   });
   photo.append(image); media.prepend(photo);
-  note.textContent = product.provider === "ebay" ? "Example photo: eBay. Amazon product may differ." : "Photo from Amazon listing";
+  note.textContent = product.provider === "ebay" ? "Example photo: eBay. Amazon product may differ."
+    : product.provider === "awin" ? `Photo from ${merchant} product feed` : "Photo from Amazon listing";
 }
 
 /* ---------- feedback (enumerated fields only, never titles or text) ---------- */
-const fbItem = (idea, position) => ({ strategy: idea.strategy, source: idea.source, discovery: idea.discovery === true, position, learning: idea.learning });
+const fbItem = (idea, position) => ({ strategy: idea.strategy, source: idea.source, discovery: idea.discovery === true, position, learning: idea.learning, ...(idea.feedbackToken ? { feedbackToken: idea.feedbackToken } : {}) });
 let rejectedTitles = [];
 async function sendFeedback(body){
   const recorded = await postFeedback(body, { enabled: apiOn() });
@@ -1181,7 +1211,7 @@ async function run(input, { append = false, background = false } = {}){
     $("#recipient-insight").hidden = !summary && !understood;
     $("#results").hidden = false;
     setStatus(out.notice || "", false);
-    $("#source").textContent = out.source === "ai" ? "Ideas suggested by AI using the details you shared." : "Ideas selected from our catalogue using your answers.";
+    $("#source").textContent = out.source === "ai" ? "Ideas suggested by AI using the details you shared." : out.source === "knowledge" ? "Ideas selected from our reviewed gift library using your answers. No new AI call was needed." : "Ideas selected from our catalogue using your answers.";
     if (!append) $("#cards").focus({ preventScroll: true });
     if (out.productDiscoveryEnabled && !out.photoFirst) fillProducts(out.ideas);
   } catch (error) {
@@ -1323,5 +1353,6 @@ if (pageUrl.searchParams.get("shortlist") === "1") {
 }
 })();
 </script>
+<script type="module" src="/app.js"></script>
 </body>
 </html>

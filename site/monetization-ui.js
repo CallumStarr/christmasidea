@@ -53,9 +53,14 @@ export function createMonetizationUI({ config, notify, getShortlist, setShortlis
   async function share(method) {
     try {
       const items = currentList();
-      const url = await wishlistUrl(items, location.href);
+      const url = await wishlistUrl(items, globalThis.GIFT_APP_NATIVE ? `https://christmasidea.co.uk/${location.hash}` : location.href);
       const text = sharedListText(items.map(resolve), url, linksFor);
       if (method === "native") {
+        if (globalThis.GIFT_NATIVE) {
+          await globalThis.GIFT_NATIVE.share({ title: "My gift shortlist", text });
+          track("native_share");
+          return;
+        }
         if (!navigator.share) {
           await navigator.clipboard.writeText(text);
           notify("Native sharing is unavailable. Your gift list and shopping links were copied instead.");
@@ -65,12 +70,19 @@ export function createMonetizationUI({ config, notify, getShortlist, setShortlis
         await navigator.share({ title: "My gift shortlist", text });
         track("native_share");
       } else if (method === "whatsapp" || method === "whatsapp-web") {
+        if (globalThis.GIFT_NATIVE) {
+          await globalThis.GIFT_NATIVE.share({ title: "My gift shortlist", text });
+          track("whatsapp_share");
+          return;
+        }
         track("whatsapp_share");
         notify("Opening WhatsApp. If the app is unavailable, use WhatsApp Web instead.");
         location.href = method === "whatsapp" ? `whatsapp://send?text=${encodeURIComponent(text)}`
           : `https://wa.me/?text=${encodeURIComponent(text)}`;
       } else {
-        await navigator.clipboard.writeText(method === "url" ? url : text);
+        const content = method === "url" ? url : text;
+        if (globalThis.GIFT_NATIVE) await globalThis.GIFT_NATIVE.copy(content);
+        else await navigator.clipboard.writeText(content);
         notify(method === "url" ? "Shareable gift-list link copied." : "Gift list and shopping links copied.");
         track(method === "url" ? "wishlist_share" : "copy_list");
       }
