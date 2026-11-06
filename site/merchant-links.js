@@ -19,14 +19,23 @@ export function ebayUrl(query, config = {}) {
   return url.toString();
 }
 
+// Device clocks drift from the server's. A listing timestamped slightly "in the future" by this
+// device's clock is still a fresh listing, so allow a few minutes either way before rejecting it.
+export const CLOCK_SKEW_MS = 5 * 60000;
+
+/** True when the server's retrieval time is plausible on this device's clock, allowing for drift. */
+export function retrievedInPast(retrieved, now = Date.now()) {
+  return Number.isFinite(retrieved) && retrieved <= now + CLOCK_SKEW_MS;
+}
+
 export function validProduct(product, config = {}, now = Date.now()) {
   if (!product || !["amazon", "ebay", "awin"].includes(product.provider)
       || product.affiliateUrl !== product.productUrl || !product.title
       || product.condition !== "NEW" || !["IN_STOCK", "IN_STOCK_SCARCE"].includes(product.availability)) return false;
   const retrieved = Date.parse(product.retrievedAt), expires = Date.parse(product.expiresAt);
   const maxAge = product.provider === "awin" ? 24 * 3600000 : 3600000;
-  if (!Number.isFinite(retrieved) || !Number.isFinite(expires) || retrieved > now
-      || now - retrieved >= maxAge || expires <= now || expires > retrieved + maxAge) return false;
+  if (!Number.isFinite(expires) || !retrievedInPast(retrieved, now)
+      || now - retrieved >= maxAge + CLOCK_SKEW_MS || expires <= now || expires > retrieved + maxAge) return false;
   try {
     const url = new URL(product.affiliateUrl);
     if (url.protocol !== "https:" || url.username || url.password || url.port) return false;

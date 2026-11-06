@@ -109,3 +109,18 @@ test("cancellation during product or image retrieval cannot commit a partial lis
     }), { name: "AbortError" });
   }
 });
+
+test("selection reports a degraded check only when lookups were limited or unavailable", async () => {
+  const limited = await selectPhotographedIdeas([idea("Limited")], [], {
+    fetchBatches: async (_ideas, callback) => callback({ products: [null], limited: true }, 0),
+    loadImage: async () => true,
+  });
+  assert.equal(limited.degraded, true);
+  const disabled = await selectPhotographedIdeas([idea("Disabled")], [], { enabled: false });
+  assert.equal(disabled.degraded, true);
+  const empty = await selectPhotographedIdeas([idea("No match")], [], {
+    fetchBatches: async (_ideas, callback) => callback({ products: [null] }, 0),
+    loadImage: async () => true,
+  });
+  assert.equal(empty.degraded, false, "a completed check that found nothing is not degraded");
+});

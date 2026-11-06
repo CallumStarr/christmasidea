@@ -127,6 +127,20 @@ test("photo-first finder hides previous results and offers retry when no photogr
   assert.ok(ui.$("#status").children.some((child) => child.textContent === "Try again"));
 });
 
+test("photo-first finder shows ideas without photos when the photo check itself could not run", async () => {
+  const first = { title: "Coffee grinder" }, second = { title: "Garden lantern" };
+  const ui = frontend(async () => Response.json({
+    ideas: [first, second], photo_first: true, product_discovery_enabled: true, source: "ai",
+  }), {
+    selectPhotographedIdeas: async () => ({ selected: [], notice: "Photo lookups reached their limit.", degraded: true }),
+  });
+  vm.runInContext("globalThis.CFG = {}", ui.context);
+  await ui.action(() => ui.$("#form").events.submit({ preventDefault() {} }), "degraded-photo-token");
+  assert.deepEqual(ui.rendered[0], [first, second]);
+  assert.equal(ui.renderOptions[0].photoFirst, false);
+  assert.equal(ui.$("#results").hidden, false);
+});
+
 test("real more/retry handlers retain bounded exclusions through the API and baseline release (mocked network)", async () => {
   const bodies = [], prompts = [], verified = new Set(), cacheKeys = [];
   let generation = 0;

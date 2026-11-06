@@ -311,7 +311,9 @@ test("recommendations remain available without Pexels or Amazon credentials", as
 
 test("/api/products stays inert without an enabled, credentialed provider", async () => {
   const captured = [];
-  const res = await handleRequest(req({ ideas: [{ title: "Hand coffee grinder", query: "hand coffee grinder" }], }, { path: "/api/products" }), env, {
+  const { issueFeedbackReceipts } = await import("../src/engine/feedback-receipts.js");
+  const [signed] = await issueFeedbackReceipts([{ title: "Hand coffee grinder", query: "hand coffee grinder", source: "model" }], env);
+  const res = await handleRequest(req({ ideas: [signed], }, { path: "/api/products" }), env, {
     fetch: async (...args) => { captured.push(args); throw new Error("unexpected provider call"); },
   });
   const data = await res.json();

@@ -107,7 +107,8 @@ test("issued receipts bind product constraints, identity and budget without stor
     { ...signed, feedbackToken: "invalid" },
   ]) assert.equal((await verifyProductReceipts([modified], env, now)).ok, false);
   assert.equal((await verifyProductReceipts([signed], env, now + RECEIPT_LIFETIME_MS)).ok, false);
-  assert.equal((await verifyProductReceipts([idea], env, now)).ok, true, "old unsigned clients remain supported");
+  assert.equal((await verifyProductReceipts([idea], env, now)).ok, false, "unsigned ideas cannot spend the product budget");
+  assert.equal((await verifyProductReceipts([signed, idea], env, now)).ok, false, "every idea must be signed");
   const { productHash: _hash, ...oldPayload } = payload;
   const encoded = Buffer.from(JSON.stringify(oldPayload)).toString("base64url");
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.IP_SALT),
@@ -115,7 +116,7 @@ test("issued receipts bind product constraints, identity and budget without stor
   const signature = Buffer.from(await crypto.subtle.sign("HMAC", key,
     new TextEncoder().encode(`santas-helper:feedback:v1:${encoded}`))).toString("base64url");
   assert.equal((await verifyProductReceipts([{ ...idea, feedbackToken: `${encoded}.${signature}` }], env, now)).ok,
-    true, "pre-upgrade signed receipts remain supported");
+    false, "receipts without a product binding cannot be reused for arbitrary searches");
   let searched = false;
   const request = (value) => new Request(`${env.ALLOWED_ORIGINS}/api/products`, {
     method: "POST", headers: { Origin: env.ALLOWED_ORIGINS, "Content-Type": "application/json" },

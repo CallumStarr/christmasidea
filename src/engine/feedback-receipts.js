@@ -59,17 +59,22 @@ export async function issueFeedbackReceipts(ideas, env, now = Date.now()) {
   }));
 }
 
+/**
+ * Product lookups spend the shared merchant-search budget, so every idea must carry a receipt this Worker issued
+ * for that exact idea (title, query and product constraints). Unsigned ideas, and older receipts issued before
+ * product binding, are refused: otherwise anyone could use the endpoint as a free search proxy and exhaust the
+ * daily budget, which in photo-first mode leaves every visitor with no ideas.
+ */
 export async function verifyProductReceipts(ideas, env, now = Date.now()) {
-  const signed = ideas.slice(0, 8).filter((idea) => idea?.feedbackToken !== undefined);
-  if (!signed.length) return { ok: true, legacy: true };
+  const requested = ideas.slice(0, 8);
+  if (!requested.length) return { ok: true };
+  const fail = { ok: false, error: "Product details changed or their receipt expired. Request fresh ideas." };
+  if (requested.some((idea) => typeof idea?.feedbackToken !== "string")) return fail;
   const key = await signingKey(env);
-  for (const idea of signed) {
+  for (const idea of requested) {
     const receipt = await readReceipt(idea.feedbackToken, key, now);
-    if (!receipt || (receipt.productHash !== undefined && receipt.productHash !== await productHash(idea))) {
-      return { ok: false, error: "Product details changed or their receipt expired. Request fresh ideas." };
-    }
+    if (!receipt || typeof receipt.productHash !== "string" || receipt.productHash !== await productHash(idea)) return fail;
   }
-  // Pre-upgrade clients/receipts remain compatible; only new issued receipts bind product constraints.
   return { ok: true };
 }
 

@@ -7,6 +7,7 @@ import { amazonUrl, ebayUrl, validProduct, validProductImage } from "../site/mer
 import { fetchProducts } from "../site/api.js";
 import { selectPhotographedIdeas } from "../site/product-selection.js";
 import { handleRequest } from "../src/core.js";
+import { issueFeedbackReceipts } from "../src/engine/feedback-receipts.js";
 
 const env = {
   PRODUCT_DISCOVERY_ENABLED: "true",
@@ -392,13 +393,15 @@ test("frontend preserves multi-merchant offers and partial provider failures", a
 
 test("the product endpoint returns eBay photos without calling Amazon or requiring AI credentials", async () => {
   const origin = "https://gifts.example.com";
+  const salt = "unit-test-ip-salt-0123456789abcdef";
+  const [signed] = await issueFeedbackReceipts([{ ...idea, source: "model" }], { IP_SALT: salt });
   const request = new Request(`${origin}/api/products`, {
     method: "POST",
     headers: { Origin: origin, "Content-Type": "application/json", "CF-Connecting-IP": "192.0.2.1" },
-    body: JSON.stringify({ ideas: [idea] }),
+    body: JSON.stringify({ ideas: [signed] }),
   });
   const result = await handleRequest(request, {
-    ...env, ALLOWED_ORIGINS: origin, IP_SALT: "unit-test-ip-salt-0123456789abcdef",
+    ...env, ALLOWED_ORIGINS: origin, IP_SALT: salt,
   }, {
     productBudget: { take: async (_ip, count) => count },
     fetch: async (url) => {
@@ -412,4 +415,22 @@ test("the product endpoint returns eBay photos without calling Amazon or requiri
   assert.equal(body.enabled, true);
   assert.equal(body.products[0].provider, "ebay");
   assert.equal(body.products[0].imageUrl, item().image.imageUrl);
+});
+
+test("the product endpoint refuses unsigned ideas before spending any search budget", async () => {
+  const origin = "https://gifts.example.com";
+  let spent = false;
+  const request = new Request(`${origin}/api/products`, {
+    method: "POST",
+    headers: { Origin: origin, "Content-Type": "application/json", "CF-Connecting-IP": "192.0.2.1" },
+    body: JSON.stringify({ ideas: [idea] }),
+  });
+  const result = await handleRequest(request, {
+    ...env, ALLOWED_ORIGINS: origin, IP_SALT: "unit-test-ip-salt-0123456789abcdef",
+  }, {
+    productBudget: { take: async (_ip, count) => { spent = true; return count; } },
+    fetch: async () => { throw new Error("unexpected eBay call"); },
+  });
+  assert.equal(result.status, 400);
+  assert.equal(spent, false);
 });

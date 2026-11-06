@@ -30,7 +30,7 @@ export async function selectPhotographedIdeas(ideas, replacements = [], {
   const used = new Set();
   const titles = new Set();
   let unavailable = !enabled, limited = false, imageFailed = false;
-  if (!enabled) return { selected, notice: "Product photos are unavailable. Please try again later." };
+  if (!enabled) return { selected, notice: "Product photos are unavailable. Please try again later.", degraded: true };
   const inspect = async (candidates) => {
     if (!candidates.length) return;
     const found = new Array(candidates.length);
@@ -74,5 +74,7 @@ export async function selectPhotographedIdeas(ideas, replacements = [], {
     : imageFailed ? "Some photos couldn't load. Only ideas with working photos are shown."
     : !selected.length ? "No suitable ideas with working product photos were found. Try another interest or budget."
     : selected.length < 8 ? "Showing fewer ideas because we couldn't find suitable product photos for the others." : "";
-  return { selected, notice };
+  // degraded: the photo check itself could not run (lookups unavailable or over their limit), as opposed to
+  // having run and found nothing suitable. Callers can then show the ideas without photos instead of none.
+  return { selected, notice, degraded: unavailable || limited };
 }

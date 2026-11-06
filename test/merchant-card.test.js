@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
-import { validProductImage } from "../site/merchant-links.js";
+import { retrievedInPast, validProductImage } from "../site/merchant-links.js";
 
 class Element {
   constructor(tagName = "div") {
@@ -54,7 +54,7 @@ async function fixture() {
     document: { createElement: (tagName) => new Element(tagName) },
     Date, Intl, Number, Math,
     CFG: { AWIN_AFFILIATE_ID: "3146453", AWIN_IMAGE_HOSTS: ["images.example.com"] },
-    validProductImage,
+    retrievedInPast, validProductImage,
     setTimeout: (callback) => timers.push(callback),
     showFeedback: (message) => notices.push(message),
     updateCardLayout: () => {},

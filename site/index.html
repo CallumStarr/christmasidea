@@ -41,7 +41,7 @@ window.GIFT_CONFIG = {
   AMAZON_TAG: "mcstarrstud0c-21",
   AMAZON_HOST: "www.amazon.co.uk",
   // Public Partner Network campaign ID. Leave empty until eBay approves your account.
-  EBAY_CAMPAIGN_ID: "",
+  EBAY_CAMPAIGN_ID: "5339240592",
   // Optional: Cloudflare Turnstile site key (bot protection). Leave empty to skip.
   TURNSTILE_SITE_KEY: "0x4AAAAAAFyTaguvuOpUKQOd"
 };
@@ -383,7 +383,7 @@ window.GIFT_CONFIG = {
 import { fetchIdeas, fetchProductBatches, sendFeedback as postFeedback } from "/api.js";
 import { selectPhotographedIdeas } from "/product-selection.js";
 import { createTurnstileTokenGate, TurnstileTokenError } from "/turnstile-token.js";
-import { amazonUrl as amazonSearchUrl, ebayUrl as ebaySearchUrl, validProduct, validProductImage } from "/merchant-links.js";
+import { amazonUrl as amazonSearchUrl, ebayUrl as ebaySearchUrl, retrievedInPast, validProduct, validProductImage } from "/merchant-links.js";
 import { INTEREST_GROUPS, ABOUT_GROUPS, renderCheckboxGroups, selectedValues, updateCheckboxSummary } from "/guided-options.js";
 import { DEFAULT_MONETIZATION_CONFIG } from "/config/affiliates.config.js";
 import { MONETIZATION_CONFIG } from "/monetization-config.js";
@@ -684,7 +684,7 @@ function setVerifiedProduct(card, idea, product){
   let price = null;
   let photo = null;
   if (product.price?.currency === "GBP" && Number.isFinite(Number(product.price.amount))
-      && Number.isFinite(retrieved) && Number.isFinite(expires) && retrieved <= Date.now() && expires > Date.now()) {
+      && retrievedInPast(retrieved) && Number.isFinite(expires) && expires > Date.now()) {
     price = document.createElement("p"); price.className = "product-price";
     price.dataset.amount = product.price.amount;
     price.dataset.retrievedAt = product.retrievedAt;
@@ -1202,14 +1202,24 @@ async function run(input, { append = false, background = false } = {}){
       }
     }
     let verifiedOffers = new Map();
+    let photoCheckDegraded = false;
     if (out.photoFirst) {
       $("#loading-text").textContent = "Checking product photos and looking for suitable alternatives...";
       const checked = await selectPhotographedIdeas(out.ideas, out.replacementIdeas, {
         config: CFG, signal: controller.signal, enabled: out.productDiscoveryEnabled,
       });
-      out.ideas = checked.selected.map((entry) => entry.idea);
-      verifiedOffers = new Map(checked.selected.map((entry) => [entry.idea.title, entry.offers]));
-      out.notice = [out.notice, checked.notice].filter(Boolean).join(" ");
+      if (!checked.selected.length && checked.degraded) {
+        // The photo check couldn't run, so it says nothing about these ideas. Show them without photos
+        // rather than an empty result; the shop search links still work.
+        out.photoFirst = false;
+        photoCheckDegraded = true;
+        out.notice = [out.notice, "Product photos couldn't be checked just now, so these ideas are shown without photos."]
+          .filter(Boolean).join(" ");
+      } else {
+        out.ideas = checked.selected.map((entry) => entry.idea);
+        verifiedOffers = new Map(checked.selected.map((entry) => [entry.idea.title, entry.offers]));
+        out.notice = [out.notice, checked.notice].filter(Boolean).join(" ");
+      }
       if (!out.ideas.length) {
         if (!append) $("#results").hidden = true;
         setStatus(out.notice || "No suitable ideas with working product photos were found. Try another interest or budget.", true, true);
@@ -1230,7 +1240,8 @@ async function run(input, { append = false, background = false } = {}){
     setStatus(out.notice || "", false);
     $("#source").textContent = out.source === "ai" ? "Ideas suggested by AI using the details you shared." : out.source === "knowledge" ? "Ideas selected from our reviewed gift library using your answers. No new AI call was needed." : "Ideas selected from our catalogue using your answers.";
     if (!append) $("#cards").focus({ preventScroll: true });
-    if (out.productDiscoveryEnabled && !out.photoFirst) fillProducts(out.ideas);
+    // After a degraded photo check, another lookup round would hit the same limit or outage.
+    if (out.productDiscoveryEnabled && !out.photoFirst && !photoCheckDegraded) fillProducts(out.ideas);
   } catch (error) {
     if (error instanceof TurnstileTokenError) {
       setStatus(error.message, true, Boolean(current && tsWidget !== null));

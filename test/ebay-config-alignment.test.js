@@ -37,11 +37,19 @@ test("eBay offers survive the browser check only when Worker and public campaign
   assert.equal(validProduct(tracked, { EBAY_CAMPAIGN_ID: "" }, now), false);
 });
 
-// Operator decision: the deployed Worker and the public site disagree, so every tracked eBay offer is
-// discarded in the browser. Do not invent an account identifier to make this pass; see
-// docs/audit/EXTERNAL_VERIFICATION_REGISTER.md.
-test("committed Worker and public eBay campaign settings are aligned", {
-  todo: "operator must choose the authoritative EPN campaign (wrangler.toml vs site/index.html)",
-}, () => {
+// The deployed Worker and the public site must agree, or every tracked eBay offer is discarded in the browser.
+test("committed Worker and public eBay campaign settings are aligned", () => {
   assert.equal(publicCampaign, workerCampaign);
+});
+
+test("a listing timestamped slightly ahead of the device clock is still accepted", () => {
+  const product = normaliseEbayItem(listing("1234567890"), workerEnv("1234567890"), now);
+  const config = { EBAY_CAMPAIGN_ID: "1234567890" };
+  // The device clock runs behind the server: 0.4 s (seen live) and two minutes are both normal drift.
+  assert.equal(validProduct(product, config, now - 400), true);
+  assert.equal(validProduct(product, config, now - 120_000), true);
+  // A timestamp far in the future is not plausible drift and is still rejected.
+  assert.equal(validProduct(product, config, now - 3600_000), false);
+  // Expiry is still enforced on the device clock.
+  assert.equal(validProduct(product, config, Date.parse(product.expiresAt)), false);
 });
