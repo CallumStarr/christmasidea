@@ -511,6 +511,7 @@ const turnstileEnabled = Boolean(CFG.USE_API && CFG.TURNSTILE_SITE_KEY);
 const tsGate = createTurnstileTokenGate();
 function resetTurnstile(){
   tsGate.recover();
+  $("#ts").classList.remove("turnstile-interactive");
   if (tsWidget === null) {
     tsGate.fail("The security check isn't available. Refresh the page and try again.");
     throw new TurnstileTokenError("The security check isn't available. Refresh the page and try again.");
@@ -524,6 +525,7 @@ function resetTurnstile(){
 }
 if (CFG.USE_API && CFG.TURNSTILE_SITE_KEY){
   const turnstileError = () => {
+    $("#ts").classList.remove("turnstile-interactive");
     const message = "The security check couldn't load. Check your connection or refresh the page, then try again.";
     tsGate.fail(message);
     setStatus(message, true);
@@ -534,7 +536,13 @@ if (CFG.USE_API && CFG.TURNSTILE_SITE_KEY){
       tsWidget = window.turnstile.render("#ts", {
         sitekey: CFG.TURNSTILE_SITE_KEY,
         size: "flexible",
-        callback: (token) => tsGate.provide(token),
+        appearance: "interaction-only",
+        "before-interactive-callback": () => $("#ts").classList.add("turnstile-interactive"),
+        "after-interactive-callback": () => $("#ts").classList.remove("turnstile-interactive"),
+        callback: (token) => {
+          $("#ts").classList.remove("turnstile-interactive");
+          tsGate.provide(token);
+        },
         "expired-callback": () => {
           tsGate.invalidate();
           if (!tsGate.busy) {

@@ -1,9 +1,50 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { createTurnstileTokenGate, TurnstileTokenError } from "../site/turnstile-token.js";
 import { fetchIdeas } from "../site/api.js";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+test("the real widget is visible and interactive only when a challenge needs input", async () => {
+  const html = readFileSync(new URL("../site/index.html", import.meta.url), "utf8");
+  const source = html.slice(html.indexOf("let tsWidget = null;"), html.indexOf("/* ---------- API ---------- */"));
+  const classes = new Set(), widget = {
+    classList: { add: (value) => classes.add(value), remove: (value) => classes.delete(value) },
+  };
+  let options, resets = 0;
+  const context = {
+    CFG: { USE_API: true, TURNSTILE_SITE_KEY: "test-site-key" },
+    createTurnstileTokenGate, TurnstileTokenError, $: () => widget,
+    setStatus() {},
+    document: { createElement: () => ({ addEventListener() {} }), head: { append() {} } },
+    window: { turnstile: {
+      render(_selector, value) { options = value; return 1; },
+      reset() { resets++; },
+    } },
+  };
+  runInNewContext(source, context);
+  context.window.onTurnstileLoad();
+  assert.equal(options.appearance, "interaction-only");
+  options["before-interactive-callback"]();
+  assert.equal(classes.has("turnstile-interactive"), true);
+  options["after-interactive-callback"]();
+  assert.equal(classes.has("turnstile-interactive"), false);
+  options["before-interactive-callback"]();
+  options.callback("fresh-widget-token");
+  assert.equal(classes.has("turnstile-interactive"), false);
+  assert.equal(await runInNewContext("tsGate.acquire()", context), "fresh-widget-token");
+  runInNewContext("tsGate.finish()", context);
+  options["before-interactive-callback"]();
+  runInNewContext("resetTurnstile()", context);
+  assert.equal(resets, 1);
+  assert.equal(classes.has("turnstile-interactive"), false);
+  options["before-interactive-callback"]();
+  options["error-callback"]();
+  assert.equal(classes.has("turnstile-interactive"), false);
+  assert.equal(runInNewContext("tsGate.failed", context), true);
+});
 
 test("initial search and Show me different ideas consume distinct, freshly supplied tokens", async () => {
   const gate = createTurnstileTokenGate();

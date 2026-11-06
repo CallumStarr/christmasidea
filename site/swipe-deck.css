@@ -7,7 +7,7 @@
 .swipe-mode .panel>:not(.form-end),.swipe-mode .form-end>:not(#ts),.swipe-mode #monetization-status,.swipe-mode #loading{display:none!important}
 .swipe-mode .form-end{margin:0}
 .swipe-mode #ts{width:fit-content;margin:0 auto 10px;pointer-events:none}
-.swipe-mode #ts iframe{pointer-events:auto}
+.swipe-mode #ts.turnstile-interactive{pointer-events:auto}
 .swipe-mode .results{
   --deck-width:min(440px,calc((100dvh - 200px)*.76),calc(100vw - 40px));
   position:fixed;inset:0;z-index:24;display:grid;grid-template-columns:minmax(0,1fr);
