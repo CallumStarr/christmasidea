@@ -1,6 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { appFrameHeaders } from "./app-headers.js";
-import { handleRequest, canonicalRedirect } from "./core.js";
+import { fetchWorker } from "./worker-fetch.js";
 import { pruneUsageBuckets, reserveProductSearches, scheduleBudgetPrune, seedProductDailyUsage } from "./budget-storage.js";
 import { acknowledgeFeedbackReview, initialiseFeedbackReview, prepareFeedbackReview, pruneFeedbackReview } from "./engine/feedback-review.js";
 import { initialiseFeedbackReceipts, pruneFeedbackReceipts, recordVerifiedFeedback } from "./engine/feedback-storage.js";
@@ -74,6 +73,18 @@ export class BudgetCounter extends DurableObject {
     return reserveProductSearches(this, this.env, ipHash, n);
   }
 
+  // Failed admin-token attempts per visitor hash per UTC hour. No global ceiling, so others cannot lock the operator out.
+  async adminAuthAllowed(ipHash) {
+    const b = this.buckets();
+    return this.count(b.hour, `adminfail:${ipHash}`) < (Number(this.env.ADMIN_AUTH_HOURLY_FAILURE_LIMIT) || 10);
+  }
+
+  async recordAdminAuthFailure(ipHash) {
+    const b = this.buckets();
+    this.add(b.hour, `adminfail:${ipHash}`);
+    return true;
+  }
+
   // Feedback counts live in "F2026-11-02" buckets for 90 days; per-visitor rate limiting uses the short minute bucket.
   async recordFeedback(ipHash, keys, records) {
     const b = this.buckets();
@@ -111,76 +122,9 @@ export class BudgetCounter extends DurableObject {
   }
 }
 
-const SECURITY_HEADERS = {
-  "X-Content-Type-Options": "nosniff",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-  "X-Frame-Options": "DENY",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-  "Strict-Transport-Security": "max-age=31536000",
-  // Pages use inline scripts and styles, so 'unsafe-inline' is needed until they are moved to hashed files.
-  "Content-Security-Policy": [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https://m.media-amazon.com https://images-eu.ssl-images-amazon.com https://i.ebayimg.com",
-    "font-src 'self'",
-    "connect-src 'self' https://cloudflareinsights.com",
-    "frame-src https://challenges.cloudflare.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-  ].join("; "),
-};
-
-function withHeaders(res, extra, env = {}) {
-  const out = new Response(res.body, res);
-  for (const [k, v] of Object.entries(extra)) out.headers.set(k, v);
-  const imageHosts = [...new Set(String(env.AWIN_IMAGE_HOSTS || "").split(",").map((host) => host.trim().toLowerCase())
-    .filter((host) => /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/.test(host)))];
-  if (imageHosts.length) {
-    const csp = out.headers.get("Content-Security-Policy");
-    out.headers.set("Content-Security-Policy", csp.replace(/img-src ([^;]+)/, `$& ${imageHosts.map((host) => `https://${host}`).join(" ")}`));
-  }
-  const hosts = [env.MONETIZATION_AD_HOST, env.MONETIZATION_ANALYTICS_HOST]
-    .filter((host) => typeof host === "string" && /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i.test(host))
-    .map((host) => `https://${host.toLowerCase()}`);
-  if (hosts.length) {
-    const csp = out.headers.get("Content-Security-Policy");
-    out.headers.set("Content-Security-Policy", csp.replace(/script-src ([^;]+)/, `$& ${hosts.join(" ")}`)
-      .replace(/connect-src ([^;]+)/, `$& ${hosts.join(" ")}`));
-  }
-  return out;
-}
-
 export default {
   async scheduled(_controller, env, ctx) {
     scheduleBudgetPrune(env, ctx);
   },
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-
-    const redirect = canonicalRedirect(request, env);
-    if (redirect) return redirect;
-
-    if (url.pathname.startsWith("/api/")) {
-      const stub = env.BUDGET.get(env.BUDGET.idFromName("global"));
-      const res = await handleRequest(request, env, {
-        fetch: (...args) => fetch(...args),
-        budget: { consume: (ipHash) => stub.consume(ipHash), reuse: (ipHash) => stub.takeKnowledge(ipHash) },
-        productBudget: { take: (ipHash, n) => stub.takeProducts(ipHash, n) },
-        feedback: {
-          record: (ipHash, keys, records) => stub.recordFeedback(ipHash, keys, records),
-          export: (after, kind) => stub.exportFeedback(after, kind),
-          review: (action, id) => stub.reviewFeedback(action, id),
-        },
-        cache: typeof caches !== "undefined" ? caches.default : null,
-        waitUntil: (p) => ctx.waitUntil(p),
-      });
-      return withHeaders(res, SECURITY_HEADERS, env);
-    }
-
-    const res = await env.ASSETS.fetch(request);
-    return withHeaders(res, appFrameHeaders(url.pathname, SECURITY_HEADERS), env);
-  },
+  fetch: fetchWorker,
 };

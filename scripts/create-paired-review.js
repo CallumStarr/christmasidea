@@ -113,7 +113,27 @@ export function buildPairedReview({ cases, baselineCases, baselineResults, curre
   return { csv, key };
 }
 
+export function writePairedReview(outputDir, { csv, key }) {
+  const output = path.join(outputDir, "paired-blind-review.csv");
+  const keyPath = path.join(outputDir, "paired-blind-key.json");
+  if (fs.existsSync(output) || fs.existsSync(keyPath)) {
+    throw new Error("Refusing to overwrite an existing paired review or key. Choose a fresh --output-dir.");
+  }
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.writeFileSync(output, csv, { flag: "wx" });
+  fs.writeFileSync(keyPath, JSON.stringify(key, null, 2) + "\n", { flag: "wx" });
+  return { output, keyPath };
+}
+
 async function main() {
+  const args = process.argv.slice(2);
+  let outputDir = path.join(ROOT, "benchmarks", "v3.4");
+  if (args.length) {
+    if (args.length !== 2 || args[0] !== "--output-dir" || !args[1].trim()) {
+      throw new Error("Usage: node scripts/create-paired-review.js [--output-dir <new-directory>]");
+    }
+    outputDir = path.resolve(args[1]);
+  }
   const cases = JSON.parse(fs.readFileSync(path.join(ROOT, "benchmarks", "v3.4", "cases.json"), "utf8"));
   const legacyCases = JSON.parse(fs.readFileSync(path.join(ROOT, "benchmarks", "recipients.json"), "utf8"));
   const byLegacyCase = new Map(legacyCases.map((item) => [item.id, item]));
@@ -128,10 +148,7 @@ async function main() {
     baselineResults: baseline.results,
     currentResults: current.results,
   });
-  const output = path.join(ROOT, "benchmarks", "v3.4", "paired-blind-review.csv");
-  const keyPath = path.join(ROOT, "benchmarks", "v3.4", "paired-blind-key.json");
-  fs.writeFileSync(output, result.csv);
-  fs.writeFileSync(keyPath, JSON.stringify(result.key, null, 2) + "\n");
+  const { output, keyPath } = writePairedReview(outputDir, result);
   console.log(`Created ${path.relative(ROOT, output)} with 30 blind pairs.`);
   console.log(`Keep ${path.relative(ROOT, keyPath)} separate from reviewers until scoring is complete.`);
 }

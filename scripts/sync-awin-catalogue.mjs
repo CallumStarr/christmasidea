@@ -3,9 +3,9 @@ import { mkdtemp, open, rename, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
-import { isAwinAdvertiserName } from "../src/providers/awin-advertisers.js";
 import { csvRows, field, headerMap } from "./import-awin-feed.mjs";
 
 const FEED_LIST_ORIGIN = "https://ui.awin.com";
@@ -14,6 +14,27 @@ const FEED_ORIGINS = new Set([
   "https://datafeed.api.productserve.com",
 ]);
 const MAX_REDIRECTS = 5;
+const MAX_FEED_LIST_BYTES = 32 * 1024 * 1024;
+const DEFAULT_MAX_FEED_BYTES = 2 * 1024 * 1024 * 1024;
+
+function maxFeedBytes() {
+  const configured = Number(process.env.AWIN_MAX_FEED_BYTES);
+  return Number.isSafeInteger(configured) && configured > 0 ? configured : DEFAULT_MAX_FEED_BYTES;
+}
+
+/** Streams a response body to disk, failing (without echoing any URL) once it exceeds maxBytes. */
+export async function writeLimited(body, path, maxBytes, label) {
+  let total = 0;
+  const limit = new Transform({
+    transform(chunk, _encoding, callback) {
+      total += chunk.length;
+      if (total > maxBytes) callback(new Error(`${label} exceeded the ${maxBytes}-byte download limit.`));
+      else callback(null, chunk);
+    },
+  });
+  await pipeline(body, limit, createWriteStream(path));
+  return total;
+}
 
 function optionsFrom(argv) {
   const options = { mode: "", help: false, listOnly: false };
@@ -73,7 +94,7 @@ export async function readAwinFeedList(path, allowedAdvertisers) {
     const membership = field(row, headers, ["membership_status"]).toLowerCase();
     const advertiserName = field(row, headers, ["advertiser_name"]);
     if (!/^\d{1,8}$/.test(advertiserId)
-        || (allowedAdvertisers && !allowedAdvertisers.has(advertiserId) && !isAwinAdvertiserName(advertiserName))
+        || (allowedAdvertisers && !allowedAdvertisers.has(advertiserId))
         || !["active", "joined"].includes(membership)) continue;
     activeAdvertisers.add(advertiserId);
     const format = field(row, headers, ["datafeed_format"]).toLowerCase();
@@ -160,7 +181,7 @@ async function downloadFeed(startUrl, destination, signal) {
   }
   if (!response?.ok || !response.body) throw new Error(`Awin product-feed download failed with status ${response?.status || 0}.`);
   const downloaded = `${destination}.download`;
-  await pipeline(response.body, createWriteStream(downloaded));
+  await writeLimited(response.body, downloaded, maxFeedBytes(), "An Awin product feed");
   const handle = await open(downloaded, "r");
   const prefix = Buffer.alloc(2);
   const { bytesRead } = await handle.read(prefix, 0, prefix.length, 0);
@@ -204,7 +225,7 @@ async function main() {
   try {
     const feedList = await fetchFeedList({ publisherId, apiKey, signal: controller.signal });
     const feedListPath = join(tempDir, "feed-list.csv");
-    await pipeline(feedList.body, createWriteStream(feedListPath));
+    await writeLimited(feedList.body, feedListPath, MAX_FEED_LIST_BYTES, "Awin's feed list");
     const result = await readAwinFeedList(feedListPath, advertiserIds ? new Set(advertiserIds) : null);
     if (options.listOnly) {
       console.log("Joined advertisers in Awin's feed list:");

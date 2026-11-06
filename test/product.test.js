@@ -121,6 +121,122 @@ test("wrong product type is rejected even when other terms overlap", () => {
   assert.ok(result.reasons.includes("wrong_product_type"));
 });
 
+test("an explicitly contradicted title or required feature cannot become a high-confidence offer", () => {
+  const train = idea({
+    title: "Wooden magnetic train-track building kit",
+    concept: "building blocks for tracks",
+    query: "large construction blocks for toddlers",
+    productSpec: { maxPriceGbp: 40, budgetMaxGbp: 40 },
+  });
+  const broad = product({
+    title: "Large construction building blocks for tracks for toddlers",
+    description: "Blocks for drawing racetrack layouts; no trains or magnetic connections.",
+    price: { amount: 20, currency: "GBP" },
+  });
+  for (const candidate of [
+    broad,
+    { ...broad, title: "Wooden magnetic train-track building block kit" },
+    { ...broad, description: "These construction blocks don't include magnetic connections." },
+  ]) {
+    const result = scoreProductMatch(train, candidate);
+    assert.equal(result.accepted, false);
+    assert.ok(result.reasons.includes("title_identity_contradicted"));
+  }
+  const matching = scoreProductMatch(train, {
+    ...broad,
+    title: "Wooden magnetic train-track building block kit",
+    description: "Not only large construction blocks for toddlers, but also a train; no batteries included.",
+  });
+  assert.equal(matching.accepted, true, JSON.stringify(matching));
+  for (const description of [
+    "No batteries, includes magnetic train tracks and large construction blocks for toddlers.",
+    "Without batteries, with magnetic train tracks and large construction blocks for toddlers.",
+  ]) {
+    const positive = scoreProductMatch(train, {
+      ...broad, title: "Wooden magnetic train-track building block kit", description,
+    });
+    assert.equal(positive.accepted, true, `${description}: ${JSON.stringify(positive)}`);
+  }
+  const featureClaim = { ...train, title: "Building blocks", productSpec: { requiredFeatures: ["magnetic"] } };
+  assert.ok(scoreProductMatch(featureClaim, broad).reasons.includes("title_identity_contradicted"));
+});
+
+test("affix, verb, and inflected negations still contradict a claimed identity", () => {
+  const train = idea({
+    title: "Wooden magnetic train-track building kit",
+    concept: "building blocks for tracks",
+    query: "large construction blocks for toddlers",
+    productSpec: { maxPriceGbp: 40, budgetMaxGbp: 40, recipientAgeBand: "toddler" },
+  });
+  const listing = (overrides) => product({
+    title: "Wooden magnetic train-track building block kit",
+    brand: "Acme",
+    description: "Large construction blocks for toddlers.",
+    price: { amount: 20, currency: "GBP" },
+    ...overrides,
+  });
+  assert.equal(scoreProductMatch(train, listing({})).accepted, true);
+  for (const overrides of [
+    { description: "Large construction blocks for toddlers. No magnets." },
+    { title: "Wooden non-magnetic train-track building block kit" },
+    { description: "Large magnet-free construction blocks for toddlers." },
+    { description: "Large construction blocks for toddlers; lacks magnetic connectors." },
+    { description: "Large construction blocks for toddlers excluding magnetic parts." },
+  ]) {
+    const result = scoreProductMatch(train, listing(overrides));
+    assert.equal(result.accepted, false, JSON.stringify(overrides));
+    assert.ok(result.reasons.includes("title_identity_contradicted"), JSON.stringify(result));
+  }
+  const simple = (title, concept) => ({
+    title, query: title.toLowerCase(), concept,
+    productSpec: { maxPriceGbp: 40, budgetMaxGbp: 40, recipientAgeBand: "adult" },
+  });
+  for (const [request, title, description] of [
+    [simple("Hands-free Bluetooth headset", "bluetooth headset"), "Jabra hands-free Bluetooth headset", ""],
+    [simple("Non-stick frying pan", "frying pan"), "Tefal non-stick frying pan 28cm", ""],
+    [simple("Insulated water bottle", "water bottle"), "Insulated water bottle, BPA-free", ""],
+    [simple("Wireless earbuds without cables", "earbuds"), "Wireless earbuds without cables", "No cables needed."],
+  ]) {
+    const result = scoreProductMatch(request, product({
+      title, brand: "Acme", description, price: { amount: 20, currency: "GBP" },
+    }));
+    assert.equal(result.accepted, true, `${title}: ${JSON.stringify(result)}`);
+  }
+});
+
+test("packaging, depictions, imitations, toys, and pre-owned listings are not the requested item", () => {
+  for (const overrides of [
+    { title: "Felco Japanese pruning shears, red stainless steel - box only" },
+    { title: "Felco Japanese pruning shears, red stainless steel (empty box)" },
+    { title: "Felco Japanese pruning shears, red stainless steel instruction manual" },
+    { title: "Poster of Felco Japanese pruning shears, red stainless steel" },
+    { title: "Felco-style Japanese pruning shears, red stainless steel", brand: "Generic" },
+    { title: "Japanese pruning shears inspired by Felco, red stainless steel" },
+    { title: "Toy Felco Japanese pruning shears, red stainless steel play set" },
+    { title: "Felco Japanese pruning shears, red stainless steel (refurbished)" },
+    { title: "Pre-owned Felco Japanese pruning shears, red stainless steel" },
+  ]) {
+    const result = scoreProductMatch(idea(), product(overrides));
+    assert.equal(result.accepted, false, overrides.title);
+    assert.ok(result.reasons.includes("listing_not_the_requested_item"), JSON.stringify(result));
+  }
+  const requested = (title, concept, recipientAgeBand) => ({
+    title, query: title.toLowerCase(), concept,
+    productSpec: { maxPriceGbp: 40, budgetMaxGbp: 40, recipientAgeBand },
+  });
+  for (const [request, title] of [
+    [requested("Poster of the solar system", "poster", "adult"), "Poster of the solar system, A2"],
+    [requested("LEGO Technic toy car", "lego car", "adult"), "LEGO Technic car toy set"],
+    [requested("Wooden train set", "train set", "toddler"), "Wooden train set toy for toddlers"],
+    [requested("Retro radio", "radio", "adult"), "Retro-style DAB radio"],
+  ]) {
+    const result = scoreProductMatch(request, product({
+      title, brand: "Acme", description: "", price: { amount: 20, currency: "GBP" },
+    }));
+    assert.equal(result.accepted, true, `${title}: ${JSON.stringify(result)}`);
+  }
+});
+
 test("wrong colour is rejected when a colour was explicitly preferred", () => {
   const result = scoreProductMatch(idea(), product({ title: "Felco Japanese pruning shears, blue" }));
   assert.ok(result.reasons.includes("colour_mismatch"));

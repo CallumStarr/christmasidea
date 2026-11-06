@@ -35,7 +35,8 @@ export function feedbackKeys(body, { verified = false } = {}) {
   const keys = [];
   for (const i of items) {
     keys.push(`${event}|s:${i.strategy}`, `${event}|src:${i.source}`, `${event}|d:${i.discovery ? 1 : 0}`, `${event}|p:${i.position}`);
-    const joint = learningCounter(event, i.learning, i.position);
+    // Unsigned bodies are attacker-chosen, so only receipt-verified cards may contribute learning-policy evidence.
+    const joint = verified ? learningCounter(event, i.learning, i.position) : null;
     if (joint) keys.push(joint);
     const concept = verified ? knowledgeCounter(event, i.learning, i.position) : null;
     if (concept) keys.push(concept);

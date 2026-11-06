@@ -1,5 +1,6 @@
 import { contentStems, words } from "./text.js";
 import { evaluateSuitability } from "./product-suitability.js";
+import { violatesProductExclusions } from "./product-constraints.js";
 
 const COLOURS = new Set([
   "black", "blue", "brown", "burgundy", "cream", "gold", "green", "grey", "orange",
@@ -14,6 +15,12 @@ const MATERIAL_GROUPS = [
 const UNSUITABLE_LISTING = /\b(?:porn|pornographic|fuck|fucking|shit|cunt|tits)\b|\bt\*ts\b/i;
 const ADD_ON = /\b(?:accessor(?:y|ies)|replacement|spare|compatible|case|cover|sheath|blade|blades|holder|attachment|protector|sharpener|sharpening|cleaner|cleaning|brush|bag|organizer|storage|maintenance)\b/i;
 const BOOK_LISTING = /\b(?:books?|paperbacks?|hardbacks?|hardcovers?|softcovers?|isbn)\b|\b97[89]\d{10}\b/i;
+const NOT_THE_ITEM = /\b(?:box only|empty box|packaging only|(?:instruction|user|owner['\u2019]?s?) manual|manual only|(?:posters?|pictures?|photos?|prints?|stickers?|decals?) of)\b/i;
+const IMITATION_LISTING = /\b(?:inspired by|alternative to|dupes?|look-?alikes?|knock-?offs?|replicas?|counterfeit)\b/i;
+const NOT_NEW_TITLE = /\b(?:refurbished|renewed|reconditioned|pre-?owned|second-?hand|ex-?display|open[- ]box)\b|\(used\b[^)]*\)|\bused[ -](?:condition|item|good|very good|like new|acceptable)\b/i;
+const TOY_LISTING = /\b(?:toys?|play ?sets?|pretend play|role ?play)\b/i;
+const NEGATED_PHRASE = /\b(?:no|not|without|lacks?|lacking|excluding|excludes?|minus|free from|(?:does|do)(?: not|n['\u2019]t) (?:include|contain|have))\s+(?!(?:only|just|merely)\b)(.+?)(?=\b(?:but|although|however|with|including|includes?|features?|contains?|comes?|provides?|offers?|made|designed)\b|[.;!?]|$)/gi;
+const NEGATED_AFFIX = /\bnon-([a-z]+)\b|\b([a-z]+)-free\b/gi;
 
 function terms(value) {
   const containers = words(value).filter((word) => /^(?:kits?|sets?)$/.test(word))
@@ -54,6 +61,63 @@ function includesPhrase(text, phrase) {
   if (!expected.length) return false;
   const available = new Set(terms(text));
   return expected.every((term) => available.has(term));
+}
+
+function identityTerms(text) {
+  return terms(String(text || "")
+    .replace(/\b(?:wooden|bamboo)\b/gi, "wood")
+    .replace(/\bmagnet(?:ic|s|i[sz]ed)?\b/gi, "magnet")
+    .replace(/\bpersonali[sz]ed\b/gi, "personalised"));
+}
+
+function hasContradictedIdentity(idea, product) {
+  const spec = idea.productSpec || {};
+  const claimed = new Set(identityTerms([
+    idea.title, ...(Array.isArray(spec.requiredFeatures) ? spec.requiredFeatures : []),
+    ...(Array.isArray(spec.requiredVariants) ? spec.requiredVariants : []),
+  ].filter(Boolean).join(" ")));
+  // Terms the idea itself negates (e.g. "hands-free", "without cables") are not identity claims.
+  const selfDenied = deniedTerms([idea.title, idea.query, idea.concept,
+    ...(Array.isArray(spec.requiredFeatures) ? spec.requiredFeatures : [])]);
+  const denied = deniedTerms([product.title, product.brand, product.description, ...(product.features || [])]);
+  return [...claimed].some((term) => denied.has(term) && !selfDenied.has(term));
+}
+
+function deniedTerms(values) {
+  const denied = new Set();
+  for (const value of values) {
+    const text = String(value || "");
+    for (const match of text.matchAll(NEGATED_PHRASE)) {
+      for (const term of identityTerms(match[1])) denied.add(term);
+    }
+    for (const match of text.matchAll(NEGATED_AFFIX)) {
+      for (const term of identityTerms(match[1] || match[2])) denied.add(term);
+    }
+  }
+  return denied;
+}
+
+function isMisrepresentedListing(idea, product) {
+  const spec = idea.productSpec || {};
+  const title = String(product.title || "");
+  const requested = [idea.title, idea.query, idea.concept].filter(Boolean).join(" ");
+  const unrequested = (pattern) => pattern.test(title) && !pattern.test(requested);
+  const brand = String(spec.brandPreference || "").trim();
+  const escapedBrand = brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const brandImitation = Boolean(brand)
+    && new RegExp(`\\b${escapedBrand}[- ](?:style|type|compatible)\\b`, "i").test(title);
+  const adultRecipient = ["teen", "adult"].includes(spec.recipientAgeBand);
+  return unrequested(NOT_THE_ITEM) || unrequested(IMITATION_LISTING) || brandImitation
+    || unrequested(NOT_NEW_TITLE) || (adultRecipient && unrequested(TOY_LISTING));
+}
+
+function includesVariant(title, variant) {
+  const normalise = (text) => words(String(text)
+    .replace(/\b(uk|us|eu)(?=\d)/gi, "$1 ")
+    .replace(/(\d)(?=mm\b|cm\b|inch\b|inches\b)/gi, "$1 "))
+    .map((word) => word === "inches" ? "inch" : word).join(" ");
+  const expected = normalise(variant);
+  return Boolean(expected) && ` ${normalise(title)} `.includes(` ${expected} `);
 }
 
 function normaliseColour(value) {
@@ -128,13 +192,16 @@ export function scoreProductMatch(idea, product, thresholds = productMatchThresh
       || (BOOK_LISTING.test(title) && !BOOK_LISTING.test(productType) && !/\bcookbooks?\b/i.test(productType))) {
     reasons.push("wrong_product_type");
   }
+  if (hasContradictedIdentity(idea, product)) reasons.push("title_identity_contradicted");
+  if (isMisrepresentedListing(idea, product)) reasons.push("listing_not_the_requested_item");
   if (String(product.condition || "").toUpperCase() !== "NEW") reasons.push("condition_unverified_or_not_new");
   if (!["IN_STOCK", "IN_STOCK_SCARCE"].includes(availability)) reasons.push("availability_unverified_or_not_in_stock");
   if (spec.brandPreference && !includesPhrase(`${product.brand || ""} ${product.title || ""}`, spec.brandPreference)) {
     reasons.push("brand_mismatch");
   }
   if (requiredFeatures.some((feature) => !includesPhrase(details, feature))) reasons.push("required_feature_missing");
-  if (requiredVariants.some((variant) => !includesPhrase(title, variant))) reasons.push("variant_mismatch");
+  if (requiredVariants.some((variant) => !includesVariant(title, variant))) reasons.push("variant_mismatch");
+  if (violatesProductExclusions(spec, details)) reasons.push("excluded_by_shopper");
   if (spec.preferredColour) {
     if (!includesPhrase(details, normaliseColour(spec.preferredColour))
       || hasConflictingTitleColour(String(product.title || ""), normaliseColour(spec.preferredColour))) {

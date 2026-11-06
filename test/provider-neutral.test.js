@@ -6,6 +6,7 @@ import { evaluateSuitability } from "../src/product-suitability.js";
 import { validateOffer, isAllowedImageUrl, displayFor } from "../src/offer-validation.js";
 import { amazonPolicy } from "../src/providers/amazon.js";
 import { allImageHosts, configuredProviderId } from "../src/providers/index.js";
+import { fetchWorker } from "../src/worker-fetch.js";
 
 const TAG = "mcstarrstud0c-21";
 const policy = amazonPolicy(TAG);
@@ -87,14 +88,18 @@ test("suitability is evaluated separately from identity", () => {
 test("registry keeps Amazon unconfigured without credentials and the CSP lists every provider image host", async () => {
   assert.equal(configuredProviderId({}), null);
   assert.equal(configuredProviderId({ AMAZON_CREATORS_CLIENT_ID: "a", AMAZON_CREATORS_CLIENT_SECRET: "b", AMAZON_PARTNER_TAG: TAG }), "amazon");
-  const src = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
-  const img = src.match(/"img-src ([^"]+)"/)[1].split(" ").filter((p) => p.startsWith("https://")).map((p) => p.slice(8)).sort();
+  const response = await fetchWorker(new Request("https://gifts.example.com/"), {
+    ASSETS: { fetch: async () => new Response("asset") },
+  }, {});
+  const imgDirective = response.headers.get("Content-Security-Policy").split(";").find((part) => part.trim().startsWith("img-src "));
+  assert.ok(imgDirective, "CSP must define img-src");
+  const img = imgDirective.trim().split(" ").filter((p) => p.startsWith("https://")).map((p) => p.slice(8)).sort();
   assert.deepEqual(img, allImageHosts());
 });
 
 test("Amazon product-provider, offer-validation and image logic stays inside the Amazon provider module", async () => {
   const forbidden = [/media-amazon\.com/, /ssl-images-amazon\.com/, /creatorsapi/, /api\.amazon\.co\.uk/, /\/dp\/|gp\\?\/product/];
-  const allowedElsewhere = new Set(["index.js"]); // the CSP names the image hosts; a test above keeps it in sync
+  const allowedElsewhere = new Set(["worker-fetch.js"]); // the CSP names the image hosts; a test above keeps it in sync
   const dir = new URL("../src/", import.meta.url);
   const offenders = [];
   for (const name of await readdir(dir)) {

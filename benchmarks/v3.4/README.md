@@ -1,6 +1,10 @@
 # Benchmark v3.4: gift intelligence engine
 
-Release decision: production now selects the preserved v3.3 prompt and original-order curation (`RECOMMENDATION_MODE = "baseline-v3.3"`), with current safety validation retained. The v3.4 engine and the replay commands below remain experimental diagnostics. They do not describe the selected production recommendation path. The baseline release regression test checks all 30 preserved title lists and ordering without new model calls.
+Release decision: production now selects the preserved v3.3 prompt and original-order curation (`RECOMMENDATION_MODE = "baseline-v3.3"`), with current safety validation retained. The v3.4 engine and the replay commands below remain experimental diagnostics. They do not describe the selected production recommendation path. The baseline release regression test checks exact title/order parity for 29 cases and the deliberate case-12 kneeler/apron consistency replacement, without new model calls.
+
+The additive [2026 audit set](../audit-2026/README.md) supplies 24 further synthetic cases, bringing
+the distinct evaluation-ready set to 74. Those new cases have no live model outputs or human scores.
+Validator-v7 adds recipient/product constraint regressions without altering frozen benchmark artifacts.
 
 `cases.json` holds 50 cases:
 
@@ -13,14 +17,15 @@ Release decision: production now selects the preserved v3.3 prompt and original-
 
 ```powershell
 # Live run (costs about $0.002 per case with Haiku 5.5; needs ANTHROPIC_API_KEY in the environment)
-node scripts/run-benchmark.js --live --confirm-cost --models=haiku --cases-file=benchmarks/v3.4/cases.json --output=benchmarks/v3.4/live-haiku
+# Paid generation requires separate approval; choose a fresh output directory.
+node scripts/run-benchmark.js --live --confirm-cost --models=haiku --cases-file=benchmarks/v3.4/cases.json --output=benchmarks/v3.4/new-live-run
 
 # Structural metrics, as stored or replayed through the current engine (free, offline)
-node scripts/engine-metrics.js --results=benchmarks/v3.4/live-haiku/benchmark-results.json --expected-cases=50 --json=benchmarks/v3.4/live-haiku.metrics.json
-node scripts/engine-metrics.js --results=benchmarks/baselines/v3.3-pre-refactor/benchmark-results.json --case-set=v3.3-original --expected-cases=30 --replay --json=benchmarks/v3.4/v3.3-baseline-replayed.metrics.json
+node scripts/engine-metrics.js --results=benchmarks/v3.4/live-haiku/benchmark-results.json --expected-cases=50
+node scripts/engine-metrics.js --results=benchmarks/baselines/v3.3-pre-refactor/benchmark-results.json --case-set=v3.3-original --expected-cases=30 --replay
 
-# Blind human review
-npm run benchmark:review:prepare
+# Blind human review (choose a fresh output directory)
+npm run benchmark:review:prepare -- --output-dir benchmarks/v3.4/new-review
 ```
 
 `--replay` feeds each stored raw Claude response through today's engine. This isolates what the engine adds from what
@@ -29,8 +34,12 @@ the prompt adds.
 The replay commands validate case counts and unique IDs, require every expected result to be completed, and require raw outputs (and stored ideas for as-stored metrics). Missing, malformed or incomplete benchmark data fails with a non-zero exit code. The v3.3 baseline replay uses only its 30 `v3.3-original` cases; v3.4 covers all 50 cases. These checks protect artifact integrity and replayability, not recommendation quality.
 
 Replay metrics are calculated from the current engine applied to stored raw model outputs. The reported `stored_generation_total_cost_usd` is the cost recorded for the original model run; replay itself makes no model calls and incurs no model-generation cost.
+The optional `--json=<path>` writes a report and can overwrite an existing file; choose a fresh path rather than
+replacing a historical metric snapshot.
 
-`npm run benchmark:review:prepare` creates `paired-blind-review.csv` and a separate `paired-blind-key.json`. It pairs
+`npm run benchmark:review:prepare -- --output-dir <new-directory>` creates `paired-blind-review.csv` and a separate
+`paired-blind-key.json` in that directory. It refuses to overwrite an existing sheet or key, including the historical
+artifacts in the default directory. It pairs
 the preserved v3.3 outputs with v3.4 outputs replayed through the current engine on the same 30 original scenarios,
 assigns the A/B side per case using a fixed seed, and leaves every score blank. The assignment is reproducible, not independent randomisation. Share only the CSV with reviewers; keep the key
 separate until scoring is complete. Score each set for recipient fit, thoughtfulness, originality, meaningful
@@ -48,13 +57,18 @@ files and notes.
 - **Grounded connections:** ideas whose quoted connection anchor appears in the request. This checks evidence
   grounding, not the quality of the connection.
 - **Product match-cap over budget:** count whose `productSpec.maxPriceGbp` exceeds the parsed budget by more than
-  10%. This is a matching cap, not an observed product price or proof that a gift costs that amount.
+  10%. The runner reports fully, partially and unassessed cases and the number of assessed/unassessed idea caps;
+  missing budgets or invalid caps are not counted as affordable. This is a matching cap, not an observed product
+  price or proof that a gift costs that amount.
 - **Near-duplicate pairs:** pairs whose title/concept stem Jaccard similarity is at least 0.72. This is a reproducible
   lexical flag; it can miss semantic duplicates or flag distinct ideas with similar wording.
 - **Repeated-interest excess:** occurrences beyond the first where the interest graph detects the same named interest
   in different ideas. Detection is alias-based and does not establish that the ideas are redundant.
 - **Strategy balance:** normalised Shannon entropy over current strategy labels; unavailable for v3.3 outputs without
-  those labels. A balanced strategy mix is not necessarily a good mix.
+  those labels. Normalization uses labelled ideas only and reports missing labels. One observed strategy has entropy
+  zero, not NaN. A balanced strategy mix is not necessarily a good mix.
+  Current v3.3 raw-output replay has strategy labels supplied by the experimental engine; its mean is 0.776
+  after the single-strategy correction. Historical saved metric files are not overwritten.
 
 All automated metrics are diagnostics, not substitutes for blind human evaluation. None measures conversion value,
 and none should be optimised alone.
@@ -114,6 +128,11 @@ Do not compare this score directly with the v3.3 baseline's 4.133 weighted score
 AI reviewer on 30 cases, while this is a supplied review of 50 cases.
 
 ## Results
+
+The following table is a **historical snapshot**, not current assurance. Its zero discovery-budget count did not
+assess the 20 cases whose inputs contain malformed `?` currency markers, and the old completed-only truncation
+counter could report a structurally selected zero. Current replays report these limitations explicitly; see the
+[independent benchmark review](../../docs/audit/BENCHMARK_VALIDITY_REVIEW.md).
 
 | Metric (mean per case) | v3.3 as stored | v3.3 replayed through engine | v3.4 live (50) | v3.4 live, original 30 | v3.4 live, discovery 20 |
 |---|---|---|---|---|---|

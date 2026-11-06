@@ -4,18 +4,12 @@
 
 import { budgetCap, budgetLabel, LABELS, relationLabel } from "./constants.js";
 import { DISLIKE_GROUPS } from "./rules.js";
-import { VAGUE, contentStems, splitList, stem } from "./text.js";
+import { VAGUE, contentStems, stem } from "./text.js";
+import { constraintPhrases, parseTextAge } from "../site/recipient-language.js";
 
 // "train sets" -> "sets" survives the pre-stem vague filter; owned items must be compared on the
 // product word ("train") because idea titles drop the vague word ("Wooden train set" -> "train").
 const VAGUE_STEMS = new Set([...VAGUE].map(stem));
-
-const NUMBER_WORDS = {
-  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11,
-  twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18,
-};
-const NUM = `(\\d{1,2}|${Object.keys(NUMBER_WORDS).join("|")})`;
-const toNumber = (s) => (/^\d+$/.test(s) ? Number(s) : NUMBER_WORDS[s.toLowerCase()]);
 
 export function bandForAge(years) {
   if (years === null || years === undefined) return "unknown";
@@ -48,27 +42,10 @@ function parseAge(input, text) {
     if (input.relation === "child") return 6;
     if (input.relation === "teen") return 15;
   }
-  const lower = text.toLowerCase();
-  const patterns = [
-    new RegExp(`\\b${NUM}[- ]?(?:year|yr)s?[- ]?old\\b`),
-    new RegExp(`\\baged?\\s+${NUM}\\b`),
-    new RegExp(`\\b${NUM}[- ]?yo\\b`),
-    new RegExp(`\\b(?:is|turning|turns|just turned)\\s+${NUM}\\b(?!\\s*(?:pounds|quid|minutes|mins|%|miles))`),
-  ];
-  for (const re of patterns) {
-    const m = lower.match(re);
-    if (m) {
-      const n = toNumber(m[1]);
-      if (Number.isFinite(n) && n < 110) return n;
-    }
-  }
-  if (/\b\d{1,2}[- ]?months?[- ]?old\b|\b(?:newborn|new born|infant|baby)\b/.test(lower)) return 0;
-  if (/\btoddler\b/.test(lower)) return 2;
-  if (/\bteen(?:ager)?\b/.test(lower)) return 15;
-  return null;
+  return parseTextAge(text);
 }
 
-const HARD_BUDGET = /(?:under|up to|upto|max(?:imum)?|no more than|nothing over|not (?:more|over)|within|at most|less than|below|capped at|limit(?: of)?)\s*$/;
+const HARD_BUDGET = /(?:under|up to|upto|max(?:imum)?|no more than|nothing (?:over|more than)|not (?:more(?: than)?|over)|within|at most|less than|below|capped at|limit(?: of)?)\s*$/;
 const SOFT_BUDGET = /(?:around|about|approx(?:imately)?|roughly|circa|~)\s*$/;
 
 function parseBudget(input, text) {
@@ -89,8 +66,10 @@ function parseBudget(input, text) {
     const before = lower.slice(Math.max(0, m.index - 18), m.index);
     const low = Number(m[1] ?? m[3]);
     const high = m[2] ? Number(m[2]) : low;
-    if (m[4] || /(?:over|above|at least|more than|from|minimum)\s*$/.test(before)) continue; // a floor, not a ceiling
-    found.push({ value: Math.max(low, high), hard: HARD_BUDGET.test(before), soft: SOFT_BUDGET.test(before) });
+    const hard = HARD_BUDGET.test(before);
+    if (m[4] || /(?:not|no)\s+(?:less than|under|below)\s*$/.test(before)
+      || (!hard && /(?:over|above|at least|more than|from|minimum)\s*$/.test(before))) continue;
+    found.push({ value: Math.max(low, high), hard, soft: SOFT_BUDGET.test(before) });
   }
   if (!found.length) return { max: null, soft: false, scope, source: "none" };
   const hard = found.filter((f) => f.hard);
@@ -98,37 +77,9 @@ function parseBudget(input, text) {
   return { max: pick.value, soft: !pick.hard, scope, source: "text" };
 }
 
-function clauseStops(s) {
-  return s.split(/\b(?:because|since|so\b|but\b|which|as they|as he|as she|while|however)\b|[.!?]/i)[0];
-}
-
-function toPhrases(text) {
-  return splitList(clauseStops(text))
-    .map((p) => p.replace(/^(?:a|an|the|any|more|another|all(?: the)?|plenty of|loads of|lots of|several|many|his|her|their|own|good)\s+/i, "").trim())
-    .filter(Boolean);
-}
-
 /** Pulls explicit dislikes/exclusions and things the recipient already owns out of the shopper's text. */
 export function extractConstraints(text) {
-  const avoid = [];
-  const owned = [];
-  const sentences = String(text || "").replace(/\s+/g, " ").split(/(?<=[.!?])\s+/);
-  const avoidRes = [
-    /(?:^|\b(?:please|and|but|,)\s*)(?:avoid|exclude|skip)\s+([^.;!?]+)/gi,
-    /(?:^|[.!?]\s*)no\s+([^.;!?]+)/gi,
-    /\bwithout\s+([^.;!?]+)/gi,
-    /\b(?:don'?t|do not|doesn'?t|does not|didn'?t)\s+(?:really\s+)?(?:want|like|need|suggest|recommend|buy|get|include|enjoy|use)\s+([^.;!?]+)/gi,
-    /\b(?:dislikes?|hates?|can'?t stand|allergic to|not a fan of|not keen on)\s+([^.;!?]+)/gi,
-  ];
-  const ownRes = [
-    /\balready\s+(?:has|have|owns?|got|having|own)\s+([^.;!?]+)/gi,
-    /\b(?:has|have|owns?|got)\s+([^.;!?]+?)\s+already\b/gi,
-    /\b(?:owns?|owned)\s+([^.;!?]+)/gi,
-  ];
-  for (const sentence of sentences) {
-    for (const re of avoidRes) for (const m of sentence.matchAll(re)) avoid.push(...toPhrases(m[1]));
-    for (const re of ownRes) for (const m of sentence.matchAll(re)) owned.push(...toPhrases(m[1]));
-  }
+  const { avoid, owned } = constraintPhrases(text);
   const build = (phrases, kind) => {
     const seen = new Set();
     const out = [];

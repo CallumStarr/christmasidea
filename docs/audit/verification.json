@@ -1,0 +1,529 @@
+{
+    "auditDate":  "2026-11-06",
+    "baselineCommit":  "74a6ddf2b5855710f2a2e762b0805e57645f85c1",
+    "finalHead":  "74a6ddf2b5855710f2a2e762b0805e57645f85c1",
+    "branch":  "main",
+    "upstream":  "origin/main",
+    "advertisedRemoteMain":  "74a6ddf2b5855710f2a2e762b0805e57645f85c1",
+    "changesCommitted":  false,
+    "deployed":  false,
+    "paidModelCalls":  0,
+    "automatedTests":  {
+                           "focusedPass":  99,
+                           "widgetAndBackendPass":  28,
+                           "finalFail":  0,
+                           "baselinePass":  487,
+                           "finalPass":  549
+                       },
+    "workerDryRun":  {
+                         "gzipKiB":  93.43,
+                         "uploadKiB":  323.13
+                     },
+    "nativeBundle":  {
+                         "assets":  107,
+                         "androidCopiesMatch":  true,
+                         "iosCopiesMatch":  true,
+                         "apkWebAssetsMatch":  true,
+                         "apkBytes":  8299483,
+                         "apkSha256":  "251D13B2092BB270C21149B36A82EF83EF4172CCAB9A92B7801EE2D834EA87E3"
+                     },
+    "android":  {
+                    "debugBuild":  "pass",
+                    "lintErrors":  0,
+                    "exampleUnitTests":  1,
+                    "policyUnitTests":  2,
+                    "lintWarnings":  30,
+                    "deviceTested":  false,
+                    "releaseSigned":  false
+                },
+    "ios":  {
+                "reason":  "Mac/Xcode unavailable",
+                "assetsSynced":  true,
+                "compiled":  false,
+                "deviceTested":  false
+            },
+    "sourceAndTestsSyntaxChecks":  134,
+    "findings":  {
+                     "operatorAction":  2,
+                     "fixedVerified":  20,
+                     "total":  22
+                 },
+    "asvs":  {
+                 "pass":  7,
+                 "requirements":  345,
+                 "partial":  14,
+                 "notApplicable":  69,
+                 "notTested":  253,
+                 "requiresExternalAccess":  2
+             },
+    "wcag":  {
+                 "criteria":  55,
+                 "notTested":  20,
+                 "conformanceCertified":  false,
+                 "notApplicable":  7,
+                 "partial":  28
+             },
+    "scans":  {
+                  "worktreeSecretMatches":  0,
+                  "npmReportedAdvisories":  0,
+                  "lockComponents":  194,
+                  "availableHistorySecretMatches":  0
+              },
+    "evidenceLogs":  [
+                         {
+                             "name":  "baseline-tests.log",
+                             "sha256":  "3019a13a74af5ce592198e6277a077690b9765a84c592918a7ce67f9d272ece0"
+                         },
+                         {
+                             "name":  "verified-tests.log",
+                             "sha256":  "fd6cebef64d545c962565b3e5ba0a7f4b549b609dbc6654620cc5cbaf41186a0"
+                         },
+                         {
+                             "name":  "requested-focused-tests.log",
+                             "sha256":  "979d3cf3aa312c5d28ae3cc84bb081f02ef9dfc71e1471c83716ac73a9bf93bc"
+                         },
+                         {
+                             "name":  "verified-dry-run.log",
+                             "sha256":  "b94b93e585e6dc80cab0919ee455c34bdcafda80134be2ea670f2d2b5841b627"
+                         },
+                         {
+                             "name":  "android-verified.log",
+                             "sha256":  "ff37f9ba1c8a14cb59af8137a8fd53250cf9f6454011b40de4f7d26368d71d15"
+                         },
+                         {
+                             "name":  "android-warning-review-final.log",
+                             "sha256":  "789e31f217297fb385662776e1c8023cac2d8a2d60da9a4304758fa68e2b9b3e"
+                         },
+                         {
+                             "name":  "android-warning-review-validation.log",
+                             "sha256":  "5186cd66f99c441841ad0e884ed453269656516b92a8b2beee77cc417159db91"
+                         },
+                         {
+                             "name":  "isolated-load.log",
+                             "sha256":  "59491431cd8c25555adf72667136d2803976f1abe4e2d94a9bcb507fc535f7a0"
+                         },
+                         {
+                             "name":  "turnstile-before.log",
+                             "sha256":  "698d61695640733f2a4eaf961f9d8c18a85eac09552425ff02a21edcd00c6247"
+                         },
+                         {
+                             "name":  "turnstile-after.log",
+                             "sha256":  "3cc778a294ae36f20bcd0dd3c80a0e3477b82e7336f4d7114e2982ae67adc5ab"
+                         },
+                         {
+                             "name":  "turnstile-action-before.log",
+                             "sha256":  "ffa6c8a38acc87e1755f58fea09b31b2fff15c86ada7ccedf0b1b3e8f29da343"
+                         },
+                         {
+                             "name":  "turnstile-action-after.log",
+                             "sha256":  "4c991d4e9f9f6ba794076c9f3b417468a1b76d6176e46a0259c4420c6da1c233"
+                         },
+                         {
+                             "name":  "api-boundaries.log",
+                             "sha256":  "511e684580e43540b4c05884ec683e30ddbc61030df18fc9da4ed19a3837b7ef"
+                         },
+                         {
+                             "name":  "replay-v33.log",
+                             "sha256":  "f99cbf0eaf6da523cf94f9b744f8b2dce152f847fa02455ed5b0a401cc51f498"
+                         },
+                         {
+                             "name":  "replay-v34.log",
+                             "sha256":  "acf0eacbafa3ae1ff69924c3809e7902b6352af404a283ec5e6f07772b76285b"
+                         },
+                         {
+                             "name":  "secret-history.json",
+                             "sha256":  "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+                         },
+                         {
+                             "name":  "secret-final-worktree.json",
+                             "sha256":  "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+                         },
+                         {
+                             "name":  "dependency-audit.json",
+                             "sha256":  "a69215bbf4f5aee6bae9e112a79c6e63fe980a506a533fa37d99c896eb135c6d"
+                         }
+                     ],
+    "changedFiles":  [
+                         {
+                             "path":  ".github/workflows/awin-catalogue.yml",
+                             "status":  "M",
+                             "sha256":  "903405aa09d17f81079c7e1e49a4a4e96ab099dc87671ac3589c493cb5144575"
+                         },
+                         {
+                             "path":  ".github/workflows/feedback-review.yml",
+                             "status":  "M",
+                             "sha256":  "83c4e258b5b581f0cf17c38b9095b8981fc2278a186a22c3debda649b8d2c5d3"
+                         },
+                         {
+                             "path":  ".github/workflows/quality.yml",
+                             "status":  "M",
+                             "sha256":  "6fd33e76605275f8491a3343915a2ee6d58a9afe8792d61feda57fd280bb7700"
+                         },
+                         {
+                             "path":  "PROJECT_STATUS.md",
+                             "status":  "M",
+                             "sha256":  "935a0cbb31ce34e4b1ed1e38208855d8f249c913bdbe9aaf8638810ee2aea453"
+                         },
+                         {
+                             "path":  "README.md",
+                             "status":  "M",
+                             "sha256":  "20cd7c4d753e22b04972503a51224b623b94c868fad15c2669cc021819c9318b"
+                         },
+                         {
+                             "path":  "android/app/src/main/AndroidManifest.xml",
+                             "status":  "M",
+                             "sha256":  "6aeed7d71e52849f31baea1eb9099288eaeba3c16824c6efe16b201fe5de03be"
+                         },
+                         {
+                             "path":  "android/app/src/main/res/values/styles.xml",
+                             "status":  "M",
+                             "sha256":  "216ac56cb8f3683fdcbe4e168d5dfdd22602eb86db736808dbe156faf59af125"
+                         },
+                         {
+                             "path":  "benchmarks/v3.4/README.md",
+                             "status":  "M",
+                             "sha256":  "20ed950c669cf6a31726440d27aca4921c71a0c5d71b3b1b0236fc05e656eb87"
+                         },
+                         {
+                             "path":  "docs/awin-product-catalogue.md",
+                             "status":  "M",
+                             "sha256":  "be7e9506b0c2b8bb0071d4fce35c2af683535c85a7ea0275e303260b96f155ba"
+                         },
+                         {
+                             "path":  "docs/gift-intelligence-engine.md",
+                             "status":  "M",
+                             "sha256":  "0109f046695d91cf180b18b4a1cee33bdaad9ffed3ecc50262de1026828c6701"
+                         },
+                         {
+                             "path":  "docs/product-evidence-ranking.md",
+                             "status":  "M",
+                             "sha256":  "a7ee1dd49c131693701706a5e0f44c01e64075e29234a816b4d22284f030af18"
+                         },
+                         {
+                             "path":  "scripts/engine-metrics.js",
+                             "status":  "M",
+                             "sha256":  "88acc8115cb08cf11e0a9304cf3f1291e46dd2abc6359760e1a001ed54942d9c"
+                         },
+                         {
+                             "path":  "scripts/import-awin-feed.mjs",
+                             "status":  "M",
+                             "sha256":  "e6aa8b182d0fc2653f33750d4e6a08278443c07eeb2006f1a4357e3564363c6e"
+                         },
+                         {
+                             "path":  "scripts/run-benchmark.js",
+                             "status":  "M",
+                             "sha256":  "1ba8013bf0283d7c26ba8b7c748c29fe4195ce7fe4559d5f3bfd3f8bb4c3832d"
+                         },
+                         {
+                             "path":  "scripts/sync-awin-catalogue.mjs",
+                             "status":  "M",
+                             "sha256":  "5568c5ea2e0d1e5e1db9d2e66c6b72be481a000b292def1dabd3176a4c569141"
+                         },
+                         {
+                             "path":  "site/api.js",
+                             "status":  "M",
+                             "sha256":  "7770f67e1ce7032502b338ba83339363672238880a0f30a1e58df7d247afbdd5"
+                         },
+                         {
+                             "path":  "site/app-verify.js",
+                             "status":  "M",
+                             "sha256":  "d018af9ae5e2e34423355a20c143c65f6abb11c7ab72752a329f29e6ff3a442a"
+                         },
+                         {
+                             "path":  "site/calendar-reminder.js",
+                             "status":  "M",
+                             "sha256":  "6803b9b49fb3d3aa7f3c8134970bcd00efe0f00c5cb7d11521450965abf09504"
+                         },
+                         {
+                             "path":  "site/index.html",
+                             "status":  "M",
+                             "sha256":  "c133f795268bd8a82d6559024c7254724f9071107c935ee98d46b19bb05f0042"
+                         },
+                         {
+                             "path":  "site/monetization-data.js",
+                             "status":  "M",
+                             "sha256":  "c73cf38e80246959ecb1e9d2069530c987d578e4502e65688f691c4df8376500"
+                         },
+                         {
+                             "path":  "site/monetization-shell.js",
+                             "status":  "M",
+                             "sha256":  "8cbef245287b734a8dfb2b6e420d407645a7bd66b36975441f7af412c075a377"
+                         },
+                         {
+                             "path":  "site/monetization-ui.js",
+                             "status":  "M",
+                             "sha256":  "f636f8ad9d9dca086f1842d011bcfec470b3a87f8dec46718d8975c4291543b3"
+                         },
+                         {
+                             "path":  "site/privacy.html",
+                             "status":  "M",
+                             "sha256":  "8aadbd69b4c540630907e8b4b1123bad29013881430f714d92224bf1179a35e1"
+                         },
+                         {
+                             "path":  "site/site-shell.js",
+                             "status":  "M",
+                             "sha256":  "8f6c7e031589c0fd04a226ca28af1a7b1cdfef987ee01074772473cae75dcd66"
+                         },
+                         {
+                             "path":  "site/swipe-deck.js",
+                             "status":  "M",
+                             "sha256":  "9c761e6f8e90089026c62d9a752af66e08a314aaf36ecd32c0c5b3dfe28487b2"
+                         },
+                         {
+                             "path":  "site/wishlists.js",
+                             "status":  "M",
+                             "sha256":  "d25f13144defaf1f5b214cb5dbd49c1701fa812083134885fdf6c25fda0523fa"
+                         },
+                         {
+                             "path":  "src/core.js",
+                             "status":  "M",
+                             "sha256":  "ee9bbf3c50c5a968487dc345127d6fe08f7ca456249f9a2a0b20b0b989785347"
+                         },
+                         {
+                             "path":  "src/engine/feedback-receipts.js",
+                             "status":  "M",
+                             "sha256":  "bb125647e812d454ff6ee762c8ef3f2d604bcce3c58dc8009f6e7c22e09097e5"
+                         },
+                         {
+                             "path":  "src/offer-validation.js",
+                             "status":  "M",
+                             "sha256":  "a01c96e66c935d1ba867bd89fb0f71c3b04a0bbbc2303ee7b0ab82f664234b2d"
+                         },
+                         {
+                             "path":  "src/product-matcher.js",
+                             "status":  "M",
+                             "sha256":  "c5adc66d18e8d702aac124ed74ccfbe77257fcb1b6a08c7b4fc57ac0d1c6727a"
+                         },
+                         {
+                             "path":  "src/product-suitability.js",
+                             "status":  "M",
+                             "sha256":  "5ddd6e622605e3c412a9943a12e3475eccfa5dceb75d2818e704e1d1862425c7"
+                         },
+                         {
+                             "path":  "src/product-validation.js",
+                             "status":  "M",
+                             "sha256":  "58462d282d2f94ec294b913e35b38920d990c324ce0b0ba65f4d5d6766a5882d"
+                         },
+                         {
+                             "path":  "src/recipient.js",
+                             "status":  "M",
+                             "sha256":  "3e26880943702af5e72dc30a9a895b7f9bbb47f4bfa5ba117a45edd500c4c19c"
+                         },
+                         {
+                             "path":  "src/validate.js",
+                             "status":  "M",
+                             "sha256":  "ac7857bd0dd7390e49d6ff8eb49ff1cc413b6f4d844f9079d2524535f4251028"
+                         },
+                         {
+                             "path":  "test/awin.test.js",
+                             "status":  "M",
+                             "sha256":  "35cfa3ff3b1c5f79dce21b28916d1e86545bdd4bd098d4489fca630ff2313da9"
+                         },
+                         {
+                             "path":  "test/catalogue-enrichment.test.js",
+                             "status":  "M",
+                             "sha256":  "045a5b50de396235374ba04a9fbee427240cc4c31bff50943fea2df7bd77fab5"
+                         },
+                         {
+                             "path":  "test/feedback-receipts.test.js",
+                             "status":  "M",
+                             "sha256":  "a3f7fea9e7cd860fa25d55036aff581784b30caceb1dd4c864515d3c6b5e773d"
+                         },
+                         {
+                             "path":  "test/frontend-exclusion-flow.test.js",
+                             "status":  "M",
+                             "sha256":  "e73d224aea1fea7d1eaeb04939bfb89776ce0f014dd9e9ea3204bd275902d17f"
+                         },
+                         {
+                             "path":  "test/gift-edit.test.js",
+                             "status":  "M",
+                             "sha256":  "badc15de7308860c126889d0ac5d60cb7adcd01249ca0c2893b9f1038e8b638e"
+                         },
+                         {
+                             "path":  "test/monetization.test.js",
+                             "status":  "M",
+                             "sha256":  "b75ce8c94313ce4eb21bd2f448732d0a903312f550b951e4c64ef5e41d339ca9"
+                         },
+                         {
+                             "path":  "test/swipe-deck.test.js",
+                             "status":  "M",
+                             "sha256":  "0b9e76639f8e0477127ccafbcee456dfdd202edfab44c6775073ab1d09df21d8"
+                         },
+                         {
+                             "path":  "test/turnstile-token.test.js",
+                             "status":  "M",
+                             "sha256":  "95c829744be04e71ca5401a0afef15ac085cbbead7064a41082cb226b4b835f5"
+                         },
+                         {
+                             "path":  "wrangler.toml",
+                             "status":  "M",
+                             "sha256":  "613ea0a98d9eac934ef14be2b7eb47e6de9d0ae75fb5124809901afe83e757c2"
+                         },
+                         {
+                             "path":  "android/app/src/main/res/values-v27/styles.xml",
+                             "status":  "??",
+                             "sha256":  "1383fb0e7f280ac2b6007ea7f53aef82bd880ba2efda76647577dd2ea625a8dc"
+                         },
+                         {
+                             "path":  "android/app/src/main/res/xml/data_extraction_rules.xml",
+                             "status":  "??",
+                             "sha256":  "65cd9bcc40eaa83e77f16335a19be31f32f05d684c6f894386c029dd8fd079e0"
+                         },
+                         {
+                             "path":  "android/app/src/main/res/xml/legacy_backup_rules.xml",
+                             "status":  "??",
+                             "sha256":  "af797319a95a30539b09171a669af006ae322edb80c8c4c51da0ee4bf07dc1fd"
+                         },
+                         {
+                             "path":  "android/app/src/test/java/uk/co/christmasidea/santashelper/ManifestPolicyTest.java",
+                             "status":  "??",
+                             "sha256":  "8972969e0326956d0825ff11b8d9f6b0c8bec46a7d6d4a51982b1c6342e1f0f5"
+                         },
+                         {
+                             "path":  "benchmarks/audit-2026/README.md",
+                             "status":  "??",
+                             "sha256":  "2ad8d32ec2040ba5c35bb956c36ac95014aa8c108d4b6d45ccaad909bac51fb4"
+                         },
+                         {
+                             "path":  "benchmarks/audit-2026/cases.json",
+                             "status":  "??",
+                             "sha256":  "13b805fcbf4876e73f3bb1f6152ece632e891b60f548d405df320e9323d1e073"
+                         },
+                         {
+                             "path":  "docs/audit/00-repository-inventory.md",
+                             "status":  "??",
+                             "sha256":  "43bd2157deccb85a2e9720224be41b76bbf339b164f7977e0bc35bcb90ecb736"
+                         },
+                         {
+                             "path":  "docs/audit/ANDROID_WARNING_REVIEW.md",
+                             "status":  "??",
+                             "sha256":  "9bd30e6fbf9d32f102ead5f93729ecf507c213f86291e3306a0543bb2bac8387"
+                         },
+                         {
+                             "path":  "docs/audit/README.md",
+                             "status":  "??",
+                             "sha256":  "f25b681bb79275e3c84e0a96203723b25a00a9cf43f35422879e50e0993e61d7"
+                         },
+                         {
+                             "path":  "docs/audit/ai-quality.md",
+                             "status":  "??",
+                             "sha256":  "90ece762a738f127aa39f4f26d74e1abc2fa10a447298b2e4b96861bbffdb119"
+                         },
+                         {
+                             "path":  "docs/audit/architecture.md",
+                             "status":  "??",
+                             "sha256":  "8ab4c6c7d3bfcb8c1200e74d53556a78f25668d0de925fab1e297b5ef038cfa1"
+                         },
+                         {
+                             "path":  "docs/audit/asvs-matrix.csv",
+                             "status":  "??",
+                             "sha256":  "90f22d2c5d3da3a9e9096cc1434ad0375a1be0ced7ce295ef0ecea7eab7b56b1"
+                         },
+                         {
+                             "path":  "docs/audit/audit-matrix.md",
+                             "status":  "??",
+                             "sha256":  "f5953c56d573df197f9a4d9e43e304864fa532706589df63b699af977b953e18"
+                         },
+                         {
+                             "path":  "docs/audit/commercial-integrity.md",
+                             "status":  "??",
+                             "sha256":  "87ebac0969a6540501050c1ad43a9e84ebf8a12b4af299edc62db0f0943029f6"
+                         },
+                         {
+                             "path":  "docs/audit/findings.json",
+                             "status":  "??",
+                             "sha256":  "b65af3055011d1fac47624637b23a1b9aa8688a91649c2dec8e0f62f7db4fdf4"
+                         },
+                         {
+                             "path":  "docs/audit/findings.md",
+                             "status":  "??",
+                             "sha256":  "7fb70fa2395bc88a69e92cd1f72448176d65f935d8be3239b44acccdca778608"
+                         },
+                         {
+                             "path":  "docs/audit/lock-inventory.cdx.json",
+                             "status":  "??",
+                             "sha256":  "fe0ea5bbcfac71c8948e938b8ff9deee23a1534cfe59ecf1cf419123ded8bc4f"
+                         },
+                         {
+                             "path":  "docs/audit/mobile.md",
+                             "status":  "??",
+                             "sha256":  "e4133483e1c6113f65f3c825fe37a246b31dfa11d290fc76aa7c0f25dff4fd86"
+                         },
+                         {
+                             "path":  "docs/audit/outstanding-risks.md",
+                             "status":  "??",
+                             "sha256":  "897bff23f166780226cab3f0a571614d6cb1e9534cc9a22d23e64a1a9e027f8b"
+                         },
+                         {
+                             "path":  "docs/audit/performance-reliability.md",
+                             "status":  "??",
+                             "sha256":  "794ecb197fb2a54ab67ce4ef0004066be800f79a1cddc7dce91c96dd0678e856"
+                         },
+                         {
+                             "path":  "docs/audit/privacy-compliance.md",
+                             "status":  "??",
+                             "sha256":  "2583399e553480ac92b0ab5fd15a36217dd5c9ac430a30faaf30d22ba8e0ddcf"
+                         },
+                         {
+                             "path":  "docs/audit/remediation.md",
+                             "status":  "??",
+                             "sha256":  "5b410e7c18ecc4044a22e9354c3b5cc08589ccc74d83ce2d6c8c214af1a4c116"
+                         },
+                         {
+                             "path":  "docs/audit/roadmap.md",
+                             "status":  "??",
+                             "sha256":  "43ba545c8b1a146f9ff9990f954ec0bbc23c83bb2f37024390078fe275a53981"
+                         },
+                         {
+                             "path":  "docs/audit/test-report.md",
+                             "status":  "??",
+                             "sha256":  "abfd6fbf574cdda9d11a6a862a7d2c209997681e0f04a2c2ca896f726eee5cf3"
+                         },
+                         {
+                             "path":  "docs/audit/wcag-matrix.csv",
+                             "status":  "??",
+                             "sha256":  "9cc815e89b41741aad87e18cca5e9fe4c97c8a59d04e3121a448e0760a15b4cd"
+                         },
+                         {
+                             "path":  "scripts/audit-load.mjs",
+                             "status":  "??",
+                             "sha256":  "0b89269db94b4ddeb2ac8ba0402e0c2042a4c55aee5ddcdc24caa19a87bc1e5f"
+                         },
+                         {
+                             "path":  "site/recipient-language.js",
+                             "status":  "??",
+                             "sha256":  "e8b02fe513182968e9cd249ff0c22d57e076695781e311ec3ab44c4f383ca458"
+                         },
+                         {
+                             "path":  "src/product-constraints.js",
+                             "status":  "??",
+                             "sha256":  "50fe8d22c7d1fc1de0183fe0b494e9a2a0ea678848e26e5bc7b3f652e0086b4d"
+                         },
+                         {
+                             "path":  "test/api-boundaries.test.js",
+                             "status":  "??",
+                             "sha256":  "d943fbaea408dc11a643ac52022e76aadeaedd51d7f966986c21d3f40a33f665"
+                         },
+                         {
+                             "path":  "test/audit-guardrails.test.js",
+                             "status":  "??",
+                             "sha256":  "ee81ba5089a27639b0b157628ec2ac99ee793999792c5934318b978c23f74aa8"
+                         },
+                         {
+                             "path":  "test/frontend-state-regressions.test.js",
+                             "status":  "??",
+                             "sha256":  "11d0ca7550e19b4cf6efefb82fbdf68b9acb5bfff34b3948309679e8a1b51d07"
+                         },
+                         {
+                             "path":  "test/recipient-commerce-constraints.test.js",
+                             "status":  "??",
+                             "sha256":  "65046c5b065b80e80f7a0ba2e38533d14470a41b72c290cfa235b652dace44d8"
+                         },
+                         {
+                             "path":  "test/turnstile-security.test.js",
+                             "status":  "??",
+                             "sha256":  "2a3ee3c345c2b80bf88985b76fa759e092ff2fdf209085aab65a3c00875a231c"
+                         }
+                     ],
+    "note":  "Hashes describe this uncommitted worktree at audit close; manifest excludes itself. Raw logs remain in session evidence. Not an attestation of deployed code, legal compliance or full-platform security."
+}

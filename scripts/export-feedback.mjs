@@ -12,6 +12,7 @@ do {
     method: "POST",
     headers: { Origin: origin, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(after ? { after } : {}),
+    redirect: "error",
   });
   if (!response.ok) throw new Error(`Feedback export failed (${response.status}).`);
   const text = await response.text();

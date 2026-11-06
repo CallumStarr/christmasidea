@@ -1,5 +1,6 @@
 import { cleanText } from "../text.js";
 import { validateOffer } from "../offer-validation.js";
+import { fetchWithoutRedirect } from "../upstream-fetch.js";
 
 const ITEM_ID = /^v1\|(\d{9,15})\|(\d{1,15})$/;
 const tokens = new Map();
@@ -64,7 +65,7 @@ export function ebayConfigured(env) {
 
 async function request(url, init, env, fetchImpl) {
   try {
-    return await fetchImpl(url, {
+    return await fetchWithoutRedirect(fetchImpl, url, {
       ...init,
       signal: AbortSignal.timeout(Math.max(1000, Math.min(15000, Number(env.PRODUCT_API_TIMEOUT_MS) || 8000))),
     });

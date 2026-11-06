@@ -6,9 +6,10 @@ import { initialiseFeedbackReceipts, pruneFeedbackReceipts, recordVerifiedFeedba
 import { feedbackKeys } from "../src/engine/feedback.js";
 import { CONCEPTS, GRAPH_VERSION } from "../src/engine/interest-graph.js";
 import { conceptKey } from "../src/engine/concepts.js";
-import { applyLearning } from "../src/engine/learning.js";
+import { applyLearning, feedbackCsv } from "../src/engine/learning.js";
 import { handleRequest, normaliseInput } from "../src/core.js";
 import { fetchProducts, sendFeedback } from "../site/api.js";
+import { proposePolicy } from "../scripts/review-feedback.mjs";
 
 const now = Date.parse("2026-11-06T15:00:00Z");
 const env = { IP_SALT: "receipt-test-secret-0123456789abcdef01234567", ALLOWED_ORIGINS: "https://gifts.example.com" };
@@ -88,14 +89,42 @@ test("invalid, modified, expired, wrong-key and mixed receipts fail explicitly",
   assert.equal((await verifyFeedbackReceipts({ event: "shown", items: Array(13).fill(item) }, env, now)).ok, false);
 });
 
-test("legacy clients remain compatible but cannot add verified concept evidence", async () => {
+test("legacy clients remain compatible but cannot add learning or concept evidence", async () => {
   const legacy = { ...ideas[0], position: 0 };
   const verified = await verifyFeedbackReceipts({ event: "good", item: legacy }, env, now);
   assert.equal(verified.ok, true);
   assert.equal(verified.legacy, true);
   const keys = feedbackKeys(verified.body).keys;
-  assert.ok(keys.some((key) => key.startsWith("L|good")));
-  assert.ok(keys.every((key) => !key.startsWith("V|") && !key.startsWith("K|")));
+  assert.ok(keys.includes("good|p:0"), "coarse aggregate counters are still recorded");
+  assert.ok(keys.every((key) => !key.startsWith("L|") && !key.startsWith("V|") && !key.startsWith("K|")));
+});
+
+test("receipt-verified cards still contribute learning evidence", async () => {
+  const item = await signedItem();
+  const { records } = await verifyFeedbackReceipts({ event: "good", item }, env, now);
+  assert.ok(records[0].keys.some((key) => key.startsWith("L|good|")));
+  assert.ok(records[0].shownKeys.some((key) => key.startsWith("L|shown|")));
+});
+
+test("forged unsigned feedback cannot manufacture a learning-policy proposal", async () => {
+  const counts = new Map();
+  const deps = { feedback: { record: async (_ip, keys) => {
+    for (const key of keys) counts.set(key, (counts.get(key) || 0) + 1);
+    return { ok: true };
+  } } };
+  const learning = { topic: "trains", age: "adult", budget: "15-30", category: "Tech", policy: "control-v1" };
+  const send = async (body) => (await handleRequest(new Request("https://gifts.example.com/api/feedback", {
+    method: "POST", headers: { Origin: "https://gifts.example.com", "Content-Type": "application/json", "CF-Connecting-IP": "203.0.113.9" },
+    body: JSON.stringify(body),
+  }), env, deps)).status;
+  for (let i = 0; i < 20; i++) {
+    assert.equal(await send({ event: "shown", items: Array.from({ length: 12 }, (_, position) => ({ source: "model", strategy: "unknown", position, learning })) }), 202);
+  }
+  for (let i = 0; i < 40; i++) assert.equal(await send({ event: "good", item: { source: "model", position: 0, learning } }), 202);
+  const rows = [...counts].filter(([key]) => key.startsWith("L|")).map(([k, n]) => ({ bucket: "F2026-11-06", k, n }));
+  assert.equal(rows.length, 0);
+  assert.deepEqual(proposePolicy(feedbackCsv(rows)).cells, []);
+  assert.equal(counts.get("good|p:0"), 40, "unsigned events remain visible as coarse aggregates");
 });
 
 test("SQLite deduplicates replayed cards, prevents conflicting ratings, and handles rating before shown", async (t) => {
@@ -171,14 +200,14 @@ test("real feedback API validates before storage and passes only server-verified
   assert.ok(records[0].keys.some((key) => key.startsWith("V|good|")));
 });
 
-test("browser API forwards receipts only to feedback, not product lookup", async () => {
+test("browser API forwards immutable-card receipts to product lookup without learning dimensions", async () => {
   const item = { ...(await signedItem()), position: 0 };
   let products;
   await fetchProducts([item], { fetchImpl: async (_url, init) => {
     products = JSON.parse(init.body).ideas;
     return Response.json({ products: [] });
   } });
-  assert.equal(products[0].feedbackToken, undefined);
+  assert.equal(products[0].feedbackToken, item.feedbackToken);
   assert.equal(products[0].learning, undefined);
   let feedback;
   await sendFeedback({ event: "good", item }, { enabled: true, fetchImpl: async (_url, init) => {

@@ -122,13 +122,18 @@ test("baseline and experimental results never share cache keys", async () => {
 
 test("baseline still verifies Turnstile and retains exclusion instructions for different ideas", async () => {
   const input = { ...cases[0].input, exclude: ["Garden notebook"], turnstileToken: "invalid" };
-  const response = await handleRequest(request(input), { ...env, TURNSTILE_SECRET: "test-only" }, {
+  let verificationCalls = 0;
+  const response = await handleRequest(request(input), {
+    ...env, CANONICAL_HOST: "gifts.example.com", TURNSTILE_REQUIRED: "true", TURNSTILE_SECRET: "test-only",
+  }, {
     fetch: async (url) => {
       assert.match(url, /siteverify/);
+      verificationCalls++;
       return Response.json({ success: false });
     },
   });
   assert.equal(response.status, 403);
   assert.equal((await response.json()).retryTurnstile, true);
+  assert.equal(verificationCalls, 1);
   assert.match(buildUserMessage(input), /Garden notebook/);
 });

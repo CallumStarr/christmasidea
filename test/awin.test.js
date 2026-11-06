@@ -47,6 +47,72 @@ const offer = (overrides = {}) => ({
   ...overrides,
 });
 
+test("Awin identities retain their full provider-specific length without collisions", () => {
+  for (const suffix of ["a".repeat(79) + "1", "a".repeat(79) + "2"]) {
+    const productId = `488:${suffix}`;
+    const product = validateAwinProduct(offer({ productId,
+      affiliateUrl: `https://www.awin1.com/pclick.php?m=488&a=3146453&p=${suffix}` }), env, NOW);
+    assert.equal(product?.productId, productId);
+    assert.equal(validProduct(product, { AWIN_AFFILIATE_ID: "3146453" }, NOW), true);
+  }
+  assert.equal(validateAwinProduct(offer({ productId: `488:${"a".repeat(81)}` }), env, NOW), null);
+});
+
+test("Awin imports require explicit new condition and reject conflicting or missing evidence", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "awin-condition-test-"));
+  try {
+    const feed = join(directory, "feed.csv"), output = join(directory, "output");
+    const conditions = [["new", ""], ["used", ""], ["refurbished", ""], ["unknown", ""], ["new", "used"], ["", ""]];
+    await writeFile(feed, [
+      "merchant_id,aw_product_id,product_name,currency,search_price,in_stock,condition,product_condition,aw_deep_link,merchant_deep_link",
+      ...conditions.map(([condition, other], index) => [
+        "488", `condition-${index}`, `Journal ${index}`, "GBP", "20", "1", condition, other,
+        `https://www.awin1.com/pclick.php?m=488&a=3146453&p=condition-${index}`, merchantUrl,
+      ].join(",")),
+    ].join("\n"));
+    const script = fileURLToPath(new URL("../scripts/import-awin-feed.mjs", import.meta.url));
+    const run = spawnSync(process.execPath, [script, "--feed", feed, "--output", output, "--advertisers", "488"], {
+      encoding: "utf8",
+    });
+    assert.equal(run.status, 0, run.stderr);
+    assert.match(run.stdout, /1 eligible, 5 rejected/);
+    const sql = await readFile(join(output, "awin-import-0000.sql"), "utf8");
+    assert.match(sql, /condition-0/);
+    assert.doesNotMatch(sql, /condition-[1-5]/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("an import with no condition evidence aborts before publication, cleanup or D1 invocation", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "awin-empty-condition-test-"));
+  try {
+    const feed = join(directory, "feed.csv"), output = join(directory, "output");
+    await writeFile(feed, [
+      "merchant_id,aw_product_id,product_name,currency,search_price,in_stock,aw_deep_link,merchant_deep_link",
+      `488,journal,Travel journal,GBP,20,1,https://www.awin1.com/pclick.php?m=488&a=3146453&p=journal,${merchantUrl}`,
+    ].join("\n"));
+    const script = fileURLToPath(new URL("../scripts/import-awin-feed.mjs", import.meta.url));
+    for (const flags of [["--output", output], ["--apply", "--database", "audit-unused", "--local"]]) {
+      const run = spawnSync(process.execPath, [script, "--feed", feed, "--advertisers", "488", ...flags], {
+        encoding: "utf8",
+        // No Wrangler command can execute; an all-rejected import must stop before invoking it.
+        env: { ...process.env, PATH: directory, WRANGLER_SEND_METRICS: "false" },
+      });
+      assert.equal(run.status, 1);
+      assert.match(run.stderr, /condition_missing=1/);
+      assert.match(run.stderr, /The active catalogue was not changed/);
+      assert.doesNotMatch(run.stdout, /Generation published|Cleaned/);
+      assert.doesNotMatch(run.stderr, /Wrangler D1|not recognized|not found/i);
+    }
+    await assert.rejects(readFile(join(output, "awin-publish.sql")), { code: "ENOENT" });
+    await assert.rejects(readFile(join(output, "awin-import-0000.sql")), { code: "ENOENT" });
+    await assert.rejects(readFile(join(output, "awin-cleanup.sql")), { code: "ENOENT" });
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 function catalogueDb(rows = [offer()]) {
   const statements = [];
   return {
@@ -173,19 +239,19 @@ test("Awin feed importer parses quoted CSV, filters advertiser/stock and produce
     "488", "photo-book-1", '"Personalised photo book, hard cover"', 'A book with a quoted "message"',
     "PhotoCo", "Photo Books UK", "Personalised gifts", "20.00", "GBP", "yes", "2.00",
     "https://images.example.com/photo.jpg", merchantUrl,
-    "http://www.awin1.com/pclick.php?p=photo-book-1&a=3146453&m=488", "12345670",
+    "http://www.awin1.com/pclick.php?p=photo-book-1&a=3146453&m=488", "12345670", "new",
   ].join(",");
   const notAllowed = [
     "999", "other-1", "Photo book", "Description", "Brand", "Unknown shop", "Books", "20", "GBP",
-    "yes", "0", "https://images.example.com/other.jpg", merchantUrl, deepLink, "",
+    "yes", "0", "https://images.example.com/other.jpg", merchantUrl, deepLink, "", "new",
   ].join(",");
   const outOfStock = [
     "488", "out-1", "Photo book", "Description", "Brand", "Photo Books UK", "Books", "20", "GBP",
     "no", "0", "https://images.example.com/other.jpg", merchantUrl,
-    `https://www.awin1.com/cread.php?awinmid=488&awinaffid=3146453&ued=${encodeURIComponent(merchantUrl)}`, "",
+    `https://www.awin1.com/cread.php?awinmid=488&awinaffid=3146453&ued=${encodeURIComponent(merchantUrl)}`, "", "new",
   ].join(",");
   const csv = [
-    "merchant_id,aw_product_id,product_name,description,brand_name,merchant_name,merchant_category,search_price,currency,in_stock,delivery_cost,image_url,merchant_deep_link,aw_deep_link,ean",
+    "merchant_id,aw_product_id,product_name,description,brand_name,merchant_name,merchant_category,search_price,currency,in_stock,delivery_cost,image_url,merchant_deep_link,aw_deep_link,ean,condition",
     validRow, notAllowed, outOfStock,
   ].join("\n");
   await writeFile(feed, gzipSync(csv));
@@ -219,8 +285,11 @@ test("Awin feed importer parses quoted CSV, filters advertiser/stock and produce
           "12345,The Wentworth Wooden Jigsaw Company,GB,active,Awin,https://productdata.awin.com/datafeed/download/apikey/key/fid/7/format/csv",
         ].join("\n"));
         const nameMatched = await readAwinFeedList(path, new Set(["488"]));
-        assert.deepEqual(nameMatched.activeAdvertisers, ["12345"]);
-        assert.equal(nameMatched.feeds.length, 1);
+        assert.deepEqual(nameMatched.activeAdvertisers, []);
+        assert.equal(nameMatched.feeds.length, 0);
+        const unrestricted = await readAwinFeedList(path, null);
+        assert.deepEqual(unrestricted.activeAdvertisers, ["12345"]);
+        assert.equal(unrestricted.feeds.length, 1);
         assert.equal(isAwinAdvertiserName("The Wentworth Wooden Jigsaw Company"), true);
         assert.equal(isAwinAdvertiserName("Unrelated UK Retailer"), false);
 

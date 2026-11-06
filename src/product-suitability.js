@@ -17,8 +17,8 @@ export function evaluateSuitability(spec = {}, product = {}) {
   if (knownAge === "adult" && CHILD_TITLE.test(title)) reasons.push("recipient_age_mismatch");
   else if (CHILD_BANDS.includes(knownAge) && /\badult\b/i.test(title)) reasons.push("recipient_age_mismatch");
 
-  const effectiveCap = Number.isFinite(cap) && cap > 0 ? cap
-    : Number.isFinite(budgetMax) && budgetMax > 0 ? budgetMax : null;
+  const caps = [cap, budgetMax].filter((value) => Number.isFinite(value) && value > 0);
+  const effectiveCap = caps.length ? Math.min(...caps) : null;
   if (effectiveCap !== null && price === null) reasons.push("price_unverified_with_budget");
   else if (effectiveCap !== null && price > effectiveCap) reasons.push("over_budget");
 

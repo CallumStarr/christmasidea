@@ -1,6 +1,7 @@
 import { STRATEGIES } from "../constants.js";
 import { feedbackKeys, FEEDBACK_EVENTS, FEEDBACK_SOURCES } from "./feedback.js";
 import { validLearning } from "./learning.js";
+import { normaliseProductIdea } from "../product-validation.js";
 
 export const RECEIPT_LIFETIME_MS = 86400_000;
 const encoder = new TextEncoder();
@@ -13,6 +14,27 @@ async function signingKey(env) {
 }
 
 const signedBytes = (payload) => encoder.encode(`santas-helper:feedback:v1:${payload}`);
+
+async function productHash(idea) {
+  const value = normaliseProductIdea(idea);
+  if (!value) return null;
+  return encode(new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(JSON.stringify(value)))));
+}
+
+async function readReceipt(token, key, now) {
+  try {
+    if (typeof token !== "string" || token.length > 2000 || !/^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]{43}$/.test(token)) return null;
+    const [payload, signature] = token.split(".");
+    if (!await crypto.subtle.verify("HMAC", key, decode(signature), signedBytes(payload))) return null;
+    const receipt = JSON.parse(new TextDecoder().decode(decode(payload)));
+    if (receipt?.v !== 1 || !/^[a-f0-9-]{36}$/.test(receipt.id)
+        || !Number.isSafeInteger(receipt.expires) || receipt.expires <= now
+        || receipt.expires > now + RECEIPT_LIFETIME_MS) return null;
+    return receipt;
+  } catch {
+    return null;
+  }
+}
 
 export async function issueFeedbackReceipts(ideas, env, now = Date.now()) {
   if (!Array.isArray(ideas) || ideas.length > 12) throw new Error("Feedback issuance supports at most twelve cards.");
@@ -27,12 +49,28 @@ export async function issueFeedbackReceipts(ideas, env, now = Date.now()) {
     } : undefined;
     const item = { source: idea.source, strategy: STRATEGIES.includes(idea.strategy) ? idea.strategy : "unknown",
       discovery: idea.discovery === true, position, ...(learning ? { learning } : {}) };
+    const hash = await productHash(idea);
     const payload = encode(encoder.encode(JSON.stringify({
       v: 1, id: crypto.randomUUID(), expires: now + RECEIPT_LIFETIME_MS, item,
+      ...(hash ? { productHash: hash } : {}),
     })));
     const signature = encode(new Uint8Array(await crypto.subtle.sign("HMAC", key, signedBytes(payload))));
     return { ...idea, feedbackToken: `${payload}.${signature}` };
   }));
+}
+
+export async function verifyProductReceipts(ideas, env, now = Date.now()) {
+  const signed = ideas.slice(0, 8).filter((idea) => idea?.feedbackToken !== undefined);
+  if (!signed.length) return { ok: true, legacy: true };
+  const key = await signingKey(env);
+  for (const idea of signed) {
+    const receipt = await readReceipt(idea.feedbackToken, key, now);
+    if (!receipt || (receipt.productHash !== undefined && receipt.productHash !== await productHash(idea))) {
+      return { ok: false, error: "Product details changed or their receipt expired. Request fresh ideas." };
+    }
+  }
+  // Pre-upgrade clients/receipts remain compatible; only new issued receipts bind product constraints.
+  return { ok: true };
 }
 
 export async function verifyFeedbackReceipts(body, env, now = Date.now()) {
@@ -46,23 +84,8 @@ export async function verifyFeedbackReceipts(body, env, now = Date.now()) {
   const key = await signingKey(env);
   const records = [];
   for (const value of raw) {
-    const token = value?.feedbackToken;
-    if (typeof token !== "string" || token.length > 2000 || !/^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]{43}$/.test(token)) {
-      return { ok: false, error: "Invalid feedback receipt." };
-    }
-    const [payload, signature] = token.split(".");
-    if (!await crypto.subtle.verify("HMAC", key, decode(signature), signedBytes(payload))) {
-      return { ok: false, error: "Invalid feedback receipt." };
-    }
-    let receipt;
-    try {
-      receipt = JSON.parse(new TextDecoder().decode(decode(payload)));
-    } catch {
-      return { ok: false, error: "Invalid feedback receipt." };
-    }
-    if (receipt?.v !== 1 || !/^[a-f0-9-]{36}$/.test(receipt.id)
-      || !Number.isSafeInteger(receipt.expires) || receipt.expires <= now
-      || receipt.expires > now + RECEIPT_LIFETIME_MS) return { ok: false, error: "Feedback receipt has expired or is invalid." };
+    const receipt = await readReceipt(value?.feedbackToken, key, now);
+    if (!receipt) return { ok: false, error: "Feedback receipt has expired or is invalid." };
     const event = body.event;
     if (!Number.isInteger(value.position) || value.position < 0 || value.position > 11) return { ok: false, error: "Invalid feedback position." };
     // Photo selection may compact/reorder issued cards. Only display position remains browser-reported.

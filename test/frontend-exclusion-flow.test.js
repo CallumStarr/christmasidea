@@ -18,6 +18,7 @@ const firstBatch = [
     .map((name) => idea(name, name)),
 ];
 const env = {
+  CANONICAL_HOST: "gifts.example.com",
   ALLOWED_ORIGINS: "https://gifts.example.com",
   IP_SALT: "frontend-test-salt-0123456789abcdef",
   ANTHROPIC_API_KEY: "test-only",
@@ -44,7 +45,7 @@ function frontend(fetchImpl, { selectPhotographedIdeas } = {}) {
   };
   $("#description").value = description;
   $("#results").hidden = true;
-  const rendered = [], renderOptions = [];
+  const rendered = [], renderOptions = [], sharedInvalidations = [];
   const gate = createTurnstileTokenGate();
   const context = vm.createContext({
     $, document: { createElement: element, querySelector: () => null, querySelectorAll: () => [], activeElement: null },
@@ -55,7 +56,7 @@ function frontend(fetchImpl, { selectPhotographedIdeas } = {}) {
     fetchIdeas: (input, options) => fetchIdeas(input, { ...options, fetchImpl }),
     renderCards: (ideas, options) => { rendered.push(ideas); renderOptions.push(options); }, renderUnderstood: () => false,
     selectPhotographedIdeas,
-    monetization: { inventoryReady: Promise.resolve() },
+    monetization: { inventoryReady: Promise.resolve(), invalidateSharedList() { sharedInvalidations.push(true); } },
     swipeDeck: { setBusy() {} }, shouldPrefetch,
     sendFeedback: async () => {}, fillProducts: () => assert.fail("discovery must remain disabled"),
   });
@@ -71,8 +72,24 @@ function frontend(fetchImpl, { selectPhotographedIdeas } = {}) {
     }
     assert.fail("frontend request did not settle");
   }
-  return { $, context, rendered, renderOptions, action };
+  return { $, context, rendered, renderOptions, sharedInvalidations, action };
 }
+
+test("new finder requests invalidate shared decoding before awaiting results, but more requests do not", async () => {
+  let release;
+  const ui = frontend(() => new Promise((resolve) => { release = resolve; }));
+  ui.context.turnstileEnabled = false;
+  ui.$("#form").events.submit({ preventDefault() {} });
+  assert.equal(ui.sharedInvalidations.length, 1);
+  assert.equal(ui.rendered.length, 0);
+  release(Response.json({ ideas: [{ title: "First gift" }], source: "ai" }));
+  await ui.action(() => {}, "");
+  ui.$("#more").events.click();
+  assert.equal(ui.sharedInvalidations.length, 1);
+  release(Response.json({ ideas: [{ title: "Next gift" }], source: "ai" }));
+  await ui.action(() => {}, "");
+  assert.equal(ui.rendered.length, 2);
+});
 
 test("photo-first finder renders only checked ideas and uses preloaded offers without a second enrichment", async () => {
   const first = { title: "Coffee grinder" }, missing = { title: "Unavailable idea" }, backup = { title: "Coffee dripper" };
@@ -129,7 +146,7 @@ test("real more/retry handlers retain bounded exclusions through the API and bas
           assert.equal(verified.has(body.response), false, "single-use token must not be reused");
           verified.add(body.response);
           if (denyNext) { denyNext = false; return Response.json({ success: false }); }
-          return Response.json({ success: true });
+          return Response.json({ success: true, hostname: "gifts.example.com" });
         }
         prompts.push(body.messages[0].content);
         const ideas = generation++ === 0 ? firstBatch : [

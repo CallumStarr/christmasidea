@@ -26,6 +26,20 @@ These changes do not authorize any additional feeds, review scraping or product-
 
 The feed-list API is the source of truth for synchronization: only advertisers Awin marks active/joined are imported, and only from allowlisted HTTPS Awin feed hosts. Product discovery validates advertiser IDs against the active imported catalogue generation, so newly joined feed advertisers do not require a code or Worker configuration update. The static advertiser list remains as a compatibility/default validation list for existing products and manual imports.
 
+An explicit sync `--advertisers` list is an exact ID restriction: a familiar advertiser name never
+expands it. Omitting the option retains automatic discovery of all supported joined feeds.
+Complete Awin IDs (up to an eight-digit advertiser ID and 80-character source ID) are preserved,
+not shortened by provider-neutral validation.
+
+The importer requires explicit `new` evidence in `condition`, `product_condition` or `item_condition`.
+Missing, unknown, used, refurbished and conflicting condition values are rejected. Joined programme
+membership is not evidence of new condition; no merchant-specific new-only exception is configured.
+This can substantially reduce or eliminate eligible rows in feeds without trustworthy condition data.
+An all-rejected import fails before publication or cleanup, leaving the existing active catalogue unchanged.
+**Previously imported generations must be refreshed before activation**: they predate this evidence gate
+and must not be treated as verified-new inventory. This audit did not enable the Awin provider or change
+feed permissions.
+
 ## Current coverage snapshot
 
 The Awin **My Programmes** page showed 20 joined programmes on 2026-11-06. Fourteen had product-feed entries in the feed list; 11 UK Awin-format feed URLs were imported. The active D1 generation contains 25,046 eligible, in-stock GBP products across six advertisers: cardfactory (20,423), Philip Jones Jewellery (2,605), Cadbury Gifts Direct (1,367), Bunches.co.uk (305), Fitness Options (290), and Social Stories Club (56). This is a snapshot, not evidence that every joined programme or product is covered.

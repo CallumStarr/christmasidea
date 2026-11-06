@@ -6,6 +6,7 @@
 import { ANGLES, CATEGORIES, STRATEGIES } from "./constants.js";
 import { deriveRecipient } from "./recipient.js";
 import { giftTypeEnabled, normaliseGiftType } from "./engine/gift-types.js";
+import { productConstraints } from "./product-constraints.js";
 import {
   AGE_RATING_CLAIM, ALWAYS_BLOCKED, BABY_BLOCKED, INJECTION_ECHO, MINOR_BLOCKED, PREFERENCE_TOPICS,
   PREFERENCE_VERB, PRICE_OR_STOCK_CLAIM, PRODUCT_CONCEPTS, PRODUCT_CONFLICTS, QUERY_ACRONYMS, QUERY_FOR_PHRASE, QUERY_NOISE, SAFETY_CLAIM,
@@ -13,7 +14,7 @@ import {
 } from "./rules.js";
 import { cleanText, contentStems, jaccard, sentences, stem, stemSet, words } from "./text.js";
 
-export const VALIDATOR_VERSION = "validator-v6";
+export const VALIDATOR_VERSION = "validator-v7";
 export const MAX_IDEAS = 8;
 
 const QUERY_ALLOWED = /[^\p{L}\p{N} '&-]/gu;
@@ -40,6 +41,7 @@ function productSpecOf(candidate, context = null) {
     recipientAgeBand: context?.ageBand || "unknown",
     maxPriceGbp: limits.length ? Math.min(...limits) : null,
     budgetMaxGbp: budgetMax,
+    ...productConstraints({ excludedTerms: context?.avoid.map((item) => item.phrase) || [] }),
   };
 }
 

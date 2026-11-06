@@ -1,4 +1,5 @@
 import { cleanText } from "./text.js";
+import { productConstraints } from "./product-constraints.js";
 
 
 function cleanList(value, count = 4) {
@@ -32,6 +33,7 @@ export function normaliseProductIdea(value) {
         : "unknown",
       maxPriceGbp: Number.isFinite(maxPrice) && maxPrice > 0 ? maxPrice : null,
       budgetMaxGbp: Number.isFinite(budgetMax) && budgetMax > 0 ? budgetMax : null,
+      ...productConstraints(spec),
     },
   };
 }

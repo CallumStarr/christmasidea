@@ -45,7 +45,11 @@ export function listMetrics(ideas, input) {
   const text = normEvidence(u.ctx.text);
   const budget = u.ctx.budget?.max || null;
   const literal = ideas.filter((i) => stated.length && isDirectFor(stemSet(`${i.title} ${i.concept || ""}`), stated)).length;
-  const matchCapOverBudget = budget ? ideas.filter((i) => Number(i.productSpec?.maxPriceGbp) > budget * 1.1).length : 0;
+  const validCaps = budget ? ideas.map((i) => i.productSpec?.maxPriceGbp)
+    .filter((cap) => typeof cap === "number" && Number.isFinite(cap) && cap > 0) : [];
+  const matchCapOverBudget = validCaps.length ? validCaps.filter((cap) => cap > budget * 1.1).length : null;
+  const budgetAssessment = validCaps.length === 0 ? "unassessed"
+    : validCaps.length === ideas.length ? "assessed" : "partial";
   const grounded = ideas.filter((i) => i.connection && text.includes(normEvidence(i.connection.anchor))).length;
   let nearDuplicatePairs = 0;
   for (let i = 0; i < ideas.length; i += 1) {
@@ -67,9 +71,10 @@ export function listMetrics(ideas, input) {
   for (const idea of ideas) {
     if (typeof idea.strategy === "string" && idea.strategy) strategies.set(idea.strategy, (strategies.get(idea.strategy) || 0) + 1);
   }
-  const strategyBalance = strategies.size
+  const labelledStrategies = [...strategies.values()].reduce((sum, count) => sum + count, 0);
+  const strategyBalance = strategies.size === 1 ? 0 : strategies.size
     ? Math.round((-([...strategies.values()].reduce((sum, count) => {
-      const p = count / ideas.length;
+      const p = count / labelledStrategies;
       return sum + p * Math.log(p);
     }, 0)) / Math.log(strategies.size)) * 1000) / 1000
     : null;
@@ -81,9 +86,14 @@ export function listMetrics(ideas, input) {
     discovery: ideas.filter((i) => i.discovery).length,
     grounded_connections: grounded,
     match_cap_over_budget: matchCapOverBudget,
+    budget_assessment: budgetAssessment,
+    match_caps_assessed: validCaps.length,
+    match_caps_unassessed: ideas.length - validCaps.length,
     near_duplicate_pairs: nearDuplicatePairs,
     repeated_interest_excess: repeatedInterestExcess,
     strategy_balance: strategyBalance,
+    strategy_labels_present: labelledStrategies,
+    strategy_labels_missing: ideas.length - labelledStrategies,
     categories: new Set(ideas.map((i) => i.category)).size,
     backups: ideas.filter((i) => i.source && i.source !== "model").length,
   };
@@ -91,6 +101,7 @@ export function listMetrics(ideas, input) {
 
 export function summarise(rows) {
   const pick = (k) => rows.map((r) => r[k]).filter((v) => typeof v === "number");
+  const assessedBudgets = pick("match_cap_over_budget");
   return {
     cases: rows.length,
     mean_shown: mean(pick("shown")),
@@ -98,12 +109,25 @@ export function summarise(rows) {
     mean_literal_share: mean(pick("literal_share")),
     mean_discovery: mean(pick("discovery")),
     mean_grounded_connections: mean(pick("grounded_connections")),
-    total_match_cap_over_budget: pick("match_cap_over_budget").reduce((s, x) => s + x, 0),
+    total_match_cap_over_budget: assessedBudgets.length ? assessedBudgets.reduce((s, x) => s + x, 0) : null,
+    budget_assessed_cases: rows.filter((r) => r.budget_assessment === "assessed").length,
+    budget_partially_assessed_cases: rows.filter((r) => r.budget_assessment === "partial").length,
+    budget_unassessed_cases: rows.filter((r) => r.budget_assessment === "unassessed").length,
+    match_caps_assessed: pick("match_caps_assessed").reduce((s, x) => s + x, 0),
+    match_caps_unassessed: pick("match_caps_unassessed").reduce((s, x) => s + x, 0),
     total_near_duplicate_pairs: pick("near_duplicate_pairs").reduce((s, x) => s + x, 0),
     mean_repeated_interest_excess: mean(pick("repeated_interest_excess")),
     mean_strategy_balance: mean(pick("strategy_balance")),
     mean_categories: mean(pick("categories")),
     shortfall_cases: rows.filter((r) => r.shown < 8).length,
+  };
+}
+
+export function summariseCompletion(rows) {
+  return {
+    truncated: rows.filter((row) => row.truncated === true).length,
+    truncation_unknown: rows.filter((row) => typeof row.truncated !== "boolean").length,
+    sample_scope: "completed results only; failed or missing attempts are excluded",
   };
 }
 
@@ -179,6 +203,7 @@ function main() {
         case_id: r.case_id,
         set: c.set || "",
         status: r.status,
+        truncated: typeof r.truncated === "boolean" ? r.truncated : null,
         stored_generation_cost_usd: r.estimated_cost_usd || 0,
         ...listMetrics(ideas, input),
       };
@@ -191,7 +216,7 @@ function main() {
       prompt_version: data.prompt_version,
       overall: {
         ...summarise(rows),
-        truncated: rows.filter((r) => r.status === "truncated").length,
+        ...summariseCompletion(rows),
         stored_generation_total_cost_usd: Math.round(rows.reduce((sum, row) => sum + row.stored_generation_cost_usd, 0) * 1e6) / 1e6,
       },
       by_set: Object.fromEntries(Object.entries(bySet).map(([k, v]) => [k, summarise(v)])),

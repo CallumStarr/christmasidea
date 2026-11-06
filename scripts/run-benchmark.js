@@ -33,11 +33,11 @@ export const MODELS = {
 
 // Protocol 4: Haiku is benchmarked with exactly the production request (forced strict tool, shared
 // thinking/effort/limit). Sonnet 5.5 cannot force a tool, so it alone uses tool_choice=auto.
-// Protocol 5: the user message carries the same graph discovery hints as production, and results
-// are curated by the Gift Intelligence Engine (graph backups, ranking, connections) as visitors see.
+// Protocol 5 evaluates the experimental v4 prompt and Gift Intelligence Engine.
+// Production currently selects the preserved baseline-v3.3 path instead.
 export const BENCHMARK_PROTOCOL_VERSION = 5;
 
-/** The user message production would send for this input, including server-side discovery hints. */
+/** The experimental engine's user message, including server-side discovery hints. */
 export function productionUserMessage(input) {
   return buildUserMessage(input, promptHints(understand(input)));
 }
@@ -242,6 +242,7 @@ async function anthropicCall(model, userMessage) {
       "anthropic-version": ANTHROPIC_VERSION,
     },
     body: JSON.stringify(buildBenchmarkRequest(model, userMessage)),
+    redirect: "error",
     signal: AbortSignal.timeout(90_000),
   });
   if (!response.ok) {
@@ -307,7 +308,8 @@ async function main() {
   for (const model of selectedModels) console.log(`  ${model.label}: $${model.input.toFixed(2)} input / $${model.output.toFixed(2)} output per million tokens`);
 
   if (!args.live) {
-    console.log(`\nRequest protocol: ${BENCHMARK_PROTOCOL_VERSION} (identical to production: ${selectedModels.map((m) => `${m.label}=${m.forceTool ? "forced strict tool" : "tool_choice=auto"}`).join(", ")}; thinking=adaptive, effort=${benchmarkEffort()}, max_tokens=${benchmarkMaxTokens()}).`);
+    console.log(`\nExperimental v4 request protocol: ${BENCHMARK_PROTOCOL_VERSION} (${selectedModels.map((m) => `${m.label}=${m.forceTool ? "forced strict tool" : "tool_choice=auto"}`).join(", ")}; thinking=adaptive, effort=${benchmarkEffort()}, max_tokens=${benchmarkMaxTokens()}).`);
+    console.log("This runner does not evaluate the production-selected baseline-v3.3 path.");
     console.log("DRY RUN ONLY — no Anthropic API calls were made.");
     console.log("Run with --live --confirm-cost and ANTHROPIC_API_KEY to execute the comparison.");
     console.log("The test set covers both freeform and guided inputs, budgets, age safety, dislikes, owned items, low-information requests and cross-interest gifts.");

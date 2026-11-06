@@ -53,11 +53,11 @@ test("real feed import produces an enriched SQLite snapshot and source-labelled 
     const link = `https://www.awin1.com/cread.php?awinmid=488&awinaffid=3146453&ued=${encodeURIComponent(url)}`;
     const feed = join(directory, "feed.csv");
     const rows = [
-      "merchant_id,aw_product_id,product_name,brand_name,search_price,currency,in_stock,delivery_cost,merchant_deep_link,aw_deep_link,ean,product_GTIN,model_number,product_model,mpn,warranty,dimensions",
-      `488,grinder,Coffee grinder,CoffeeCo,20,GBP,yes,2,${url},${link},0,12345670,0,Grinder X1,MPN-1,Two years,20 cm`,
-      `488,conflict,Coffee grinder,CoffeeCo,20,GBP,yes,0,${url},${link},12345670,4006381333931,,,,,`,
-      `488,single,Chocolate bar 32g,ChocolateCo,2,GBP,yes,0,${url},${link},4006381333931,,,,,,`,
-      `488,box,Chocolate bar 32g (Box of 48),ChocolateCo,80,GBP,yes,0,${url},${link},4006381333931,,,,,,`,
+      "merchant_id,aw_product_id,product_name,brand_name,search_price,currency,in_stock,delivery_cost,merchant_deep_link,aw_deep_link,ean,product_GTIN,model_number,product_model,mpn,warranty,dimensions,condition",
+      `488,grinder,Coffee grinder,CoffeeCo,20,GBP,yes,2,${url},${link},0,12345670,0,Grinder X1,MPN-1,Two years,20 cm,new`,
+      `488,conflict,Coffee grinder,CoffeeCo,20,GBP,yes,0,${url},${link},12345670,4006381333931,,,,,,new`,
+      `488,single,Chocolate bar 32g,ChocolateCo,2,GBP,yes,0,${url},${link},4006381333931,,,,,,,new`,
+      `488,box,Chocolate bar 32g (Box of 48),ChocolateCo,80,GBP,yes,0,${url},${link},4006381333931,,,,,,,new`,
     ];
     await writeFile(feed, rows.join("\n"));
     const script = fileURLToPath(new URL("../scripts/import-awin-feed.mjs", import.meta.url));

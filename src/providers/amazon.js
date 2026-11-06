@@ -1,5 +1,6 @@
 import { cleanText } from "../text.js";
 import { isAllowedImageUrl, validateOffer } from "../offer-validation.js";
+import { fetchWithoutRedirect } from "../upstream-fetch.js";
 
 const AMAZON_IMAGE_HOSTS = ["m.media-amazon.com", "images-eu.ssl-images-amazon.com"];
 const PRODUCT_ID = /^[A-Z0-9]{10}$/;
@@ -77,7 +78,7 @@ async function getAccessToken(env, fetchImpl, forceRefresh = false) {
 
   let response;
   try {
-    response = await fetchImpl(TOKEN_URL, {
+    response = await fetchWithoutRedirect(fetchImpl, TOKEN_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -117,7 +118,7 @@ async function apiRequest(operation, body, env, fetchImpl) {
   let response;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      response = await fetchImpl(`${API_URL}/catalog/v1/${operation}`, {
+      response = await fetchWithoutRedirect(fetchImpl, `${API_URL}/catalog/v1/${operation}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

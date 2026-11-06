@@ -104,7 +104,7 @@ export async function fetchProducts(ideas, { fetchImpl = fetch, enabled = true, 
     const response = await fetchImpl(apiEndpoint("/api/products"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ideas: ideas.map(({ feedbackToken, learning, ...idea }) => idea) }),
+      body: JSON.stringify({ ideas: ideas.map(({ learning, ...idea }) => idea) }),
       signal,
     });
     if (!response.ok) return { products: [], unavailable: true };

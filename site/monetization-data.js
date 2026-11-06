@@ -1,4 +1,5 @@
 import { validDestination } from "./affiliateRouter.js";
+import { constraintPhrases, parseTextAge } from "./recipient-language.js";
 
 export const RELATIONS = ["partner", "mum", "dad", "sibling", "friend", "child", "teen", "grandparent", "colleague", "secret-santa", "other"];
 export const CATEGORIES = ["Tech", "Home", "Kitchen", "Books", "Games & toys", "Hobbies & crafts", "Outdoors & sport", "Beauty & wellbeing", "Fashion & accessories", "Music & film", "Stationery", "Food & treats", "Experiences", "Subscriptions"];
@@ -36,12 +37,16 @@ export function queryContext(input = {}, ideas = []) {
   tags.push(recipientTag);
   const budgetMax = Number.isFinite(input.budgetMaxGbp) ? input.budgetMaxGbp
     : ideas.find((idea) => Number.isFinite(idea.productSpec?.budgetMaxGbp))?.productSpec.budgetMaxGbp ?? null;
+  const age = parseTextAge(text);
+  const constraints = constraintPhrases(text);
   return {
     recipientTag, tags, budgetMax,
     minor: ["baby", "toddler", "child", "tween", "teen"].includes(input.age) || ["child", "teen"].includes(recipientTag)
       || /\b(?:baby|toddler|child|teenager)\b/i.test(text)
-      || [...text.matchAll(/\b(\d{1,2})[- ]year[- ]old\b/gi)].some((match) => Number(match[1]) < 18),
-    constrained: /\b(?:avoid|allerg\w*|no\b|not\b|already|owns?|owned|has most|has every|don't|doesn't|do not)\b/i.test(text),
+      || (age !== null && age < 18)
+      || ideas.some((idea) => ["baby", "toddler", "child", "tween", "teen"].includes(idea.productSpec?.recipientAgeBand)),
+    constrained: constraints.avoid.length > 0 || constraints.owned.length > 0
+      || /\b(?:avoid|allerg\w*|no\b|not\b|already|owns?|owned|has most|has every|don't|doesn't|do not)\b/i.test(text),
   };
 }
 

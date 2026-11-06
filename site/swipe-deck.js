@@ -79,6 +79,7 @@ export function createSwipeDeck({ cards, toolbar, progress, onAdvance, onLike })
   function refresh() {
     if (!enabled) return;
     const remaining = available(), first = remaining[0];
+    if (dragging && dragging.card !== first) finish({ pointerId: dragging.id }, true);
     for (const [index, card] of remaining.entries()) {
       prepare(card);
       card.dataset.depth = Math.min(index, 3);
@@ -139,9 +140,8 @@ export function createSwipeDeck({ cards, toolbar, progress, onAdvance, onLike })
     ], { duration: 280, easing: "cubic-bezier(.3,.65,.3,1)", fill: "forwards" });
     animation.finished.then(() => { finish(); animation.cancel(); }, () => finish());
   }
-  function act(action) {
-    const card = top();
-    if (!enabled || departing || !card || details.get(card)?.dialog.open) return;
+  function act(action, card = top()) {
+    if (!enabled || departing || !card || card !== top() || details.get(card)?.dialog.open) return;
     if (action === "left") card.querySelector(".dismiss").click();
     else if (action === "save") card.querySelector(".save").click();
     else openDetails(card, true);
@@ -176,13 +176,14 @@ export function createSwipeDeck({ cards, toolbar, progress, onAdvance, onLike })
     if (!dragging || dragging.id !== event.pointerId) return;
     const { card, dx, dy } = dragging;
     dragging = null;
+    cancelled ||= !enabled || card !== top();
     const action = cancelled ? null : swipeDirection(dx, dy, card.getBoundingClientRect().width);
     if (action === "left" && !reducedMotion) releaseTransform = getComputedStyle(card).transform;
     card.style.removeProperty("--drag-x"); card.style.removeProperty("--drag-angle"); card.style.removeProperty("--swipe-opacity");
     card.classList.remove("dragging"); delete card.dataset.direction;
     if (cards.hasPointerCapture(event.pointerId)) cards.releasePointerCapture(event.pointerId);
     if (!cancelled) {
-      if (action) act(action);
+      if (action) act(action, card);
       else if (Math.abs(dx) < 8 && Math.abs(dy) < 8) openDetails(card);
     }
   }

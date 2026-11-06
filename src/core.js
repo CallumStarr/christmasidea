@@ -5,6 +5,7 @@ import { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS } from "./constants.js"
 import { CANDIDATE_COUNT, GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage } from "./prompt.js";
 import { VALIDATOR_VERSION, curateIdeas, sanitiseIdeas } from "./validate.js";
 import { cleanText } from "./text.js";
+import { fetchWithoutRedirect } from "./upstream-fetch.js";
 import { productDiscoveryAvailable, searchProductsForIdeas } from "./product-search.js";
 import { ENGINE_VERSION, engineFallback, promptHints, runEngine, understand } from "./engine/index.js";
 import { feedbackKeys } from "./engine/feedback.js";
@@ -13,7 +14,7 @@ import { catalogueFallback } from "./catalogue.js";
 import { applyLearning, feedbackCsv } from "./engine/learning.js";
 import { assessKnowledge, knowledgeCsv } from "./engine/knowledge.js";
 import { KNOWLEDGE_POLICY } from "./engine/knowledge-policy.js";
-import { issueFeedbackReceipts, verifyFeedbackReceipts } from "./engine/feedback-receipts.js";
+import { issueFeedbackReceipts, verifyFeedbackReceipts, verifyProductReceipts } from "./engine/feedback-receipts.js";
 
 export { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS };
 export { CANDIDATE_COUNT, GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
@@ -134,20 +135,49 @@ async function sha256Hex(text) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function turnstileHostnames(env) {
+  return new Set([
+    String(env.CANONICAL_HOST || "").trim().toLowerCase(),
+    ...String(env.TURNSTILE_ALLOWED_HOSTNAMES || "").split(",").map((host) => host.trim().toLowerCase()),
+  ].filter(Boolean));
+}
+
+function turnstileConfigurationReady(env) {
+  const secret = typeof env.TURNSTILE_SECRET === "string" && env.TURNSTILE_SECRET.trim();
+  if (!secret) return env.TURNSTILE_REQUIRED !== "true";
+  return turnstileHostnames(env).size > 0;
+}
+
 export async function verifyTurnstile(token, ip, env, fetchImpl) {
-  if (!env.TURNSTILE_SECRET) return true; // Turnstile not configured
-  if (!token) return false;
+  const reject = (code) => {
+    console.warn("Turnstile verification failed", code);
+    return false;
+  };
+  const secret = typeof env.TURNSTILE_SECRET === "string" ? env.TURNSTILE_SECRET.trim() : "";
+  if (!secret) return env.TURNSTILE_REQUIRED === "true" ? reject("missing_secret") : true;
+  if (!token) return reject("missing_token");
+  const hostnames = turnstileHostnames(env);
+  if (!hostnames.size) return reject("missing_hostname_configuration");
   try {
-    const res = await fetchImpl("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    const res = await fetchWithoutRedirect(fetchImpl, "https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret: env.TURNSTILE_SECRET, response: token, remoteip: ip }),
+      body: JSON.stringify({ secret, response: token, remoteip: ip }),
       signal: AbortSignal.timeout(8000),
     });
+    if (!res.ok) return reject("upstream_http_error");
     const data = await res.json();
-    return data && data.success === true;
+    if (data?.success !== true) return reject("upstream_rejected");
+    if (typeof data.hostname !== "string" || !hostnames.has(data.hostname.toLowerCase())) {
+      return reject("hostname_mismatch");
+    }
+    // Installed clients predate action labels; only the absent/empty legacy form is allowed.
+    if (data.action !== undefined && data.action !== "" && data.action !== "ideas") {
+      return reject("action_mismatch");
+    }
+    return true;
   } catch {
-    return false;
+    return reject("verification_unavailable");
   }
 }
 
@@ -210,7 +240,7 @@ export function buildClaudeRequest({ model, userMessage, maxTokens, effort, forc
 /** Like callClaude, but also reports why generation stopped so truncation is never mistaken for success. */
 export async function callClaudeDetailed(input, env, fetchImpl, hints = null) {
   const baseline = env.RECOMMENDATION_MODE === "baseline-v3.3";
-  const res = await fetchImpl(ANTHROPIC_URL, {
+  const res = await fetchWithoutRedirect(fetchImpl, ANTHROPIC_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -227,11 +257,9 @@ export async function callClaudeDetailed(input, env, fetchImpl, hints = null) {
     signal: AbortSignal.timeout(Number(env.UPSTREAM_TIMEOUT_MS) || 25000),
   });
   if (!res.ok) {
-    let detail = "";
-    try { detail = (await res.text()).slice(0, 300); } catch {}
-    const err = new Error(`Upstream ${res.status}`);
+    if (res.body) await res.body.cancel();
+    const err = new Error("Anthropic request failed");
     err.status = res.status;
-    err.detail = detail;
     throw err;
   }
   const data = await res.json();
@@ -374,7 +402,7 @@ export async function handleRequest(request, env, deps) {
   }
   if (url.pathname === "/api/health") return json({ ok: true }, 200, origin);
   if (url.pathname === "/api/ready") {
-    const ready = typeof env.IP_SALT === "string" && env.IP_SALT.length >= 32;
+    const ready = typeof env.IP_SALT === "string" && env.IP_SALT.length >= 32 && turnstileConfigurationReady(env);
     return json({ ok: ready }, ready ? 200 : 503, origin);
   }
   if (["/api/feedback/export", "/api/feedback/review", "/api/knowledge/export"].includes(url.pathname)) {
@@ -384,8 +412,13 @@ export async function handleRequest(request, env, deps) {
       console.error("Feedback export is not configured.");
       return json({ error: "Feedback export is not configured." }, 503, origin);
     }
+    const { hash: adminIpHash } = await visitorHash(request, env);
+    if (deps.adminAuth && !(await deps.adminAuth.allowed(adminIpHash))) {
+      return json({ error: "Too many attempts. Try again later." }, 429, origin);
+    }
     const supplied = request.headers.get("Authorization") || "";
     if (await sha256Hex(supplied) !== await sha256Hex(`Bearer ${env.FEEDBACK_ADMIN_TOKEN}`)) {
+      if (deps.adminAuth) await deps.adminAuth.fail(adminIpHash);
       return json({ error: "Unauthorised." }, 401, origin);
     }
     const r = await readJson(request, 2000);
@@ -420,6 +453,10 @@ export async function handleRequest(request, env, deps) {
     console.error("IP_SALT is missing or too short; refusing API request.");
     return json({ error: "The service is temporarily unavailable. Please try again later." }, 503, origin);
   }
+  if (url.pathname === "/api/ideas" && env.TURNSTILE_REQUIRED === "true" && !turnstileConfigurationReady(env)) {
+    console.error("Required Turnstile configuration is unavailable; refusing ideas request.");
+    return json({ error: "The service is temporarily unavailable. Please try again later." }, 503, origin);
+  }
 
   const { ip, hash: ipHash } = await visitorHash(request, env);
 
@@ -445,6 +482,8 @@ export async function handleRequest(request, env, deps) {
     const r = await readJson(request, 12000);
     if (r.error) return json({ error: r.error }, r.status, origin);
     if (!Array.isArray(r.body?.ideas)) return json({ error: "Send product ideas as a list." }, 400, origin);
+    const verified = await verifyProductReceipts(r.body.ideas, env);
+    if (!verified.ok) return json({ error: verified.error }, 400, origin);
     const result = await searchProductsForIdeas(r.body.ideas, env, deps, ipHash);
     return json(result, 200, origin);
   }
@@ -532,7 +571,8 @@ export async function handleRequest(request, env, deps) {
       : runEngine(call.output, input, { truncated, understanding });
     logCuration(result.diagnostics, call.stopReason, baseline);
   } catch (err) {
-    console.error("Claude call failed", err && err.status, err && err.detail, String(err));
+    const status = Number.isInteger(err?.status) && err.status >= 100 && err.status <= 599 ? err.status : 0;
+    console.error("Claude call failed", status);
     return fallbackResponse(input, "We couldn't get a response from the AI finder. These ideas come from our catalogue, filtered using your answers.", 502, origin, env);
   }
   // A cut-off response with no surviving model ideas is a failure, even if graph backups could pad it.

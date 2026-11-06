@@ -18,12 +18,18 @@ if (countdown) {
 const shortlistLink = document.querySelector("a#nav-shortlist");
 if (shortlistLink) {
   try {
-    const collection = readWishlists(localStorage);
+    let collection, notice = "";
+    try { collection = readWishlists(localStorage); }
+    catch (error) {
+      if (!error.recovered) throw error;
+      collection = error.recovered; notice = ` ${error.message}`;
+      shortlistLink.title = error.message;
+    }
     const count = collection.lists.reduce((sum, list) => sum + list.items.length, 0);
     document.querySelector("#nav-count").textContent = count;
-    shortlistLink.setAttribute("aria-label", `Open your shortlist, ${count} saved ${count === 1 ? "idea" : "ideas"}`);
+    shortlistLink.setAttribute("aria-label", `Open your shortlist, ${count} saved ${count === 1 ? "idea" : "ideas"}${notice}`);
   } catch (error) {
-    console.warn("Shortlist count could not be read.", error);
+    console.warn("Shortlist count could not be read.");
     document.querySelector("#nav-count").hidden = true;
     shortlistLink.setAttribute("aria-label", "Open your shortlist");
   }

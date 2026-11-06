@@ -9,7 +9,7 @@ if (NATIVE_ORIGINS.includes(parentOrigin) && /^[a-zA-Z0-9_-]{10,100}$/.test(site
     let widget;
     try {
       widget = window.turnstile.render("#check", {
-        sitekey, appearance: "interaction-only", size: "flexible",
+        sitekey, action: "ideas", appearance: "interaction-only", size: "flexible",
         callback: (token) => send("token", token),
         "before-interactive-callback": () => send("interactive"),
         "expired-callback": () => {

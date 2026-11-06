@@ -392,7 +392,7 @@ import { savedIdea, savedKey, RECIPIENT_LABELS, verifiedGiftDisclosure } from "/
 import { createMonetizationUI } from "/monetization-ui.js";
 import { createSwipeDeck, shouldPrefetch } from "/swipe-deck.js";
 import { createAppVerification } from "/app-verification.js";
-import { WISHLISTS_KEY, readWishlists, writeWishlists, activeWishlist, addWishlist } from "/wishlists.js";
+import { WISHLISTS_KEY, WishlistStorageError, readWishlists, writeWishlists, activeWishlist, addWishlist } from "/wishlists.js";
 (() => {
 "use strict";
 const CFG = { ...DEFAULT_MONETIZATION_CONFIG, ...window.GIFT_CONFIG, ...MONETIZATION_CONFIG };
@@ -486,15 +486,21 @@ setMode("describe");
 
 /* ---------- shortlist storage ---------- */
 let shortlistPersistent = true;
+let shortlistStorageNotice = "";
 let wishlists = { version: 1, activeId: "default", lists: [{ id: "default", name: "My gift shortlist", items: [] }] };
 const store = {
   get(){
     try {
       wishlists = readWishlists(localStorage);
       shortlistPersistent = true;
+      shortlistStorageNotice = "";
       return activeWishlist(wishlists).items;
-    } catch {
+    } catch (error) {
       shortlistPersistent = false;
+      if (error instanceof WishlistStorageError && error.recovered) wishlists = error.recovered;
+      shortlistStorageNotice = error instanceof WishlistStorageError
+        ? error.message : "Browser storage is unavailable; changes are available for this visit only.";
+      $("#monetization-status").textContent = shortlistStorageNotice;
       console.warn("Shortlist storage could not be read.");
       return activeWishlist(wishlists).items;
     }
@@ -502,13 +508,18 @@ const store = {
   set(v){
     activeWishlist(wishlists).items = v;
     try {
-      writeWishlists(localStorage, wishlists);
+      const result = writeWishlists(localStorage, wishlists);
       shortlistPersistent = true;
+      shortlistStorageNotice = result.compatibilityUpdated
+        ? "" : "Saved on this device, but the compatibility copy could not be updated. Older open pages may show an outdated shortlist.";
+      if (shortlistStorageNotice) showFeedback(shortlistStorageNotice, "warning");
       return true;
-    } catch {
+    } catch (error) {
       shortlistPersistent = false;
+      shortlistStorageNotice = error instanceof WishlistStorageError
+        ? error.message : "Browser storage is unavailable; changes are available for this visit only.";
       console.warn("Shortlist storage could not be updated.");
-      showFeedback("Your shortlist is available for this visit only; browser storage is unavailable.");
+      showFeedback(shortlistStorageNotice, "warning");
       return false;
     }
   }
@@ -564,6 +575,7 @@ if (turnstileEnabled && window.GIFT_APP_NATIVE) {
     try {
       tsWidget = window.turnstile.render("#ts", {
         sitekey: CFG.TURNSTILE_SITE_KEY,
+        action: "ideas",
         size: "flexible",
         appearance: "interaction-only",
         "before-interactive-callback": () => $("#ts").classList.add("turnstile-interactive"),
@@ -597,7 +609,8 @@ const apiOn = () => CFG.USE_API && (window.GIFT_APP_NATIVE || location.protocol.
 async function fillProducts(ideas){
   if (!ideas.length || !apiOn()) return;
   const request = ideas.map((idea) => ({
-    title: idea.title, query: idea.query, concept: idea.concept || idea.title, productSpec: idea.productSpec || {}
+    title: idea.title, query: idea.query, concept: idea.concept || idea.title, productSpec: idea.productSpec || {},
+    ...(idea.feedbackToken ? { feedbackToken: idea.feedbackToken } : {})
   }));
   const cards = ideas.map((idea) => cardsByTitle.get(idea.title));
   const shownProducts = new Set();
@@ -916,9 +929,9 @@ new IntersectionObserver(([entry]) => {
 function renderDialog(){
   fillWishlistSelect($("#wishlist-select"));
   $("#dlg-title").textContent = activeWishlist(wishlists).name;
-  $("#shortlist-storage").textContent = shortlistPersistent
+  $("#shortlist-storage").textContent = shortlistStorageNotice || (shortlistPersistent
     ? "Saved on this device only."
-    : "Available for this visit only; browser storage is unavailable.";
+    : "Available for this visit only; browser storage is unavailable.");
   const ul = $("#dlg-list"); ul.textContent = "";
   if (!shortlist.length){ const li = document.createElement("li"); li.textContent = "No gifts saved here yet. Use the wishlist button to keep a possibility."; ul.append(li); return; }
   for (const recipientTag of [...new Set(shortlist.map((item) => item.recipientTag))]){
@@ -1028,7 +1041,10 @@ $("#wishlist-save-form").addEventListener("submit", (event) => {
     $("#wishlist-picker").close();
     opener?.focus({ preventScroll: true });
     onSaved();
-    showFeedback(shortlistPersistent ? `Saved to ${target.name}.` : `Saved to ${target.name} for this visit only; browser storage is unavailable.`, shortlistPersistent ? "success" : "warning");
+    showFeedback([
+      shortlistPersistent ? `Saved to ${target.name}.` : `Saved to ${target.name} for this visit only.`,
+      shortlistStorageNotice,
+    ].filter(Boolean).join(" "), shortlistPersistent && !shortlistStorageNotice ? "success" : "warning");
   } catch (error) {
     console.warn("Gift could not be added to a wishlist.", error);
     $("#wishlist-picker-status").textContent = error.message;
@@ -1141,6 +1157,7 @@ function readForm(){
 
 async function run(input, { append = false, background = false } = {}){
   if (activeController) return;
+  if (!append) monetization.invalidateSharedList();
   current = input;
   const go = $("#go"), more = $("#more");
   const controller = new AbortController();
@@ -1326,7 +1343,7 @@ const monetization = createMonetizationUI({
   notify: (message) => { showFeedback(message); $("#monetization-status").textContent = message; if ($("#dlg").open) $("#shortlist-storage").textContent = message; },
   getShortlist: () => shortlist, getInput: () => current,
   onInventoryExpiry: () => { if ($("#dlg").open) renderDialog(); },
-  setShortlist: (items) => { shortlist = items; const persistent = store.set(items); renderBar(); syncSaveButtons(); return persistent; },
+  setShortlist: (items) => { shortlist = items; const persistent = store.set(items); renderBar(); syncSaveButtons(); return { persistent, notice: shortlistStorageNotice }; },
   renderShared: (ideas) => {
     activeController?.abort("cancelled"); current = null; prefetchPaused = true;
     renderCards(ideas, { shared: true });

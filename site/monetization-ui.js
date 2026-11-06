@@ -317,7 +317,9 @@ export function createMonetizationUI({ config, notify, getShortlist, setShortlis
       updateShelf();
     },
     copyList: () => share("copy"),
+    invalidateSharedList() { initialisation++; },
     decorateIdeas(ideas, { includeInventory = true } = {}) {
+      initialisation++;
       shared = null; offers.clear(); selectedAddon = null; $("#gift-addons").hidden = true;
       if (new URLSearchParams(location.hash.slice(1)).has("list")) {
         const url = new URL(location.href); url.hash = ""; history.replaceState(null, "", url);
@@ -374,10 +376,11 @@ export function createMonetizationUI({ config, notify, getShortlist, setShortlis
           const unique = new Map(getShortlist().map((item) => [savedKey(item), item]));
           for (const item of decoded) unique.set(savedKey(item), item);
           if (unique.size > 50) { notify("Your combined list exceeds 50 gifts. Remove some saved ideas first."); return; }
-          const persistent = setShortlist([...unique.values()]);
-          updateShelf(); notify(persistent ? "Shared ideas saved on this device only." : "Shared ideas saved for this visit only; browser storage is unavailable.");
+          const { persistent, notice } = setShortlist([...unique.values()]);
+          updateShelf(); notify([persistent ? "Shared ideas saved on this device only." : "Shared ideas saved for this visit only.", notice].filter(Boolean).join(" "));
         };
       } catch (error) {
+        if (revision !== initialisation) return;
         console.warn("Shared gift list could not be opened.", error);
         notify(`Couldn't open this shared list. ${error.message}`);
       }

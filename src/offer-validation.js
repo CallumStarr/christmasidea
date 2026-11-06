@@ -38,7 +38,9 @@ export function isAllowedImageUrl(value, policy) {
 /** Returns a normalised offer, or null when any identity, link, image, freshness or availability rule fails. */
 export function validateOffer(product, policy, { now = Date.now() } = {}) {
   if (!product || product.provider !== policy.id) return null;
-  const productId = (policy.normaliseId || ((id) => id))(cleanText(product.productId || product.asin, 40));
+  const rawId = product.productId || product.asin;
+  if (typeof rawId !== "string" || rawId.length > 100) return null;
+  const productId = (policy.normaliseId || ((id) => id))(rawId);
   const title = cleanText(product.title, 240);
   const productUrl = product.productUrl || product.affiliateUrl;
   const affiliateUrl = product.affiliateUrl || product.productUrl;

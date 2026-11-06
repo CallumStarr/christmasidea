@@ -273,7 +273,10 @@ For `IP_SALT`, set a securely generated random value of at least 32 characters. 
 
 For local development, put `IP_SALT=<a locally generated random value of at least 32 characters>` in the ignored `.dev.vars` file. The API fails closed with a generic unavailable response if the salt is missing or too short; never commit `.dev.vars`.
 
-`/api/health` is a liveness check only. `/api/ready` returns ready only when the required `IP_SALT` passes the generic configuration check; it never exposes the secret or its length.
+`/api/health` is a liveness check only. `/api/ready` checks the `IP_SALT` minimum
+length and required Turnstile secret/hostname configuration; it never exposes
+secret values or lengths. It does not test provider credentials, salt entropy,
+merchant approval or live dependency availability.
 
 **4. Deploy**
 
@@ -346,9 +349,12 @@ Fixed guides continue to use their disclosed editorial illustrations; live listi
 
 ## Recommendation quality
 
-Prompt `gift-intelligence-v4.0` (v3.3 is frozen in `src/prompts/gift-curator-v3.3.js`) still makes **one** Claude call. The model fills a structured `recipient_profile` and suggests discovery directions, then returns **12 candidate ideas**. The gift intelligence engine (`src/engine/`, described in [docs/gift-intelligence-engine.md](docs/gift-intelligence-engine.md)) then takes over. It builds a recipient model and walks an interest/motivation graph to find adjacent ideas. It retrieves curated graph concepts (BM25 + graph ranker, fused with RRF) and scores every candidate on grounding, fit, novelty, specificity and budget. It picks 8 with MMR diversification and attaches a connection quoted from the shopper's own words.
+The following describes the **experimental, non-selected** engine. Production
+configuration selects the frozen `baseline-v3.3` path described under
+[release recommendation selection](#release-recommendation-selection).
+Experimental prompt `gift-intelligence-v4.0` makes **one** Claude call. The model fills a structured `recipient_profile` and suggests discovery directions, then returns **12 candidate ideas**. The gift intelligence engine (`src/engine/`, described in [docs/gift-intelligence-engine.md](docs/gift-intelligence-engine.md)) then takes over. It builds a recipient model and walks an interest/motivation graph to find adjacent ideas. It retrieves curated graph concepts (BM25 + graph ranker, fused with RRF) and scores every candidate on grounding, fit, novelty, specificity and budget. It picks 8 with MMR diversification and attaches a connection quoted from the shopper's own words.
 
-Graph concepts only top up a thin list (at most 3), so `shortfall: true` is now rare. Ideas are gift *concepts* to search for, never verified products, prices or availability. Anonymous click, save and dismiss counters go to `POST /api/feedback`; they do not change ranking yet.
+In the experimental path, graph concepts only top up a thin list (at most 3). Ideas are gift *concepts* to search for, never verified products, prices or availability. Controlled click, save and dismiss counters go to `POST /api/feedback`; their collection does not automatically change ranking.
 
 **Facts versus inferences.** A `known_fact` must carry a short verbatim `evidence` extract that the server finds in the shopper's text (case and punctuation ignored). Unverified facts are kept in diagnostics (`facts_unverified`) and are never used to build the recipient summary; an unsupported summary is replaced with one built from verified facts only.
 
@@ -388,7 +394,9 @@ The Claude API is the main variable cost. At the configured cap of 500 AI search
 4. **Browser CORS policy** (`ALLOWED_ORIGINS`) limits which browser origins can read API responses. It is not authentication: non-browser clients can spoof `Origin`, so enable Turnstile and retain rate/spend limits.
 5. **Claude Console spend limit** as the final backstop.
 
-Identical searches are cached for a day and cost nothing.
+Eligible identical searches can reuse cached generation for up to a day, avoiding
+a new model call. Edge requests, verification and product enrichment can still
+consume quotas or incur costs.
 
 To test a higher-capability model, set `MODEL = "claude-sonnet-5-5"` in `wrangler.toml`. Compare it on the same recipient test set and check current per-token pricing before switching the default.
 
@@ -402,9 +410,27 @@ To test a higher-capability model, set `MODEL = "claude-sonnet-5-5"` in `wrangle
 - Product titles, destinations, prices and images are validated on the server; only image URLs from the official Amazon product response and approved Amazon image hosts are accepted. Pexels is not used and no Pexels credentials are required.
 - No tracking cookies; fonts are self-hosted, so visitors' browsers don't contact Google.
 
-## Optional: bot protection
+## Production bot protection
 
-If you see abuse, create a free Cloudflare Turnstile widget for christmasidea.co.uk, put its site key in `TURNSTILE_SITE_KEY` in `site/index.html`, and run `npx wrangler secret put TURNSTILE_SECRET` with its secret key.
+Production Wrangler sets `TURNSTILE_REQUIRED = "true"`. Configure the widget site
+key and Worker `TURNSTILE_SECRET` before a separately approved deployment; missing
+required configuration makes ideas and readiness unavailable rather than silently
+disabling verification. The server checks Siteverify HTTP success, exact challenge
+hostname and action independently of client input. `CANONICAL_HOST` and
+`TURNSTILE_ALLOWED_HOSTNAMES` identify hosted challenge pages, not Capacitor origins.
+The expected action is `ideas`; absent/empty actions remain supported for installed
+legacy clients. Missing/invalid/expired/replayed tokens fail before cache or paid work.
+Optional missing-secret behaviour remains only for environments without the
+required setting; browser fixtures must never change production protection.
+
+## Independent audit
+
+The [November 2026 audit package](docs/audit/README.md) records the starting state,
+confirmed defects, regression evidence and unresolved release limitations.
+It is outside public static assets, not confidential storage: this repository may
+be public. Reports contain no credentials. Audit changes are not a deployment or
+native distribution, and passing local tests does not certify security,
+accessibility, legal compliance or retailer approval.
 
 ## Editing the fallback catalogue
 

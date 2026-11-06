@@ -2,15 +2,25 @@ import { openPartnerModal } from "./partner-modal.js";
 import { trackMonetizationEvent } from "./monetization-telemetry.js";
 import { MONETIZATION_CONFIG } from "./monetization-config.js";
 import { readLocalGiftList, savedIdea, savedKey } from "./monetization-data.js";
-import { WISHLISTS_KEY, readWishlists, writeWishlists, activeWishlist } from "./wishlists.js";
+import { WISHLISTS_KEY, WishlistStorageError, readWishlists, writeWishlists, activeWishlist } from "./wishlists.js";
 
 let visitList = [];
 let wishlists;
 let persistent = true;
+let storageNotice = "";
 function readSaved() {
   if (!persistent) return visitList;
   try { wishlists = readWishlists(localStorage); visitList = activeWishlist(wishlists).items; return visitList; }
-  catch (error) { console.warn("Guide shortlist storage could not be read.", error); persistent = false; return visitList; }
+  catch (error) {
+    console.warn("Guide shortlist storage could not be read.");
+    persistent = false;
+    if (error instanceof WishlistStorageError && error.recovered) {
+      wishlists = error.recovered; visitList = activeWishlist(wishlists).items;
+    }
+    storageNotice = error instanceof WishlistStorageError
+      ? error.message : "Browser storage is unavailable; changes are available for this visit only.";
+    return visitList;
+  }
 }
 
 function syncGuideSaves() {
@@ -26,6 +36,7 @@ function syncGuideSaves() {
     const on = saved.some((item) => savedKey(item) === button.dataset.guideSave);
     button.setAttribute("aria-pressed", String(on));
     button.textContent = on ? "Saved idea" : "Save idea";
+    if (storageNotice) button.nextElementSibling.textContent = storageNotice;
   }
 }
 
@@ -49,17 +60,26 @@ for (const article of document.querySelectorAll(".idea")) {
     try {
       if (!wishlists) throw new Error("Wishlist storage is unavailable.");
       activeWishlist(wishlists).items = visitList;
-      writeWishlists(localStorage, wishlists); persistent = true;
+      const result = writeWishlists(localStorage, wishlists); persistent = true;
+      storageNotice = result.compatibilityUpdated
+        ? "" : "The compatibility copy could not be updated. Older open pages may show an outdated shortlist.";
     }
-    catch (error) { console.warn("Guide shortlist storage could not be updated.", error); persistent = false; }
+    catch (error) {
+      console.warn("Guide shortlist storage could not be updated."); persistent = false;
+      storageNotice = error instanceof WishlistStorageError
+        ? error.message : storageNotice || "Browser storage is unavailable.";
+    }
     syncGuideSaves();
-    status.textContent = persistent ? `${activeWishlist(wishlists).name} updated on this device only.` : "Shortlist updated for this visit only; browser storage is unavailable.";
+    status.textContent = [
+      persistent ? `${activeWishlist(wishlists).name} updated on this device only.` : "Shortlist updated for this visit only.",
+      storageNotice,
+    ].filter(Boolean).join(" ");
   });
   article.append(button, status);
 }
 syncGuideSaves();
 window.addEventListener("storage", (event) => {
-  if (event.key === WISHLISTS_KEY || event.key === null) { persistent = true; syncGuideSaves(); }
+  if (event.key === WISHLISTS_KEY || event.key === null) { persistent = true; storageNotice = ""; syncGuideSaves(); }
 });
 
 document.addEventListener("click", (event) => {

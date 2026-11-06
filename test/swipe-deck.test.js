@@ -59,7 +59,7 @@ test("wishlist names, capacities and stored shapes are validated explicitly", ()
   let full = state;
   for (let index = 1; index < 20; index++) full = addWishlist(full, `List ${index}`, `list-${index}`);
   assert.throws(() => addWishlist(full, "One too many", "overflow"), /20/);
-  assert.throws(() => writeWishlists({ setItem() { throw new Error("Quota exceeded"); } }, state), /Quota/);
+  assert.throws(() => writeWishlists({ getItem() { return null; }, setItem() { throw new Error("Quota exceeded"); } }, state), /Quota/);
 });
 
 test("shopping card includes approved searchable partners without inventing stock or tracking for pending programmes", () => {
@@ -232,4 +232,36 @@ test("a photo removed while its details are open closes that dialog and exposes 
   assert.equal(first.card.querySelector(".gift-detail").open, false);
   assert.equal(second.card.inert, false);
   assert.equal(first.card.attributes["aria-hidden"], "true");
+});
+
+test("a gesture is cancelled when its captured card disappears before release", (t) => {
+  const ui = deckFixture(t), [first, second] = ui.entries;
+  for (const dx of [-115, 115, 0]) {
+    first.card.hidden = false;
+    ui.deck.refresh();
+    ui.cards.events.pointerdown({ target: first.card, pointerId: 1, button: 0, isPrimary: true, clientX: 180, clientY: 100 });
+    ui.cards.events.pointermove({ pointerId: 1, clientX: 180 + dx, clientY: 100 });
+    first.card.hidden = true;
+    ui.deck.refresh();
+    ui.cards.events.pointerup({ pointerId: 1 });
+    assert.equal(second.card.hidden, false);
+    assert.ok(!second.card.querySelector(".gift-detail").open);
+    assert.equal(ui.cards.hasPointerCapture(1), false);
+    assert.equal(first.card.classList.contains("dragging"), false);
+  }
+  assert.deepEqual(ui.advances, []);
+  assert.deepEqual(ui.likes, []);
+});
+
+test("a cancelled gesture cannot resume when its original card becomes top again", (t) => {
+  const ui = deckFixture(t), first = ui.entries[0].card;
+  ui.cards.events.pointerdown({ target: first, pointerId: 1, button: 0, isPrimary: true, clientX: 180, clientY: 100 });
+  ui.cards.events.pointermove({ pointerId: 1, clientX: 65, clientY: 100 });
+  first.hidden = true;
+  ui.deck.refresh();
+  first.hidden = false;
+  ui.deck.refresh();
+  ui.cards.events.pointerup({ pointerId: 1 });
+  assert.equal(first.hidden, false);
+  assert.deepEqual(ui.advances, []);
 });

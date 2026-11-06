@@ -4,13 +4,13 @@ Brand: **Santa's Helper**. Domain: **ChristmasIdea.co.uk** (retained). Worker na
 
 ## Completed
 
-- Release selection: `RECOMMENDATION_MODE = "baseline-v3.3"` restores the frozen baseline prompt and original-order curation, retaining current safety validation and all publication-readiness fixes. All 30 reviewed baseline raw outputs reproduce their stored title lists/order. The v4 engine remains available for offline research, not selected for production.
+- Release selection: `RECOMMENDATION_MODE = "baseline-v3.3"` selects the frozen baseline prompt and original-order curation with current safety validation. The release regression preserves 29 of 30 stored title lists/order; case-12 deliberately replaces an inconsistent kneeling-pad/apron concept. The v4 engine remains available for offline research, not selected for production.
 
 - Santa's Helper branding across pages, gift guides, metadata, OG image and package metadata.
 - Claude gift recommendation engine, with structured output, validation, catalogue fallback and rate limiting.
 - Recommendation prompt v3.3 and its request-generation changes (`src/prompt.js`, `src/validate.js` validator-v4).
 - Phase 0 provider-neutral product architecture: provider registry, generic offer validation, per-provider image-host allow-lists, identity matching separate from suitability.
-- Amazon Creators API product-discovery implementation. It is dormant: `PRODUCT_DISCOVERY_ENABLED = "false"` in `wrangler.toml`.
+- Provider-neutral product discovery is implemented. Wrangler enables global discovery, eBay and photo-first mode; the Amazon and Awin provider flags remain false. Credentials, merchant approvals and deployed configuration require separate verification.
 - v3.3 Haiku 5.5 quality baseline: `benchmarks/baselines/v3.3-pre-refactor/` (4.133/5 weighted, 30 synthetic cases, single AI reviewer; see its README for limitations).
 - Recovery points: `refs/snapshots/phase0-pre-refactor` and `C:\Christmas_List2\backups\christmasidea-phase0-snapshot.bundle`.
 - **Gift intelligence engine (`gift-engine-v1`, prompt `gift-intelligence-v4.0`)**. Covers the recipient model with stated and inferred facts, an interest/motivation graph, hybrid BM25 + graph retrieval with RRF, multi-objective ranking with MMR and caps, quoted connections, discovery ideas, one listing per card, a source registry, and anonymous feedback counters (`POST /api/feedback`). Feedback expiry is enforced by request-time and daily scheduled pruning. See `docs/gift-intelligence-engine.md`.
@@ -19,12 +19,11 @@ Brand: **Santa's Helper**. Domain: **ChristmasIdea.co.uk** (retained). Worker na
 ## Blocked (external dependencies)
 
 - Amazon Creators API production activation: pending confirmation of Associates eligibility, qualifying sales, credentials and actual API access. Live API access has not been tested.
-- Any other retailer integration (e.g. Awin): pending approval, access, commercial terms and image usage rights.
+- Awin discovery activation: implementation, migrations and ingestion exist but discovery remains disabled. Merchant-level eligibility, current feed coverage, credentials and image rights require separate confirmation; static affiliate approvals do not automatically authorize catalogue access.
 
 ## Not yet implemented
 
 - Semantic embeddings (Workers AI + Vectorize): designed, worthwhile once a real product catalogue exists.
-- Multi-retailer product discovery.
 - Trend and popularity intelligence: needs an authorised, timestamped data source.
 - Learning ranker (LinUCB contextual bandit): designed. Counters are collected, but they do not affect ranking until purchase-quality signals and enough volume exist.
 - Occasion-specific modes beyond Christmas.
@@ -45,8 +44,17 @@ The product-only policy bans vouchers, tickets, services and subscriptions, whic
 
 ## Deferred / hygiene notes
 
-- Confirm `IP_SALT` is set in production; API requests now fail closed if it is missing or shorter than 32 characters.
+- The audit's read-only production `/api/ready` check returned ready. This checks the configured salt's minimum length only; its entropy, custody and rotation history remain privately operator-verifiable.
 - `/api/products` trusts client-supplied ideas; consider a server-issued plan id.
 - Confirm the Cloudflare plan's CPU and subrequest limits before enabling product discovery.
 - Rotate any Anthropic API key that has been shared in plain text.
 - Earlier "awaiting approval" notes for Phase 0 and benchmark work are closed; those tasks are complete.
+
+## Audit and release limitations
+
+See [the November 2026 audit](docs/audit/README.md) for evidence, fixes and outstanding gates.
+Passing local tests is not full-platform verification. No audit changes have been deployed
+or distributed to installed apps. Physical-device accessibility, iOS compilation,
+merchant permissions, legal determinations and state-restoration drills remain separate
+release checks. `KNOWLEDGE_REUSE_ENABLED` is true, but the shipped knowledge policy is
+empty/unapproved; the learning ranker remains disabled.

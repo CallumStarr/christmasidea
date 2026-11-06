@@ -33,7 +33,7 @@ test("photo-first batches reset shared-list state and use the current recipient 
   const method = source.slice(source.indexOf("decorateIdeas(ideas,"), source.indexOf("async initialise()"));
   const elements = new Map();
   const context = vm.createContext({
-    shared: [{ title: "Previously received list" }], offers: new Map(), selectedAddon: {},
+    shared: [{ title: "Previously received list" }], offers: new Map(), selectedAddon: {}, initialisation: 0,
     scope: {}, context: { recipientTag: "other" },
     location: { hash: "" }, URLSearchParams, queryContext,
     getInput: () => ({ mode: "describe", description: "My dad enjoys coffee." }),

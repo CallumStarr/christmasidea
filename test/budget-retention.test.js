@@ -105,3 +105,24 @@ test("the scheduled cleanup reaches the global budget Durable Object", async () 
   assert.equal(name, "global");
   assert.equal(await awaited, "pruned");
 });
+
+test("scheduled cleanup exposes storage failure and a later retry can succeed", async () => {
+  let awaited, fail = true;
+  const env = {
+    BUDGET: {
+      idFromName: () => "global-id",
+      get: () => ({
+        prune: async () => {
+          if (fail) throw new Error("Synthetic storage failure");
+          return true;
+        },
+      }),
+    },
+  };
+  const context = { waitUntil: (promise) => { awaited = promise; } };
+  scheduleBudgetPrune(env, context);
+  await assert.rejects(awaited, /Synthetic storage failure/);
+  fail = false;
+  scheduleBudgetPrune(env, context);
+  assert.equal(await awaited, true);
+});

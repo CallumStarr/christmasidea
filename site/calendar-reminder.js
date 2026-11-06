@@ -6,7 +6,7 @@ export function blackFridayDate(now = new Date()) {
   let year = now.getFullYear();
   const friday = (year) => {
     const first = new Date(Date.UTC(year, 10, 1));
-    return new Date(Date.UTC(year, 10, 1 + (5 - first.getUTCDay() + 7) % 7 + 21));
+    return new Date(Date.UTC(year, 10, 1 + (4 - first.getUTCDay() + 7) % 7 + 21 + 1));
   };
   let date = friday(year);
   const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
@@ -27,6 +27,9 @@ function foldLine(line) {
 }
 
 export function calendarReminder({ birthday, link = "https://christmasidea.co.uk/", now = new Date(), uid = crypto.randomUUID() } = {}) {
+  if (typeof uid !== "string" || !uid.trim() || /[\u0000-\u001f\u007f]/.test(uid)) {
+    throw new TypeError("Invalid reminder identifier");
+  }
   let date, summary;
   if (birthday) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(birthday)) throw new TypeError("Choose a valid birthday date");
@@ -43,7 +46,7 @@ export function calendarReminder({ birthday, link = "https://christmasidea.co.uk
   if (!["https:", "http:"].includes(url.protocol)) throw new TypeError("Invalid reminder link");
   const lines = [
     "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Santas Helper//Gift Reminder//EN", "CALSCALE:GREGORIAN",
-    "BEGIN:VEVENT", `UID:${uid}@christmasidea.co.uk`,
+    "BEGIN:VEVENT", `UID:${text(uid)}@christmasidea.co.uk`,
     `DTSTAMP:${now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")}`,
     `DTSTART;VALUE=DATE:${dateStamp(date)}`, `DTEND;VALUE=DATE:${dateStamp(new Date(date.getTime() + DAY))}`,
     `SUMMARY:${text(summary)}`, `DESCRIPTION:${text(`Return to Santa's Helper to choose a gift: ${url}`)}`,

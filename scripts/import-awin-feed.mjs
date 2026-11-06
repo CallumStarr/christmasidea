@@ -12,6 +12,9 @@ import { feedIdentity, normaliseCatalogueClaims, catalogueClaim, packagingSignat
 const INSERT_BATCH_SIZE = 50;
 const SQL_FILE_SIZE = 1000;
 const CLEANUP_BATCH_SIZE = 250;
+// Bounds memory for hostile or corrupt feeds; real Awin fields and rows are far smaller.
+export const MAX_FEED_FIELD_CHARS = 1_000_000;
+export const MAX_FEED_ROW_FIELDS = 2000;
 
 function argumentsFrom(argv) {
   const options = { feeds: [], apply: false, mode: "" };
@@ -64,6 +67,7 @@ export async function* csvRows(path) {
     const text = chunk;
     for (let index = 0; index < text.length; index++) {
       const char = text[index];
+      if (field.length > MAX_FEED_FIELD_CHARS) throw new Error(`Feed field exceeds ${MAX_FEED_FIELD_CHARS} characters: ${path}`);
       if (first) {
         first = false;
         if (char === "\uFEFF") continue;
@@ -97,6 +101,7 @@ export async function* csvRows(path) {
       else if (char === ",") {
         row.push(field);
         field = "";
+        if (row.length >= MAX_FEED_ROW_FIELDS) throw new Error(`Feed row exceeds ${MAX_FEED_ROW_FIELDS} fields: ${path}`);
       } else if (char === "\n") {
         row.push(field.replace(/\r$/, ""));
         yield row;
@@ -202,6 +207,8 @@ function normaliseRow(row, headers, { allowed, publisherId, rejectionCounts, def
   const currency = (field(row, headers, ["currency", "currency_code"]) || defaultCurrency).toUpperCase();
   const price = money(field(row, headers, ["search_price", "price", "product_price"]));
   const stock = field(row, headers, ["in_stock", "stock_status", "availability"]);
+  const conditions = ["condition", "product_condition", "item_condition"]
+    .map((name) => field(row, headers, [name])).filter(Boolean);
   const merchantName = clean(field(row, headers, ["merchant_name", "advertiser_name"]), 80);
   const affiliateUrl = secureAwinLink(field(row, headers, ["aw_deep_link", "affiliate_url"]));
   const awinId = `${advertiserId}:${sourceId}`;
@@ -216,6 +223,8 @@ function normaliseRow(row, headers, { allowed, publisherId, rejectionCounts, def
   if (price === null || price <= 0) return reject("price_missing_or_invalid");
   if (!stock.trim()) return reject("stock_status_missing");
   if (!stockAvailable(stock)) return reject("not_in_stock");
+  if (!conditions.length) return reject("condition_missing");
+  if (conditions.some((condition) => !/^new$/i.test(condition))) return reject("condition_not_new");
   const linkRejection = awinLinkRejection(affiliateUrl, advertiserId, publisherId);
   if (linkRejection) return reject(linkRejection);
   const affiliate = safeHttpsUrl(affiliateUrl);

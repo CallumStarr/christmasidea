@@ -27,6 +27,7 @@ test("the real widget is visible and interactive only when a challenge needs inp
   runInNewContext(source, context);
   context.window.onTurnstileLoad();
   assert.equal(options.appearance, "interaction-only");
+  assert.equal(options.action, "ideas");
   options["before-interactive-callback"]();
   assert.equal(classes.has("turnstile-interactive"), true);
   options["after-interactive-callback"]();
@@ -44,6 +45,30 @@ test("the real widget is visible and interactive only when a challenge needs inp
   options["error-callback"]();
   assert.equal(classes.has("turnstile-interactive"), false);
   assert.equal(runInNewContext("tsGate.failed", context), true);
+});
+
+test("hosted native verification labels the fixed ideas action for both app origins", () => {
+  const source = readFileSync(new URL("../site/app-verify.js", import.meta.url), "utf8")
+    .replace(/^import[^\n]+\n/, "");
+  const origins = ["capacitor://localhost", "https://localhost"];
+  for (const origin of origins) {
+    let options;
+    const messages = [];
+    const context = {
+      NATIVE_ORIGINS: origins, URLSearchParams,
+      location: { search: new URLSearchParams({ parent: origin, sitekey: "test-site-key", action: "untrusted" }).toString() },
+      parent: { postMessage: (data, target) => messages.push({ data, target }) },
+      document: { createElement: () => ({ addEventListener() {} }), head: { append() {} } },
+      window: { turnstile: { render(_selector, value) { options = value; return 1; } } },
+    };
+    runInNewContext(source, context);
+    context.window.onAppCheckReady();
+    assert.equal(options.action, "ideas");
+    options.callback("native-token");
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0].target, origin);
+    assert.equal(messages[0].data.token, "native-token");
+  }
 });
 
 test("initial search and Show me different ideas consume distinct, freshly supplied tokens", async () => {

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
 import { activeWishlist } from "../site/wishlists.js";
+import { fetchWorker } from "../src/worker-fetch.js";
 
 const site = (p) => new URL(`../site/${p}`, import.meta.url);
 const read = (p) => readFile(site(p), "utf8");
@@ -99,13 +100,16 @@ test("homepage offers optional feedback between the finder and gift guides", asy
 });
 
 test("Worker sets CSP and HSTS headers and locks framing", async () => {
-  const src = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
-  assert.match(src, /Strict-Transport-Security/);
-  assert.match(src, /Content-Security-Policy/);
-  assert.match(src, /frame-ancestors 'none'/);
-  assert.match(src, /object-src 'none'/);
-  assert.match(src, /https:\/\/m\.media-amazon\.com/);
-  assert.doesNotMatch(src, /images\.pexels\.com/);
+  const response = await fetchWorker(new Request("https://gifts.example.com/"), {
+    ASSETS: { fetch: async () => new Response("asset") },
+  }, {});
+  assert.equal(response.headers.get("Strict-Transport-Security"), "max-age=31536000");
+  assert.equal(response.headers.get("X-Frame-Options"), "DENY");
+  const csp = response.headers.get("Content-Security-Policy");
+  assert.match(csp, /frame-ancestors 'none'/);
+  assert.match(csp, /object-src 'none'/);
+  assert.match(csp, /https:\/\/m\.media-amazon\.com/);
+  assert.doesNotMatch(csp, /images\.pexels\.com/);
 });
 
 test("product cards keep eBay examples non-clickable and Amazon listing images linked", async () => {

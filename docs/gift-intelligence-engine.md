@@ -4,6 +4,10 @@ Santa's Helper used to send one Claude prompt and show what came back. The engin
 recommendation pipeline. Claude reads the shopper's words and proposes candidates. Deterministic, tested code then decides
 what is shown, in what order, and why.
 
+**Release selection:** the production configuration selects `baseline-v3.3`, retaining its frozen prompt
+and original-order curation with current safety validation. The graph/retrieval/ranking pipeline below
+is experimental, not the selected production recommendation path.
+
 - Engine: `gift-engine-v1` · Ranker: `ranker-v1` · Prompt: `gift-intelligence-v4.0` (v3.3 frozen in `src/prompts/`)
 - The default AI path still makes **one LLM call per uncached search**. A separately approved, fresh knowledge library can now bypass that call for supported requests; the shipped library is unapproved and empty.
 - Accepted retailer offers additionally use the shared [cold-start product evidence ranker](product-evidence-ranking.md).
@@ -11,6 +15,21 @@ what is shown, in what order, and why.
   The linked research review covers further improvements that do not require first-party live feedback.
 
 ## Pipeline
+
+### Shared recipient safeguards
+
+The backend and commercial frontend reuse `site/recipient-language.js` for supported English age
+and exclusion forms. Negated ceilings such as “no more than £20” remain hard caps; genuine floors
+such as “no less than £20” do not become ceilings. Comma/conjunction “no leather” exclusions are
+recognized alongside sentence-start exclusions. This is bounded deterministic language support,
+not comprehensive multilingual understanding.
+
+Validator-v7 derives product exclusions from recipient context, not model-authored specifications.
+Up to 16 phrases of 80 characters travel in `productSpec.excludedTerms`; overflow marks
+`constraintsIncomplete` and product matching abstains instead of dropping constraints.
+Sponsorship uses the shared age/constraint parser and any returned minor age bands.
+
+### Experimental recommendation flow
 
 ```
  shopper text / form
@@ -127,11 +146,17 @@ The existing baseline release remains the normal AI path.
 - `feedback.js` adds daily **verified `V|` counters** for concept, topic, age/budget bands, category, ranking policy and position,
   separately for shown/click/save/dismiss/good/bad/bought events. They use the existing Durable Object database and
   **90-day retention**; no D1 database, paid embeddings, additional model call or new service is needed.
-- `feedback-receipts.js` signs only controlled server-produced metadata using domain-separated HMAC-SHA256 with the
+- `feedback-receipts.js` signs controlled server-produced metadata and an opaque SHA-256 product-contract digest using domain-separated HMAC-SHA256 with the
   existing Worker-only `IP_SALT`. Each card has an independent random ID, a signature and a **24-hour expiry**; receipts
   contain no recipient text, titles, user identifier or IP. They are freshly minted after cache reads, never shared
   inside cached responses, and also cover catalogue fallbacks and photo-first replacements. Rotating the secret invalidates
   outstanding receipts. Signing is not encryption: the controlled labels are readable.
+- New clients also forward that receipt to `/api/products`. The server verifies its signature, expiry and
+  digest before product lookup, binding normalized identity, features, variants, age, budget and exclusions.
+  These receipts are not sent to retailers, and product text is not added to feedback storage.
+  Unsigned older clients and pre-upgrade receipts remain compatible; omitting the receipt follows the legacy
+  path and cannot prove server-issued constraints. This is incremental integrity protection, not a signed-plan
+  requirement or a replacement for endpoint usage limits.
 - Verification ignores browser changes to concept/cohort/source/policy. Display position remains a validated **browser
   report**, because photo selection can compact or reorder the issued candidates; signing does not verify viewport exposure.
   An explicit interaction establishes one shown-card observation if the shown request has not arrived yet.

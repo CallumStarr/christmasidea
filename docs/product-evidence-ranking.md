@@ -24,6 +24,12 @@ The shared Worker product pipeline now:
 
 - Applies the existing hard identity, relevance, condition, availability, variant, recipient and budget gates
   **before** evidence can affect ordering. A price must be known if either supported budget-cap field is supplied.
+  When both caps exist, the smaller applies. Required variants retain short identifiers and bound sequences:
+  `UK 8` cannot match `US 8 UK 6`, and `30 cm` cannot match `30 mm`.
+- Applies bounded, server-derived recipient exclusions to listing titles and descriptions before ranking.
+  Excess/malformed exclusion payloads abstain. Issued-card receipts bind the normalized product contract
+  for current clients; unsigned legacy requests remain supported and are not authenticated gift plans.
+  Lexical matches cannot establish complete ingredient, compatibility or safety verification.
 - Ranks accepted candidates across providers instead of choosing the first registered retailer.
 - Preserves the existing preference for a checked product image. Quality evidence cannot buy a way past this
   intentional photo-first compatibility rule.

@@ -27,12 +27,13 @@ test("learning context keeps only controlled topic and broad bands", () => {
 
 test("structured counters connect outcomes without free text and stay within storage batch cap", () => {
   for (const event of ["shown", "click", "good", "bad", "bought"]) {
-    const fb = feedbackKeys({ event, item, items: [item] });
+    const fb = feedbackKeys({ event, item, items: [item] }, { verified: true });
     assert.ok(fb.keys.includes(`L|${event}|trains|child|15-30|3|control-v1|0`));
+    assert.ok(feedbackKeys({ event, item, items: [item] }).keys.every((k) => !k.startsWith("L|")), "unsigned bodies add no learning evidence");
   }
-  const invalid = feedbackKeys({ event: "good", item: { ...item, learning: { ...learning, topic: "private name" } } });
+  const invalid = feedbackKeys({ event: "good", item: { ...item, learning: { ...learning, topic: "private name" } } }, { verified: true });
   assert.ok(invalid.keys.every((k) => !k.startsWith("L|")));
-  const batch = feedbackKeys({ event: "shown", items: Array.from({ length: 12 }, (_, position) => ({ ...item, position })) });
+  const batch = feedbackKeys({ event: "shown", items: Array.from({ length: 12 }, (_, position) => ({ ...item, position })) }, { verified: true });
   assert.equal(batch.keys.length, 60);
 });
 

@@ -5,6 +5,7 @@ import { productDiscoveryAvailable, searchProductsForIdeas } from "../src/produc
 import { assignUniqueProducts } from "../src/engine/product-identity.js";
 import { amazonUrl, ebayUrl, validProduct, validProductImage } from "../site/merchant-links.js";
 import { fetchProducts } from "../site/api.js";
+import { selectPhotographedIdeas } from "../site/product-selection.js";
 import { handleRequest } from "../src/core.js";
 
 const env = {
@@ -75,6 +76,26 @@ test("ordinary eBay offers work without EPN and never accept unconfigured affili
   });
 
   assert.equal((await provider.searchProducts("coffee mug"))[0].productUrl, item().itemWebUrl);
+});
+
+test("photo selection rejects a tracked offer when the public campaign is empty", async () => {
+  const product = normaliseEbayItem(item(), env, now);
+  let imageLoads = 0;
+  const options = {
+    fetchBatches: async (_ideas, receive) => receive({ products: [product], offers: [[product]] }, 0),
+    loadImage: async () => { imageLoads++; return true; },
+  };
+  const mismatch = await selectPhotographedIdeas([idea], [], {
+    ...options, config: { EBAY_CAMPAIGN_ID: "" },
+  });
+  assert.equal(mismatch.selected.length, 0);
+  assert.match(mismatch.notice, /No suitable ideas/);
+  assert.equal(imageLoads, 0);
+
+  const matching = await selectPhotographedIdeas([idea], [], { ...options, config });
+  assert.equal(matching.selected.length, 1);
+  assert.equal(matching.selected[0].offers[0].productId, id);
+  assert.equal(imageLoads, 1);
 });
 
 test("OAuth trims credential whitespace and reports only approved error categories", async () => {

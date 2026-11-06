@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { listMetrics, validateBenchmarkData } from "../scripts/engine-metrics.js";
+import { listMetrics, summarise, summariseCompletion, validateBenchmarkData } from "../scripts/engine-metrics.js";
 
 const input = { mode: "describe", description: "My daughter is 12 and loves astronomy and model rockets. Budget £30." };
 
@@ -13,12 +13,74 @@ test("quality metrics identify near-duplicates and repeated interests without im
   assert.ok(metrics.near_duplicate_pairs >= 1);
   assert.ok(metrics.repeated_interest_excess >= 1);
   assert.ok(metrics.strategy_balance > 0 && metrics.strategy_balance <= 1);
-  assert.equal(metrics.match_cap_over_budget, 0);
+  assert.equal(metrics.match_cap_over_budget, null);
 });
 
 test("strategy balance is unavailable for historical ideas without strategy labels", () => {
   const metrics = listMetrics([{ title: "An original gift idea", category: "Home" }], input);
   assert.equal(metrics.strategy_balance, null);
+  assert.equal(metrics.strategy_labels_present, 0);
+  assert.equal(metrics.strategy_labels_missing, 1);
+});
+
+test("strategy balance normalizes only known labels and reports missing labels", () => {
+  const metrics = listMetrics([
+    { title: "First idea", strategy: "one" },
+    { title: "Second idea", strategy: "two" },
+    { title: "Third idea" },
+  ], input);
+  assert.equal(metrics.strategy_balance, 1);
+  assert.equal(metrics.strategy_labels_present, 2);
+  assert.equal(metrics.strategy_labels_missing, 1);
+});
+
+test("missing or malformed budgets are unassessed, not zero violations", () => {
+  const ideas = [{ title: "An idea", productSpec: { maxPriceGbp: 40 } }];
+  const assessed = listMetrics(ideas, input);
+  const unassessed = listMetrics(ideas, { mode: "describe", description: "My friend loves travel. Budget ?20." });
+  assert.equal(assessed.match_cap_over_budget, 1);
+  assert.equal(unassessed.match_cap_over_budget, null);
+  const combined = summarise([assessed, unassessed]);
+  assert.equal(combined.total_match_cap_over_budget, 1);
+  assert.equal(combined.budget_assessed_cases, 1);
+  assert.equal(combined.budget_partially_assessed_cases, 0);
+  assert.equal(combined.budget_unassessed_cases, 1);
+  assert.equal(summarise([unassessed]).total_match_cap_over_budget, null);
+});
+
+test("missing or malformed idea caps are reported rather than counted as affordable", () => {
+  const partial = listMetrics([
+    { title: "Known cap", productSpec: { maxPriceGbp: 40 } },
+    { title: "Missing cap" },
+    { title: "Invalid cap", productSpec: { maxPriceGbp: "20" } },
+  ], input);
+  assert.equal(partial.match_cap_over_budget, 1);
+  assert.equal(partial.budget_assessment, "partial");
+  assert.equal(partial.match_caps_assessed, 1);
+  assert.equal(partial.match_caps_unassessed, 2);
+  const missing = listMetrics([{ title: "No cap" }], input);
+  const empty = listMetrics([], input);
+  assert.equal(missing.match_cap_over_budget, null);
+  assert.equal(empty.match_cap_over_budget, null);
+  const summary = summarise([partial, missing, empty]);
+  assert.equal(summary.total_match_cap_over_budget, 1);
+  assert.equal(summary.budget_assessed_cases, 0);
+  assert.equal(summary.budget_partially_assessed_cases, 1);
+  assert.equal(summary.budget_unassessed_cases, 2);
+  assert.equal(summary.match_caps_assessed, 1);
+  assert.equal(summary.match_caps_unassessed, 3);
+});
+
+test("completion summary uses reported truncation flags, not completed-only statuses", () => {
+  assert.deepEqual(summariseCompletion([
+    { status: "completed", truncated: true },
+    { status: "completed", truncated: false },
+    { status: "completed" },
+  ]), {
+    truncated: 1,
+    truncation_unknown: 1,
+    sample_scope: "completed results only; failed or missing attempts are excluded",
+  });
 });
 
 function fixture() {
