@@ -165,7 +165,7 @@ test("Awin products flow through the existing strict product matcher", async () 
   assert.ok(scoreProductMatch(idea, unknownDelivery).reasons.includes("delivery_cost_unverified"));
 });
 
-test("Awin feed importer parses quoted CSV, filters advertiser/stock and produces staged SQL", async () => {
+test("Awin feed importer parses quoted CSV, filters advertiser/stock and produces staged SQL", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "awin-import-test-"));
   const feed = join(directory, "feed.csv.gz");
   const output = join(directory, "output");
@@ -195,7 +195,7 @@ test("Awin feed importer parses quoted CSV, filters advertiser/stock and produce
       encoding: "utf8",
     });
 
-    test("Awin sync selects joined allowlisted CSV feeds and reports unsupported feeds", async () => {
+    await t.test("Awin sync selects joined allowlisted CSV feeds and reports unsupported feeds", async () => {
       const directory = await mkdtemp(join(tmpdir(), "awin-feed-list-test-"));
       const path = join(directory, "feed-list.csv");
       await writeFile(path, [
