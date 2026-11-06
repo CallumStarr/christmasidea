@@ -13,15 +13,28 @@ const MATERIAL_GROUPS = [
 ];
 const UNSUITABLE_LISTING = /\b(?:porn|pornographic|fuck|fucking|shit|cunt|tits)\b|\bt\*ts\b/i;
 const ADD_ON = /\b(?:accessor(?:y|ies)|replacement|spare|compatible|case|cover|sheath|blade|blades|holder|attachment|protector|sharpener|sharpening|cleaner|cleaning|brush|bag|organizer|storage|maintenance)\b/i;
+const BOOK_LISTING = /\b(?:books?|paperbacks?|hardbacks?|hardcovers?|softcovers?|isbn)\b|\b97[89]\d{10}\b/i;
 
 function terms(value) {
   const containers = words(value).filter((word) => /^(?:kits?|sets?)$/.test(word))
     .map((word) => word.replace(/s$/, ""));
   return [...contentStems(String(value || "")
+    .replace(/\bknives\b/gi, "knife")
     .replace(/\b(?:cookbooks?|cookery books?)\b/gi, "cookbook")
     .replace(/\b(?:whetstones?|sharpening stones?)\b/gi, "sharpening stone")
     .replace(/\b(?:cutting|chopping) boards?\b/gi, "chopping board")
     .replace(/\b(?:culinary|food) history\b/gi, "food history")), ...containers];
+}
+
+function isUnrequestedAccessory(title, productType) {
+  let identity = title;
+  if (includesPhrase(productType, "knife") && includesPhrase(title, "knife")
+      && !/\b(?:replacement|spare)\b/i.test(title)) {
+    identity = identity.replace(/\b(?:(?:stainless|carbon|damascus)\s+)?steel blades?\b|\b\d+(?:\.\d+)?\s*(?:inch|cm|mm|")\s+blades?\b/gi, "");
+  }
+  return (ADD_ON.test(identity) && !ADD_ON.test(productType))
+    || (includesPhrase(productType, "knife")
+      && /\b(?:knife block|cutlery)\b/i.test(title) && !/\b(?:block|cutlery)\b/i.test(productType));
 }
 
 function conflictingMaterial(idea, title) {
@@ -111,7 +124,10 @@ export function scoreProductMatch(idea, product, thresholds = productMatchThresh
   const reasons = [];
   const requiredFeatures = Array.isArray(spec.requiredFeatures) ? spec.requiredFeatures : [];
   const requiredVariants = Array.isArray(spec.requiredVariants) ? spec.requiredVariants : [];
-  if (typeScore < 1 || (ADD_ON.test(title) && !ADD_ON.test(productType))) reasons.push("wrong_product_type");
+  if (typeScore < 1 || isUnrequestedAccessory(title, productType)
+      || (BOOK_LISTING.test(title) && !BOOK_LISTING.test(productType) && !/\bcookbooks?\b/i.test(productType))) {
+    reasons.push("wrong_product_type");
+  }
   if (String(product.condition || "").toUpperCase() !== "NEW") reasons.push("condition_unverified_or_not_new");
   if (!["IN_STOCK", "IN_STOCK_SCARCE"].includes(availability)) reasons.push("availability_unverified_or_not_in_stock");
   if (spec.brandPreference && !includesPhrase(`${product.brand || ""} ${product.title || ""}`, spec.brandPreference)) {

@@ -130,6 +130,58 @@ test("eBay fallback uses a short product type instead of recipient-facing prose"
   assert.equal(result.products[0]?.provider, "ebay");
 });
 
+test("accepted photographed listings take priority over a higher-scoring match without a photo", async () => {
+  const result = await searchProductsForIdeas([idea], env, {
+    productBudget: { take: async (_ip, count) => count },
+    fetch: async (url) => String(url).includes("/oauth2/") ? token() : response({
+      itemSummaries: [
+        item({ image: undefined }),
+        item({
+          itemId: "v1|123456789013|0", title: "Coffee mug",
+          itemAffiliateWebUrl: item().itemAffiliateWebUrl.replace("123456789012", "123456789013"),
+        }),
+      ],
+    }),
+  }, "visitor");
+  assert.equal(result.products[0]?.productId, "v1|123456789013|0");
+  assert.ok(result.products[0]?.imageUrl);
+});
+
+test("a verified match without a photo still triggers the existing bounded fallback", async () => {
+  for (const fallbackHasImage of [true, false]) {
+    const queries = [];
+    const result = await searchProductsForIdeas([idea], env, {
+      productBudget: { take: async (_ip, count) => count },
+      fetch: async (url) => {
+        if (String(url).includes("/oauth2/")) return token();
+        const query = new URL(url).searchParams.get("q");
+        queries.push(query);
+        const primary = query === idea.query;
+        return response({ itemSummaries: [item({
+          title: primary ? "Ceramic coffee mug" : "Coffee mug",
+          image: !primary && fallbackHasImage ? item().image : undefined,
+        })] });
+      },
+    }, "visitor");
+    assert.deepEqual(queries, ["ceramic coffee mug", "coffee mug"]);
+    assert.equal(Boolean(result.products[0]?.imageUrl), fallbackHasImage);
+    assert.equal(result.products[0]?.title, fallbackHasImage ? "Coffee mug" : "Ceramic coffee mug");
+  }
+});
+
+test("photo selection never admits a wrong product or discards a verified offer when fallback is limited", async () => {
+  let reservations = 0;
+  const result = await searchProductsForIdeas([idea], env, {
+    productBudget: { take: async (_ip, count) => ++reservations === 1 ? count : 0 },
+    fetch: async (url) => String(url).includes("/oauth2/") ? token() : response({
+      itemSummaries: [item({ image: undefined }), item({ title: "Coffee mug replacement handle" })],
+    }),
+  }, "visitor");
+  assert.equal(result.limited, true);
+  assert.equal(result.products[0]?.title, "Ceramic coffee mug");
+  assert.equal(result.products[0]?.imageUrl, null);
+});
+
 test("listing variants and URL authority are checked on both server and browser", () => {
   const variant = "v1|123456789012|987654321";
   const url = `${item().itemAffiliateWebUrl}&var=987654321`;

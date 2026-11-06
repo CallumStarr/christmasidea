@@ -94,13 +94,14 @@ test("UI keeps rejected titles ahead of freshness exclusions and clears them for
 
 test("actual card handlers send explicit ratings and purchases and preserve rejected titles", async () => {
   const html = await readFile(new URL("../site/index.html", import.meta.url), "utf8");
-  const render = html.match(/function renderCards\(ideas\)\{[\s\S]*?\n\}/)[0];
+  const render = html.match(/function renderCards\(ideas,.*\)\{[\s\S]*?\n\}/)[0];
   const events = [];
   const searches = [];
   function element() {
     return {
       children: [], events: {}, dataset: {}, hidden: false, style: { setProperty() {} },
       append(...children) { this.children.push(...children); },
+      before() {},
       setAttribute() {}, focus() {},
       addEventListener(name, handler) { this.events[name] = handler; },
     };
@@ -113,10 +114,16 @@ test("actual card handlers send explicit ratings and purchases and preserve reje
   };
   const more = element();
   const context = vm.createContext({
-    document: { createElement: element }, cardsByTitle: new Map(), HEART: "",
+    document: { createElement: element, body: { classList: { toggle() {} } } }, cardsByTitle: new Map(), HEART: "",
+    swipeDeck: { enable() {}, advance(card) { card.hidden = true; } },
     $: (selector) => selector === "#cards" ? cards : more,
     isSaved: () => false, toggleSave() {}, updateCardLayout() {}, showFeedback() {}, setStatus() {},
     statusRevision: 0, CFG: {}, apiOn: () => true,
+    monetization: { decorateIdeas: (ideas) => ideas, annotateCard() {} },
+    retailerLinks: () => [
+      { merchantId: "amazon", name: "Amazon", href: "https://amazon.example", affiliate: true, network: "amazon", search: true },
+      { merchantId: "ebay", name: "eBay", href: "https://ebay.example", affiliate: false, network: "direct", search: true },
+    ],
     current: input, activeController: null, shownTitles: ["Game", ...Array.from({ length: 24 }, (_, n) => `Other ${n}`)],
     run: (request) => searches.push(request),
     amazonUrl: () => "https://amazon.example", ebayUrl: () => "https://ebay.example",
@@ -138,6 +145,7 @@ test("actual card handlers send explicit ratings and purchases and preserve reje
   assert.deepEqual(events.map((event) => event.event), ["shown", "good", "bought", "bad"]);
   assert.deepEqual(events[1].item.learning, learning);
   const moreHandler = html.match(/\$\("#more"\)\.addEventListener\("click", \(\) => \{[\s\S]*?\n\}\);/)[0];
+  vm.runInContext(html.match(/function nextInput\(\)\{[\s\S]*?\n\}/)[0], context);
   vm.runInContext(moreHandler, context);
   more.events.click();
   assert.equal(searches[0].exclude.length, 24);

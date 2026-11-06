@@ -1,0 +1,53 @@
+[
+  {
+    "id": "demo-garden-markers",
+    "title": "Personalised herb garden markers",
+    "description": "A sample partner placement for a gardener. Check marker material, spelling and dispatch time with the seller.",
+    "priceRange": { "min": 12, "max": 25, "currency": "GBP" },
+    "imageUrl": "",
+    "destinationUrl": "https://www.etsy.com/uk/search?q=personalised+herb+garden+markers",
+    "merchantId": "etsy",
+    "sponsorName": "Demo: independent garden maker",
+    "category": "Outdoors & sport",
+    "targetTags": ["dad", "mum", "gardening"],
+    "minBudget": 25,
+    "maxBudget": 1000,
+    "active": true,
+    "priorityWeight": 20,
+    "demo": true
+  },
+  {
+    "id": "demo-personalised-journal",
+    "title": "Personalised reading journal",
+    "description": "A sample partner placement for someone who likes keeping reading notes. Review the page layout before choosing a design.",
+    "priceRange": { "min": 15, "max": 30, "currency": "GBP" },
+    "imageUrl": "",
+    "destinationUrl": "https://www.notonthehighstreet.com/search?term=personalised+reading+journal",
+    "merchantId": "noths",
+    "sponsorName": "Demo: independent stationery studio",
+    "category": "Stationery",
+    "targetTags": ["books", "reading"],
+    "minBudget": 30,
+    "maxBudget": 1000,
+    "active": true,
+    "priorityWeight": 15,
+    "demo": true
+  },
+  {
+    "id": "demo-general-notebook",
+    "title": "Pocket notebook",
+    "description": "A general sample partner placement. Choose lined, plain or dotted pages to suit how they make notes.",
+    "priceRange": { "min": 5, "max": 10, "currency": "GBP" },
+    "imageUrl": "",
+    "destinationUrl": "https://www.johnlewis.com/search?search-term=pocket+notebook",
+    "merchantId": "johnlewis",
+    "sponsorName": "Demo: gift partner",
+    "category": "Stationery",
+    "targetTags": ["general"],
+    "minBudget": 10,
+    "maxBudget": 1000,
+    "active": true,
+    "priorityWeight": 1,
+    "demo": true
+  }
+]

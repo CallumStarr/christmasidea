@@ -50,6 +50,55 @@ function fakeFetch(captured) {
 
 const okBudget = { consume: async () => ({ ok: true }) };
 
+test("photo-first mode supplies bounded, recipient-validated replacements without extra AI calls", async () => {
+  const captured = [];
+  const raw = {
+    ideas: [
+      "coffee grinder", "coffee dripper", "coffee scoop", "coffee storage tin",
+      "coffee scales", "coffee travel mug", "coffee cup", "coffee filter papers",
+      "climbing chalk bag", "climbing brush",
+    ].map((name) => ({
+      title: name, concept: name, search_query: name, why: `A useful ${name} for their hobby.`,
+      category: "Home", estimated_max_price_gbp: 20,
+    })),
+  };
+  let cached;
+  const deps = {
+    budget: okBudget,
+    cache: {
+      match: async () => cached ? new Response(cached) : undefined,
+      put: async (_key, response) => { cached = await response.text(); },
+    },
+    fetch: async (...args) => {
+      captured.push(args);
+      return Response.json({ content: [{ type: "tool_use", name: "gift_ideas", input: raw }] });
+    },
+  };
+  const body = { relation: "dad", age: "50s-60s", budget: "15-30", interests: "climbing and coffee", exclude: ["coffee travel mug"] };
+  const enabled = { ...env, RECOMMENDATION_MODE: "baseline-v3.3", PRODUCT_PHOTO_FIRST: "true" };
+  const result = await (await handleRequest(req(body), enabled, deps)).json();
+  assert.equal(result.photo_first, true);
+  assert.ok(result.replacement_ideas.length > 0 && result.replacement_ideas.length <= 4);
+  const all = [...result.ideas, ...result.replacement_ideas];
+  assert.equal(new Set(all.map((idea) => idea.title)).size, all.length);
+  assert.ok(all.every((idea) => idea.title !== "coffee travel mug"));
+  assert.ok(all.every((idea) => idea.productSpec.budgetMaxGbp === 30));
+  assert.equal(captured.length, 1);
+  const hit = await (await handleRequest(req(body), enabled, deps)).json();
+  assert.equal(hit.cached, true);
+  assert.deepEqual(hit.replacement_ideas, result.replacement_ideas);
+  assert.equal(captured.length, 1);
+});
+
+test("catalogue failure responses retain photo-first policy and validated replacement candidates", async () => {
+  const result = await (await handleRequest(req({
+    interests: "coffee", age: "50s-60s", budget: "15-30",
+  }), { ...env, ANTHROPIC_API_KEY: "", PRODUCT_PHOTO_FIRST: "true" }, {})).json();
+  assert.equal(result.fallback, true);
+  assert.equal(result.photo_first, true);
+  assert.ok(Array.isArray(result.replacement_ideas) && result.replacement_ideas.length <= 4);
+});
+
 test("happy path calls Claude with forced tool and returns sanitised ideas", async () => {
   const captured = [];
   const res = await handleRequest(req({ relation: "dad", age: "50s-60s", budget: "15-30", interests: "climbing, coffee" }), env, { fetch: fakeFetch(captured), budget: okBudget });

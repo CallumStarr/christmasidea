@@ -56,6 +56,8 @@ export async function fetchIdeas(input, {
       ideas: data.ideas,
       source: "catalogue",
       productDiscoveryEnabled: data.product_discovery_enabled === true,
+      photoFirst: data.photo_first === true,
+      replacementIdeas: Array.isArray(data.replacement_ideas) ? data.replacement_ideas.slice(0, 4) : [],
       recipient: data.recipient,
       notice: data.ideas.length ? data.error || "" : data.note || data.error || "We couldn't find suitable ideas this time. Try adding a little more detail.",
       error: false,
@@ -69,6 +71,8 @@ export async function fetchIdeas(input, {
       recipientSummary: typeof data.recipient_summary === "string" ? data.recipient_summary : "",
       recipient: data.recipient,
       productDiscoveryEnabled: data.product_discovery_enabled === true,
+      photoFirst: data.photo_first === true,
+      replacementIdeas: Array.isArray(data.replacement_ideas) ? data.replacement_ideas.slice(0, 4) : [],
       error: false,
     };
   }
@@ -89,13 +93,14 @@ export async function fetchIdeas(input, {
   };
 }
 
-export async function fetchProducts(ideas, { fetchImpl = fetch, enabled = true } = {}) {
+export async function fetchProducts(ideas, { fetchImpl = fetch, enabled = true, signal } = {}) {
   if (!enabled || !ideas.length) return { products: [], unavailable: false };
   try {
     const response = await fetchImpl("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ideas }),
+      signal,
     });
     if (!response.ok) return { products: [], unavailable: true };
     const data = await response.json();

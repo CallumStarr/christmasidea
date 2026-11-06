@@ -5,6 +5,7 @@ import vm from "node:vm";
 import { fetchIdeas } from "../site/api.js";
 import { createTurnstileTokenGate } from "../site/turnstile-token.js";
 import { handleRequest } from "../src/core.js";
+import { shouldPrefetch } from "../site/swipe-deck.js";
 
 const description = "My dad is happiest in the garden, loves a good coffee and has every tool. budget of £40";
 const idea = (title, query) => ({
@@ -24,7 +25,7 @@ const env = {
   RECOMMENDATION_MODE: "baseline-v3.3",
 };
 
-function frontend(fetchImpl) {
+function frontend(fetchImpl, { selectPhotographedIdeas } = {}) {
   const html = fs.readFileSync(new URL("../site/index.html", import.meta.url), "utf8");
   const source = html.slice(html.indexOf("function setStatus("), html.indexOf('$("#restart").addEventListener'));
   const elements = new Map();
@@ -42,7 +43,8 @@ function frontend(fetchImpl) {
     return elements.get(id);
   };
   $("#description").value = description;
-  const rendered = [];
+  $("#results").hidden = true;
+  const rendered = [], renderOptions = [];
   const gate = createTurnstileTokenGate();
   const context = vm.createContext({
     $, document: { createElement: element, querySelector: () => null, querySelectorAll: () => [], activeElement: null },
@@ -51,7 +53,10 @@ function frontend(fetchImpl) {
     reduceMotion: true, turnstileEnabled: true, tsGate: gate, tsWidget: 1,
     resetTurnstile() {}, apiOn: () => true,
     fetchIdeas: (input, options) => fetchIdeas(input, { ...options, fetchImpl }),
-    renderCards: (ideas) => rendered.push(ideas), renderUnderstood: () => false,
+    renderCards: (ideas, options) => { rendered.push(ideas); renderOptions.push(options); }, renderUnderstood: () => false,
+    selectPhotographedIdeas,
+    monetization: { inventoryReady: Promise.resolve() },
+    swipeDeck: { setBusy() {} }, shouldPrefetch,
     sendFeedback: async () => {}, fillProducts: () => assert.fail("discovery must remain disabled"),
   });
   vm.runInContext(source, context);
@@ -66,8 +71,44 @@ function frontend(fetchImpl) {
     }
     assert.fail("frontend request did not settle");
   }
-  return { $, context, rendered, action };
+  return { $, context, rendered, renderOptions, action };
 }
+
+test("photo-first finder renders only checked ideas and uses preloaded offers without a second enrichment", async () => {
+  const first = { title: "Coffee grinder" }, missing = { title: "Unavailable idea" }, backup = { title: "Coffee dripper" };
+  const offer = { provider: "ebay", imageUrl: "https://i.ebayimg.com/test.jpg" };
+  const ui = frontend(async () => Response.json({
+    ideas: [first, missing], replacement_ideas: [backup], photo_first: true,
+    product_discovery_enabled: true, source: "ai",
+  }), {
+    selectPhotographedIdeas: async (ideas, replacements, options) => {
+      assert.deepEqual(ideas, [first, missing]);
+      assert.deepEqual(replacements, [backup]);
+      assert.equal(options.enabled, true);
+      assert.ok(options.signal);
+      return { selected: [{ idea: first, offers: [offer] }, { idea: backup, offers: [offer] }], notice: "Showing fewer ideas." };
+    },
+  });
+  vm.runInContext("globalThis.CFG = {}", ui.context);
+  await ui.action(() => ui.$("#form").events.submit({ preventDefault() {} }), "photo-token");
+  assert.deepEqual(ui.rendered[0], [first, backup]);
+  assert.equal(ui.renderOptions[0].photoFirst, true);
+  assert.deepEqual(ui.renderOptions[0].verifiedOffers.get(first.title), [offer]);
+  assert.ok(ui.$("#deck-status").children.some((child) => child.textContent === "Showing fewer ideas."));
+});
+
+test("photo-first finder hides previous results and offers retry when no photographed idea survives", async () => {
+  const ui = frontend(async () => Response.json({
+    ideas: [{ title: "Unavailable" }], photo_first: true, product_discovery_enabled: true,
+  }), {
+    selectPhotographedIdeas: async () => ({ selected: [], notice: "No suitable ideas with working product photos were found." }),
+  });
+  vm.runInContext("globalThis.CFG = {}", ui.context);
+  await ui.action(() => ui.$("#form").events.submit({ preventDefault() {} }), "empty-photo-token");
+  assert.equal(ui.rendered.length, 0);
+  assert.equal(ui.$("#results").hidden, true);
+  assert.ok(ui.$("#status").children.some((child) => child.textContent === "Try again"));
+});
 
 test("real more/retry handlers retain bounded exclusions through the API and baseline release (mocked network)", async () => {
   const bodies = [], prompts = [], verified = new Set(), cacheKeys = [];
@@ -104,7 +145,7 @@ test("real more/retry handlers retain bounded exclusions through the API and bas
   denyNext = true;
   await ui.action(() => ui.$("#more").events.click(), "denied-token");
   assert.equal(ui.rendered.length, 1, "failed more request must preserve the collection");
-  const retry = ui.$("#status").children.find((child) => child.textContent === "Try again");
+  const retry = ui.$("#deck-status").children.find((child) => child.textContent === "Try again");
   assert.ok(retry);
   await ui.action(() => retry.events.click(), "retry-token");
   assert.deepEqual(bodies[1].exclude, firstBatch.map((i) => i.title));
@@ -136,4 +177,49 @@ test("actual frontend history keeps only the last 24 titles and retry does not r
   assert.equal(sent[4].exclude.length, 24);
   assert.deepEqual(sent[4].exclude, ui.rendered.slice(1, 4).flatMap((ideas) => ideas.map((i) => i.title)));
   assert.equal(ui.$("#description").value, description);
+});
+
+test("background prefetch appends once, preserves the deck after failure and requires explicit retry", async () => {
+  const sent = [];
+  let release;
+  const ui = frontend(async (_url, init) => {
+    sent.push(JSON.parse(init.body));
+    if (sent.length === 2) return new Promise((resolve) => { release = resolve; });
+    return Response.json({ ideas: [{ title: `Gift ${sent.length}` }], source: "ai" });
+  });
+  await ui.action(() => ui.$("#form").events.submit({ preventDefault() {} }), "initial");
+  ui.context.turnstileEnabled = false;
+  ui.$("#cards").querySelectorAll = () => [{}, {}, {}];
+  vm.runInContext("requestPrefetch(); requestPrefetch(); requestPrefetch();", ui.context);
+  assert.equal(sent.length, 2, "only one request may be in flight");
+  assert.equal(ui.$("#loading").hidden, true, "preloading must not replace the current view");
+  release(Response.json({ error: "Busy" }, { status: 429 }));
+  await ui.action(() => {}, "");
+  assert.equal(ui.rendered.length, 1, "failed prefetch must preserve existing cards");
+  assert.match(ui.$("#deck-status").children[0].textContent, /Too many/);
+  vm.runInContext("requestPrefetch()", ui.context);
+  assert.equal(sent.length, 2, "there is no automatic retry loop after failure");
+  await ui.action(() => ui.$("#more").events.click(), "");
+  assert.equal(ui.rendered.length, 2);
+  assert.equal(ui.renderOptions[1].append, true);
+  assert.equal(sent[2].description, description);
+  assert.deepEqual(sent[2].exclude, ["Gift 1"]);
+});
+
+test("duplicate-only and empty background batches pause rather than replacing cards or looping", async () => {
+  for (const duplicate of [true, false]) {
+    let calls = 0;
+    const ui = frontend(async () => {
+      calls++;
+      return Response.json({ ideas: calls === 1 || duplicate ? [{ title: "Coffee grinder" }] : [], source: "ai" });
+    });
+    await ui.action(() => ui.$("#form").events.submit({ preventDefault() {} }), "initial");
+    ui.context.turnstileEnabled = false;
+    ui.$("#cards").querySelectorAll = () => [];
+    await ui.action(() => vm.runInContext("requestPrefetch()", ui.context), "");
+    vm.runInContext("requestPrefetch()", ui.context);
+    assert.equal(calls, 2);
+    assert.equal(ui.rendered.length, 1);
+    assert.equal(ui.$("#results").hidden, false);
+  }
 });

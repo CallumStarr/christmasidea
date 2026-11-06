@@ -155,7 +155,9 @@ async function searchProvider(values, env, deps, ipHash, provider) {
     let best = null;
     for (const candidate of queryResults.get(query) || []) {
       const match = scoreProductMatch(idea, candidate, thresholds);
-      if (match.accepted && (!best || match.matchScore > best.matchScore)) {
+      if (match.accepted && (!best
+          || (candidate.imageUrl && !best.imageUrl)
+          || (Boolean(candidate.imageUrl) === Boolean(best.imageUrl) && match.matchScore > best.matchScore))) {
         best = { ...candidate, matchScore: match.matchScore };
       }
     }
@@ -163,13 +165,15 @@ async function searchProvider(values, env, deps, ipHash, provider) {
   };
   await fetchQueries(variants.map(([primary]) => primary).filter(Boolean));
   const primaryMatches = ideas.map(({ value }, index) => bestMatch(value, variants[index][0]));
-  const alternativeQueries = variants.flatMap((queries, index) => primaryMatches[index] ? [] : queries.slice(1));
+  const alternativeQueries = variants.flatMap((queries, index) => primaryMatches[index]?.imageUrl ? [] : queries.slice(1));
   await fetchQueries(alternativeQueries);
   const matched = ideas.map(({ value }, index) => {
-    const best = primaryMatches[index] || variants[index].slice(1)
+    const best = [primaryMatches[index], ...variants[index].slice(1)
       .map((query) => bestMatch(value, query))
+    ]
       .filter(Boolean)
-      .sort((a, b) => b.matchScore - a.matchScore)[0];
+      .sort((a, b) => Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl))
+        || b.matchScore - a.matchScore)[0];
     return best ? provider.validateProduct(best) : null;
   });
   const unique = assignUniqueProducts(matched);

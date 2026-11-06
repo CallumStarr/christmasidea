@@ -40,6 +40,7 @@ PER_VISITOR_DAILY_LIMIT = "15"
 PER_VISITOR_MINUTE_LIMIT = "4"
 # Global kill switch; each merchant also needs its own approval, flag and credentials.
 PRODUCT_DISCOVERY_ENABLED = "true"
+PRODUCT_PHOTO_FIRST = "true"
 AMAZON_PRODUCT_DISCOVERY_ENABLED = "false"
 EBAY_PRODUCT_DISCOVERY_ENABLED = "true"
 AMAZON_PARTNER_TAG = "mcstarrstud0c-21"

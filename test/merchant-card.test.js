@@ -54,6 +54,7 @@ async function fixture() {
     validProductImage,
     setTimeout: (callback) => timers.push(callback),
     showFeedback: (message) => notices.push(message),
+    updateCardLayout: () => {},
     ebayUrl: () => "https://search.example/ebay",
     amazonUrl: () => "https://search.example/amazon",
   });
@@ -72,6 +73,18 @@ const product = (provider, overrides = {}) => ({
   ...overrides,
 });
 
+test("photo-first cards are hidden if their current image fails or expires", async () => {
+  for (const event of ["error", "expiry"]) {
+    const ui = await fixture();
+    ui.card.dataset.photoRequired = "true";
+    ui.apply(ui.card, idea, product("ebay"));
+    if (event === "error") ui.media.querySelector(".product-image").children[0].listeners.error();
+    else ui.timers[0]();
+    assert.equal(ui.card.hidden, true);
+    assert.equal(ui.media.querySelector(".product-image"), null);
+    assert.equal(ui.notices.length, 1);
+  }
+});
 test("eBay example photo is not a merchant link and leaves both shopping choices available", async () => {
   const ui = await fixture(), ebay = product("ebay");
   ui.apply(ui.card, idea, ebay);

@@ -90,6 +90,14 @@ test("cooking listings match product synonyms without accepting conflicting mate
     [cooking("Pasta making kit", "home pasta making kit", "pasta making kit"), "Pasta Making Book", false],
     [cooking("Pasta making kit", "home pasta making kit", "pasta making kit"), "Home Pasta Making Kit", true],
     [cooking("Oil and vinegar set", "cooking oil vinegar set", "oil vinegar set"), "Cooking Oil With Vinegar", false],
+    [cooking("Chef's knife", "chef knife steel", "chef knife"), "Chef Knife Stainless Steel Blade", true],
+    [cooking("Chef's knife", "chef knife", "chef knife"), "Chef Knives With 8 Inch Blade", true],
+    [cooking("Chef's knife", "chef knife", "chef knife"), "Chef Knife Replacement Steel Blade", false],
+    [cooking("Chef's knife", "chef knife", "chef knife"), "Chef Knife Steel Blade Sharpener", false],
+    [cooking("Knife", "knife block", "knife"), "Universal Knife Block", false],
+    [cooking("Japanese knife", "japanese knife", "japanese knife"), "Japanese Gold Plated Cutlery With Butter Knife", false],
+    [cooking("Japanese knife", "japanese knife", "japanese knife"), "The Anatomy of a Japanese Knife by Helen Symonds - 9781837834143", false],
+    [cooking("Knife book", "japanese knife book", "knife book"), "The Anatomy of a Japanese Knife Book - 9781837834143", true],
   ];
   for (const [idea, title, accepted] of cases) {
     const match = scoreProductMatch(idea, listing(title));

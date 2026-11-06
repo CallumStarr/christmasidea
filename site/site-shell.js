@@ -1,3 +1,5 @@
+import { readWishlists } from "./wishlists.js";
+
 const countdown = document.querySelector("#countdown");
 if (countdown) {
   const now = new Date();
@@ -16,9 +18,8 @@ if (countdown) {
 const shortlistLink = document.querySelector("a#nav-shortlist");
 if (shortlistLink) {
   try {
-    const saved = JSON.parse(localStorage.getItem("ci-shortlist") || "[]");
-    if (!Array.isArray(saved)) throw new TypeError("Invalid shortlist format");
-    const count = saved.filter((item) => item && typeof item.title === "string" && typeof item.query === "string").slice(0, 50).length;
+    const collection = readWishlists(localStorage);
+    const count = collection.lists.reduce((sum, list) => sum + list.items.length, 0);
     document.querySelector("#nav-count").textContent = count;
     shortlistLink.setAttribute("aria-label", `Open your shortlist, ${count} saved ${count === 1 ? "idea" : "ideas"}`);
   } catch (error) {

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { runInNewContext } from "node:vm";
+import { readWishlists } from "../site/wishlists.js";
 
 const root = new URL("../", import.meta.url);
 const read = (name) => readFile(new URL(`site/${name}`, root), "utf8");
@@ -27,9 +28,9 @@ test("every page shares the brand shell and exposes a route back to the shortlis
   }
 });
 
-test("all eighty guide ideas include specific buying advice and descriptive affiliate actions", async () => {
+test("all 104 guide ideas include specific buying advice and descriptive affiliate actions", async () => {
   const guides = (await readdir(new URL("site/gifts/", root))).filter((name) => name !== "index.html");
-  assert.equal(guides.length, 10);
+  assert.equal(guides.length, 13);
   const artwork = new Set();
   for (const name of guides) {
     const html = await read(`gifts/${name}`);
@@ -65,7 +66,7 @@ test("guide searches match single gift concepts and budget wording does not prom
     const article = [...html.matchAll(/<article class="idea">([\s\S]*?)<\/article>/g)]
       .find(([, body]) => body.includes(`<h3>${title}</h3>`))?.[1];
     assert.ok(article, `${file}: ${title}`);
-    const href = article.match(/href="([^"]+)"/)?.[1].replaceAll("&amp;", "&");
+    const href = article.match(/href="(https:\/\/www\.amazon\.co\.uk\/s\?[^"]+)"/)?.[1].replaceAll("&amp;", "&");
     assert.equal(new URL(href).searchParams.get("k"), query, title);
   }
   const secretSanta = await read("gifts/secret-santa-gifts-under-10.html");
@@ -180,13 +181,14 @@ function shell({ now, saved = "[]" }) {
   }]));
   const warnings = [];
   return read("site-shell.js").then((source) => {
-    runInNewContext(source, {
+    runInNewContext(source.replace(/^import .+;\r?\n/gm, ""), {
+      readWishlists,
       Date: class extends Date { constructor(...args) { super(...(args.length ? args : [now])); } },
       document: {
         querySelector: (selector) => elements.get(selector),
         createElement: () => ({}),
       },
-      localStorage: { getItem: () => saved },
+      localStorage: { getItem: (key) => key === "ci-shortlist" ? saved : null },
       console: { warn: (...args) => warnings.push(args) },
     });
     return { elements, warnings };

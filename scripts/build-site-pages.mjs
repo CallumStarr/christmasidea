@@ -3,7 +3,8 @@
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { amazonUrl, ebayUrl } from "../site/merchant-links.js";
+import { retailerLinks } from "../site/affiliateRouter.js";
+import { publicMonetizationConfig } from "./monetization-settings.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = join(ROOT, "site");
@@ -11,11 +12,12 @@ const ORIGIN = "https://christmasidea.co.uk";
 
 // Single source of truth for the affiliate tag: the home page config.
 const home = readFileSync(join(SITE, "index.html"), "utf8");
-const TAG = (home.match(/AMAZON_TAG:\s*"([^"]*)"/) || [])[1] || "";
-const EBAY_CAMPAIGN_ID = (home.match(/EBAY_CAMPAIGN_ID:\s*"([^"]*)"/) || [])[1] || "";
+const PUBLIC_CONFIG = publicMonetizationConfig();
+const TAG = PUBLIC_CONFIG.AMAZON_TAG || (home.match(/AMAZON_TAG:\s*"([^"]*)"/) || [])[1] || "";
+const EBAY_CAMPAIGN_ID = PUBLIC_CONFIG.EBAY_CAMPAIGN_ID || (home.match(/EBAY_CAMPAIGN_ID:\s*"([^"]*)"/) || [])[1] || "";
+const AFFILIATE_CONFIG = { ...PUBLIC_CONFIG, AMAZON_TAG: TAG, EBAY_CAMPAIGN_ID };
+writeFileSync(join(SITE, "monetization-config.js"), `// Generated public settings; secret API credentials never belong in this file.\nexport const MONETIZATION_CONFIG = ${JSON.stringify(PUBLIC_CONFIG, null, 2)};\n`);
 
-const amazon = (q) => amazonUrl(q, { AMAZON_TAG: TAG });
-const ebay = (q) => ebayUrl(q, { EBAY_CAMPAIGN_ID });
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 const GUIDES = [
@@ -231,11 +233,80 @@ const GUIDES = [
   },
 ];
 
+GUIDES.push(
+  {
+    slug: "gifts-for-coffee-lovers-under-30", h1: "Gift ideas for coffee lovers under £30",
+    desc: "Coffee gift ideas to search for within £30, with advice on equipment compatibility, roast preferences and the delivered total.",
+    intro: "A £30 cap can go further when you know their daily coffee routine. Start with what they brew, not an expensive machine upgrade. These are ideas to search for, not confirmed offers under £30; include delivery in the final total.",
+    finderTopic: "coffee", budget: 30, category: "Kitchen",
+    tips: [
+      "Ask whether they use whole beans, ground coffee, capsules or instant. A gift in the wrong format can become an unused extra.",
+      "For brewing accessories, check their machine or dripper model. Basket size, filter shape and capsule systems are not interchangeable.",
+      "Keep the delivered total within £30. If the correct accessory costs more, choose a small sampler rather than a cheaper incompatible version.",
+    ],
+    ideas: [
+      ["Small coffee sampler", "A few coffees to try without committing to a large bag.", "coffee sampler small gift", "Choose beans or the correct grind for their brewer. Check bag weights, roast dates and whether any delivery subscription is attached."],
+      ["Manual pour-over dripper", "A different brewing method for someone who enjoys making coffee by hand.", "manual pour over coffee dripper", "Check filter availability and mug fit. A dripper may need separate filters and a pouring kettle; do not treat those extras as included."],
+      ["Coffee bean storage tin", "Somewhere to keep a modest bag of their usual beans.", "coffee storage tin airtight", "Compare usable capacity with their regular bag. Avoid unverified promises that the tin will keep coffee fresh for a particular number of weeks."],
+      ["Coffee scoop", "A simple accessory for the person who makes the same cup every morning.", "coffee measuring scoop", "Check the handle length and jar opening. Scoop volume is not a precise substitute for weighing coffee."],
+      ["Coffee brewing notebook", "A place to note beans, grind settings and recipes they want to repeat.", "coffee brewing notebook", "Look inside for useful spaces rather than pages of advertising. Choose this only if they enjoy recording a brew."],
+      ["Small milk frothing jug", "An accessory for someone whose espresso setup already steams milk.", "stainless steel milk frothing jug", "Check jug capacity and the space under their steam wand. The jug does not froth milk on its own."],
+      ["Reusable takeaway cup", "A cup for their regular coffee run.", "reusable coffee cup", "Match capacity, cleaning requirements and how they carry it. A sip lid may not be leakproof inside a bag."],
+      ["Coffee tasting book", "Ideas for exploring coffee without adding more kitchen equipment.", "coffee tasting guide book", "Read a sample to judge whether it suits a beginner or experienced brewer. Books can overlap with one they already own."],
+    ],
+  },
+  {
+    slug: "gifts-for-gardeners-under-30", h1: "Gift ideas for gardeners under £30",
+    desc: "Small gardening gifts to look for within £30, with advice on plot size, tools they own and practical material choices.",
+    intro: "For a gardener who already owns the big tools, a small useful extra can be enough. Match the gift to their containers, borders or allotment. These suggestions are not live price offers: check the correct size and delivery before treating anything as within £30.",
+    finderTopic: "gardening", budget: 30, category: "Outdoors & sport",
+    tips: [
+      "Find out whether they grow indoors, on a balcony or in a larger garden. Storage space and weather exposure change what is useful.",
+      "Check which tools and gloves they already use. A small accessory is not automatically a welcome replacement for a favourite tool.",
+      "For seeds, check their growing space, sowing season and preferences. Choose packets for plants they actually want to grow.",
+    ],
+    ideas: [
+      ["Weatherproof plant labels", "Markers for rows or pots whose contents are easy to forget.", "weatherproof plant labels", "Check label length, writing surface and whether a suitable marker is included. Labels should suit the pots or beds they use."],
+      ["Garden twine tin", "Twine for tying in plants, with a container to keep it together.", "garden twine tin", "Compare twine length and material, not just the decoration on the tin. Check whether the container is refillable."],
+      ["Seed storage envelopes", "Somewhere to organise the seeds they collect.", "seed storage envelopes", "Paper envelopes need dry storage; they are not weatherproof. Choose a size that leaves room for labelling and dates."],
+      ["Plant pot brush", "A small brush for cleaning pots before they are reused.", "plant pot cleaning brush", "Check brush dimensions and bristle material against the pots they own. Follow their normal cleaning routine rather than claiming the brush disinfects."],
+      ["Garden kneeling pad", "Padding for jobs carried out close to the ground.", "garden kneeling pad", "Check dimensions, material and ease of cleaning. Do not imply medical benefits or confuse a pad with a kneeler-seat."],
+      ["Gardening notebook", "A record of sowing dates, successes and things to try next season.", "gardening notebook", "Choose a layout suited to notes or plans, not just a decorative cover. A notebook is not a substitute for local planting guidance."],
+      ["Small watering can", "A can suited to indoor plants or a compact growing space.", "small watering can indoor plants", "Check capacity and spout access around their plants. A decorative can may be inconvenient to fill or clean."],
+      ["Personalised herb markers", "Labels for herbs they grow and use in the kitchen.", "personalised herb garden markers", "Check spelling, number of markers and outdoor suitability. Personalisation can add cost and dispatch time; confirm the delivered total."],
+    ],
+  },
+  {
+    slug: "gifts-for-personalised-gifts-under-30", h1: "Personalised gift ideas under £30",
+    desc: "Personalised gift ideas to search for within £30, with advice on spelling, customisation charges, dispatch dates and cancellation rights.",
+    intro: "A personal touch works best when it improves something they already enjoy. Independent makers offer different materials and layouts, so compare the finished item rather than the preview image alone. None of these are verified £30 offers: personalisation and delivery can change the total.",
+    finderTopic: "personalised", budget: 30, category: "Stationery",
+    tips: [
+      "Check the spelling and design directly with the seller. Do not enter names into Santa's Helper; personalisation details belong in the retailer's checkout.",
+      "Read dispatch estimates before ordering. Custom-made items may take longer and have different cancellation rights.",
+      "Check whether engraving, extra characters, proofs and gift packaging cost more. Keep the entire delivered order within your cap.",
+    ],
+    ideas: [
+      ["Personalised notebook", "A cover design for someone who already enjoys keeping notes.", "personalised notebook", "Check page ruling, size and binding before choosing the cover. Look for a preview or proof process and a clear character limit."],
+      ["Personalised bookmark", "A small marker for a regular paper-book reader.", "personalised flat bookmark", "Keep it thin enough for the book to close. Check whether the lettering is engraved, printed or applied and whether a tassel adds bulk."],
+      ["Personalised herb markers", "Named markers for the herbs they grow.", "personalised herb garden markers", "Choose only the herb names they need. Check outdoor suitability and whether the quoted price is per marker or for the full set."],
+      ["Personalised pencil case", "A case for the pens or art supplies they use.", "personalised pencil case", "Compare internal dimensions with their longest tools. Check whether supplies are included; most listings sell only the case."],
+      ["Personalised reading journal", "A place to record books and recommendations.", "personalised reading journal", "Read sample pages to check the layout. Some readers prefer blank notes to ratings and reading targets."],
+      ["Personalised keyring", "A small design associated with a hobby or shared memory.", "personalised keyring", "Check the size and attachment hardware. Avoid adding identifying address details, and make sure it will not be cumbersome in a pocket."],
+      ["Personalised mug", "A design for their usual tea or coffee break.", "personalised ceramic mug", "Check capacity, handle shape and care instructions. Personalised printing may have different dishwasher guidance from the underlying mug."],
+      ["Personalised tote bag", "A bag for a hobby, library visit or everyday errands.", "personalised cotton tote bag", "Check fabric weight, handle length and usable depth. A printed mock-up does not show the bag's carrying capacity."],
+    ],
+  },
+);
+
 const HEADER = home.match(/<header class="masthead">[\s\S]*?<\/header>/)?.[0];
 const FOOTER = home.match(/<footer class="site-footer">[\s\S]*?<\/footer>/)?.[0];
 if (!HEADER || !FOOTER) throw new Error("The homepage must provide the shared masthead and footer.");
 
 const EDITS = {
+  "gifts-for-coffee-lovers-under-30": { art: "coffee", title: "Coffee gifts within £30", label: "Small coffee extras", description: "AI-created scene of a teapot, cafetiere and coffee brewing accessories", group: "budget", tone: "oat" },
+  "gifts-for-gardeners-under-30": { art: "garden", title: "Garden gifts within £30", label: "Useful garden extras", description: "AI-created scene of garden secateurs, gloves, seed envelopes and potted rosemary", group: "budget", tone: "sage" },
+  "gifts-for-personalised-gifts-under-30": { art: "books", title: "Personal touches within £30", label: "Independent maker ideas", description: "AI-created scene of books, a reading journal and stationery accessories", group: "budget", tone: "clay" },
   "gifts-for-4-year-olds": { art: "play", title: "For little imaginations", label: "Play & making", description: "AI-created scene of a wooden toy train, building blocks and colouring pencils", group: "family", tone: "clay" },
   "gifts-for-new-babies": { art: "baby", title: "For a new arrival", label: "The first Christmas", description: "AI-created scene of a teddy bear, picture book and wooden rattle on a folded blanket", group: "family", tone: "clay" },
   "gifts-for-space-lovers": { art: "space", title: "For the stargazer", label: "After dark", description: "AI-created scene of a cream telescope on a wooden tripod, brass globe and blue star journal", group: "interests", tone: "sage" },
@@ -297,7 +368,9 @@ function head(title, desc, path, extra = "") {
 <link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/guide.css">
+<link rel="stylesheet" href="/monetization.css">
 <script type="module" src="/site-shell.js"></script>
+<script type="module" src="/monetization-shell.js"></script>
 ${extra}</head>
 <body${path === "/gifts/" ? ' class="christmas-canvas"' : ""}>
 <a class="skip-link" href="#guide-content">Skip to content</a>
@@ -325,14 +398,19 @@ function guidePage(g) {
 <section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><h2 id="choosing-title">Narrow down<br>the options.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section id="gift-ideas" aria-labelledby="ideas-title">
 <div class="ideas-heading"><div><h2 id="ideas-title">Eight options to consider</h2></div></div>
-<p class="disclosure">Ad: Amazon shopping links are affiliate links. We may earn a commission if you buy through affiliate links. eBay links ${EBAY_CAMPAIGN_ID ? "are also affiliate links" : "are ordinary search links until our Partner Network campaign is configured"}. These links search Amazon UK or eBay UK, not a specific product we have checked or tested. Check the listing and total price, including delivery. The images are AI-created illustrations, not photos of products we've tested.</p>
+<p class="disclosure">Ad: Amazon shopping links are affiliate links. We may earn a commission if you buy through affiliate links. eBay links ${EBAY_CAMPAIGN_ID ? "are also affiliate links" : "are ordinary search links until our Partner Network campaign is configured"}. Alternative retailer links may also use approved affiliate programmes. These links search the named retailer, not a specific product we have checked or tested. Check the listing and total price, including delivery. The images are AI-created illustrations, not photos of products we've tested.</p>
 <div class="idea-grid">
 ${g.ideas.map(([name, why, q, note], i) => {
     if (!note) throw new Error(`Missing buying advice: ${g.slug} / ${name}`);
-    return `<article class="idea"><span class="idea-number">${String(i + 1).padStart(2, "0")}</span><h3>${esc(name)}</h3><p class="idea-why">${esc(why)}</p><p class="buying-note"><strong>What to look for</strong>${esc(note)}</p><div class="merchant-links"><a href="${esc(amazon(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search Amazon UK for ${name} (affiliate link, opens in a new tab)`)}">Search Amazon UK <span aria-hidden="true">&nearr;</span></a><a href="${esc(ebay(q))}" rel="sponsored noopener" target="_blank" aria-label="${esc(`Search eBay UK for ${name} (${EBAY_CAMPAIGN_ID ? "affiliate link, " : ""}opens in a new tab)`)}">Search eBay UK <span aria-hidden="true">&nearr;</span></a></div></article>`;
+    const links = retailerLinks({ title: name, query: q }, AFFILIATE_CONFIG).map((link) => {
+      const merchant = ["amazon", "ebay"].includes(link.merchantId) ? `${link.name} UK` : link.name;
+      const recipient = g.recipient || (g.slug.includes("mum") ? "mum" : g.slug.includes("dad") ? "dad" : "other");
+      return `<a href="${esc(link.href)}" rel="sponsored noopener noreferrer" target="_blank" data-query="${esc(q)}" data-network="${esc(link.network)}" data-category="${esc(g.category || "Home")}" data-recipient="${esc(recipient)}" aria-label="${esc(`Search ${merchant} for ${name} (${link.affiliate ? "affiliate link, " : ""}opens in a new tab)`)}">Search ${esc(merchant)} <span aria-hidden="true">&nearr;</span></a>`;
+    }).join("");
+    return `<article class="idea"><span class="idea-number">${String(i + 1).padStart(2, "0")}</span><h3>${esc(name)}</h3><p class="idea-why">${esc(why)}</p><p class="buying-note"><strong>What to look for</strong>${esc(note)}</p><div class="merchant-links">${links}</div></article>`;
   }).join("\n")}
 </div></section>
-<aside class="finder-cta"><div><h2>Tell us what they're like.</h2><p>The gift finder uses their interests, what they already own and your budget to suggest ideas. Leave out names and sensitive details.</p></div><a href="/#form">Find ideas for them <span aria-hidden="true">&rarr;</span></a></aside>
+<aside class="finder-cta"><div><h2>Tell us what they're like.</h2><p>The gift finder uses their interests, what they already own and your budget to suggest ideas. Leave out names and sensitive details.</p></div><a href="/#${g.finderTopic ? `finder=${esc(g.finderTopic)}&amp;budget=${g.budget}` : "form"}">Find ideas for them <span aria-hidden="true">&rarr;</span></a></aside>
 <section class="related-guides" aria-labelledby="more-guides"><div class="ideas-heading"><h2 id="more-guides">Still looking? Try these</h2><a href="/gifts/">Browse all the guides <span aria-hidden="true">&rarr;</span></a></div><ul class="related-shelf">${related.map(guideLink).join("")}</ul></section>
 </main>
 ${FOOTER}
@@ -342,7 +420,7 @@ ${FOOTER}
 }
 
 function indexPage() {
-  return head("Gift guides | Santa's Helper", "Ten gift guides with eight ideas each, plus practical buying advice for interests, family gifts and a £10 Secret Santa budget.", "/gifts/",
+  return head("Gift guides | Santa's Helper", `${GUIDES.length} gift guides with eight ideas each, plus practical buying advice for interests, family gifts and smaller budgets.`, "/gifts/",
     '<link rel="preload" as="image" href="/images/guides-canvas-1000.webp" media="(max-width:1000px)" fetchpriority="high" imagesrcset="/images/guides-canvas-1000.webp 1x, /images/guides-canvas-2048.webp 2x">\n<link rel="preload" as="image" href="/images/guides-canvas-2048.webp" media="(min-width:1001px)" fetchpriority="high">\n').replace('class="wrap guide-page"', 'class="guide-page directory-page"') +
 `<div class="directory-intro wrap"><div class="directory-banner-copy"><h1>Gift guides</h1><p class="directory-count">${GUIDES.length} guides to browse</p></div></div>
 <div class="wrap">

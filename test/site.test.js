@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { runInNewContext } from "node:vm";
+import { activeWishlist } from "../site/wishlists.js";
 
 const site = (p) => new URL(`../site/${p}`, import.meta.url);
 const read = (p) => readFile(site(p), "utf8");
@@ -18,7 +19,7 @@ test("at least ten gift guides give all eight ideas equal Amazon and eBay search
     assert.equal(ebayLinks.length, links.length, `${file} must give both merchants equal coverage`);
     assert.equal((html.match(/class="merchant-links"/g) || []).length, 8);
     for (const link of links) {
-      assert.match(link, /rel="sponsored noopener"/, file);
+      assert.match(link, /rel="sponsored noopener noreferrer"/, file);
       assert.ok(link.includes(`tag=${tag}`), `${file} missing affiliate tag`);
     }
     assert.match(html, /Ad: Amazon shopping links are affiliate links/, `${file} needs a disclosure`);
@@ -189,7 +190,7 @@ test("shortlist dock is contextual and never covers the finder", async () => {
   const html = await read("index.html");
   const source = html.match(/let collectionInView = false;[\s\S]*?\.observe\(\$\("#results"\)\);/)?.[0];
   assert.ok(source);
-  const elements = Object.fromEntries(["#listbar", "#openlist", "#nav-count", "#nav-shortlist", "#results"].map((id) => [id, {
+  const elements = Object.fromEntries(["#listbar", "#openlist", "#nav-count", "#nav-shortlist", "#deck-saved-count", "#deck-wishlists", "#results"].map((id) => [id, {
     hidden: true,
     setAttribute(name, value) { this[name] = value; },
   }]));
@@ -198,6 +199,7 @@ test("shortlist dock is contextual and never covers the finder", async () => {
   runInNewContext(source, {
     $: (id) => elements[id],
     shortlist,
+    activeWishlist, wishlists: { activeId: "default", lists: [{ id: "default", name: "My gift shortlist", items: shortlist }] },
     IntersectionObserver: class {
       constructor(callback) { notify = callback; }
       observe(element) { assert.equal(element, elements["#results"]); }
@@ -206,7 +208,7 @@ test("shortlist dock is contextual and never covers the finder", async () => {
   notify([{ isIntersecting: false }]);
   assert.equal(elements["#listbar"].hidden, true);
   assert.equal(elements["#nav-count"].textContent, 1);
-  assert.equal(elements["#nav-shortlist"]["aria-label"], "Open your shortlist, 1 saved idea");
+  assert.equal(elements["#nav-shortlist"]["aria-label"], "Open your wishlists, 1 saved idea");
   notify([{ isIntersecting: true }]);
   assert.equal(elements["#listbar"].hidden, false);
   shortlist.pop();
@@ -218,7 +220,7 @@ test("homepage separates gift concepts from matched listings and offers accessib
   const html = await read("index.html");
   assert.match(html, /Example descriptions/);
   assert.match(html, /class="prompt-chip"/);
-  assert.match(html, /a\.textContent = `Search \$\{merchant\}`/);
+  assert.match(html, /a\.textContent = search \? `Search \$\{merchant\}`/);
   assert.match(html, /Search links open Amazon UK or eBay UK/);
   const disclosure = html.match(/<div class="recommendation-disclosure">([\s\S]*?)<\/div>/)?.[1];
   assert.ok(disclosure, "shopping links need a dedicated disclosure");

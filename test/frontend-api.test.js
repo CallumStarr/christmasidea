@@ -50,6 +50,20 @@ test("ideas request sends the existing description and Turnstile token", async (
   assert.equal(result.error, false);
 });
 
+test("photo-first policy and replacement ideas survive AI and catalogue response parsing", async () => {
+  for (const fallback of [false, true]) {
+    const result = await fetchIdeas({}, {
+      fetchImpl: async () => response({
+        ideas: [idea], photo_first: true, product_discovery_enabled: true,
+        replacement_ideas: Array.from({ length: 10 }, (_, index) => ({ title: `Backup ${index}` })),
+        ...(fallback ? { fallback: true } : {}),
+      }, fallback ? 503 : 200),
+    });
+    assert.equal(result.photoFirst, true);
+    assert.equal(result.productDiscoveryEnabled, true);
+    assert.equal(result.replacementIdeas.length, 4);
+  }
+});
 test("catalogue fallback ideas remain usable when the AI request returns an error status", async () => {
   const result = await fetchIdeas({ mode: "describe", description: "A young train fan." }, {
     fetchImpl: async () => response({

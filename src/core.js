@@ -321,6 +321,20 @@ function logCuration(diagnostics, stopReason, baseline = false) {
   }));
 }
 
+function photoSelectionFields(input, ideas, env, raw = null) {
+  if (env.PRODUCT_PHOTO_FIRST !== "true") return {};
+  const exclude = [...(input.exclude || []), ...ideas.map((idea) => idea.title)];
+  const replacements = raw ? curateIdeas(raw, input, {
+    exclude, limit: 4, decorate: () => ({ source: "model" }),
+  }).ideas : [];
+  if (replacements.length < 4) {
+    replacements.push(...catalogueFallback({
+      ...input, exclude: [...exclude, ...replacements.map((idea) => idea.title)],
+    }).ideas.slice(0, 4 - replacements.length));
+  }
+  return { photo_first: true, replacement_ideas: replacements };
+}
+
 function fallbackResponse(input, message, status, origin, env) {
   const baseline = env.RECOMMENDATION_MODE === "baseline-v3.3";
   const result = baseline ? catalogueFallback(input) : engineFallback(input);
@@ -334,6 +348,7 @@ function fallbackResponse(input, message, status, origin, env) {
     engine_version: baseline ? "baseline-v3.3" : ENGINE_VERSION,
     shortfall: result.diagnostics.shortfall,
     product_discovery_enabled: productDiscoveryAvailable(env),
+    ...photoSelectionFields(input, result.ideas, env),
     note: result.ideas.length ? "" : "We couldn't find suitable catalogue ideas for these details. Try another interest or a different budget.",
   }, status, origin);
 }
@@ -435,7 +450,7 @@ export async function handleRequest(request, env, deps) {
 
   // Identical requests are served from cache and cost nothing. The key covers everything that
   // changes the answer: prompt, validator rules, model and the visitor's input.
-  const cacheKeyHash = await sha256Hex(JSON.stringify([promptVersion, VALIDATOR_VERSION, engineVersion, env.MODEL || "", generationFingerprint(env), input]));
+  const cacheKeyHash = await sha256Hex(JSON.stringify([promptVersion, VALIDATOR_VERSION, engineVersion, env.MODEL || "", generationFingerprint(env), env.PRODUCT_PHOTO_FIRST === "true" ? "photo-first-v1" : "", input]));
   const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v7/${cacheKeyHash}`);
   if (deps.cache) {
     try {
@@ -456,10 +471,12 @@ export async function handleRequest(request, env, deps) {
   }
 
   let result;
+  let rawOutput;
   let truncated = false;
   const understanding = baseline ? null : understand(input);
   try {
     const call = await callClaudeDetailed(input, env, deps.fetch, baseline ? null : promptHints(understanding));
+    rawOutput = call.output;
     truncated = call.truncated;
     result = baseline
       ? curateIdeas(call.output, input, { truncated, decorate: () => ({ source: "model" }) })
@@ -481,6 +498,7 @@ export async function handleRequest(request, env, deps) {
     recipient: result.recipient,
     source: "ai",
     product_discovery_enabled: productDiscoveryAvailable(env),
+    ...photoSelectionFields(input, result.ideas, env, rawOutput),
     prompt_version: promptVersion,
     engine_version: engineVersion,
     shortfall: result.diagnostics.shortfall,

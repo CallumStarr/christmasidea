@@ -24,9 +24,12 @@
 <link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/home.css">
+<link rel="stylesheet" href="/monetization.css">
+<link rel="stylesheet" href="/swipe-deck.css">
 <link rel="preload" as="image" href="/images/finder-canvas-1000.webp" media="(max-width:1000px)" fetchpriority="high" imagesrcset="/images/finder-canvas-1000.webp 1x, /images/finder-canvas-2048.webp 2x">
 <link rel="preload" as="image" href="/images/finder-canvas-2048.webp" media="(min-width:1001px)" fetchpriority="high">
 <script type="module" src="/site-shell.js"></script>
+<script type="module" src="/monetization-shell.js"></script>
 <script>
 /* =====================  SETTINGS  ===================== */
 window.GIFT_CONFIG = {
@@ -59,7 +62,7 @@ window.GIFT_CONFIG = {
       <span class="countdown" id="countdown" hidden></span>
       <button class="nav-shortlist" id="nav-shortlist" type="button" aria-label="Open your shortlist, 0 saved ideas">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg>
-        <span>Shortlist</span><span class="saved-count" id="nav-count">0</span>
+        <span>Wishlists</span><span class="saved-count" id="nav-count">0</span>
       </button>
     </nav>
   </div>
@@ -178,6 +181,12 @@ window.GIFT_CONFIG = {
     </div>
 
     <div class="form-end">
+      <fieldset id="verified-preferences" hidden>
+        <legend>Optional verified partner ideas</legend>
+        <label><input type="checkbox" id="include-experiences"> Include UK experience vouchers</label>
+        <label><input type="checkbox" id="include-subscriptions"> Include subscriptions with recurring charges clearly shown</label>
+        <p class="hint">For adult guided searches only, and only when current partner availability and terms have been verified.</p>
+      </fieldset>
       <div class="actions">
         <button type="submit" class="btn btn-primary" id="go"><span>Find gift ideas</span><span class="button-arrow" aria-hidden="true">&rarr;</span></button>
       </div>
@@ -186,6 +195,7 @@ window.GIFT_CONFIG = {
     </div>
     <div id="status" role="status" aria-live="polite"></div>
   </form>
+  <p id="monetization-status" class="source" role="status" aria-live="polite"></p>
   <div id="loading" class="loading" aria-busy="true" hidden>
     <div class="loading-head">
       <p class="eyebrow">Looking for ideas that fit</p>
@@ -193,11 +203,23 @@ window.GIFT_CONFIG = {
     </div>
     <p id="loading-text" role="status" aria-live="polite" aria-atomic="true">Finding gift ideas from the details you shared...</p>
     <p class="loading-note">You can cancel without losing your description.</p>
+    <div id="loading-ad" hidden></div>
   </div>
 </section>
 
 <div class="wrap">
+  <section class="resume-shopping" id="resume-shopping" hidden aria-labelledby="resume-title">
+    <p class="eyebrow">On this browser only</p>
+    <h2 id="resume-title">Pick up where you left off</h2>
+    <ul id="resume-items"></ul>
+    <button type="button" class="btn btn-outline" id="clear-recent">Clear recently viewed ideas</button>
+  </section>
   <section class="results" id="results" hidden aria-labelledby="results-title">
+    <div class="deck-topbar" hidden>
+      <button type="button" class="deck-nav-button" id="deck-edit" aria-label="Edit recipient details" title="Edit recipient details"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Back</span></button>
+      <span class="deck-wordmark">Santa's Helper <span aria-hidden="true">&#x2736;</span></span>
+      <button type="button" class="deck-nav-button" id="deck-wishlists" aria-label="Open your wishlists" title="Your wishlists"><svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg><span class="deck-saved-count" id="deck-saved-count">0</span></button>
+    </div>
     <div class="results-head">
       <div>
         <p class="eyebrow">Your gift ideas</p>
@@ -215,12 +237,27 @@ window.GIFT_CONFIG = {
     </div>
     <div class="recommendation-disclosure">
       <p class="disclosure"><strong>Ad &middot; Shopping links.</strong> Amazon shopping links are affiliate links. <span id="ebay-disclosure">eBay links are ordinary search links until our Partner Network campaign is configured.</span> We may earn a commission if you buy through affiliate links, at no extra cost to you. These are gift ideas, not products we have tested.</p>
-      <details class="affiliate-details"><summary>How to use these ideas</summary><p>As an Amazon Associate I earn from qualifying purchases. Search links open Amazon UK or eBay UK; they do not confirm a product, price or availability. A &ldquo;Matched Amazon listing&rdquo; or &ldquo;Matched eBay listing&rdquo; label applies only to that retailer's offer. An eBay-sourced example photo illustrates the gift idea and is not clickable; choose either shop below it. It does not confirm the same product is available on Amazon. When available, Amazon listing photos take priority and link to their Amazon listing. Matching is not a review or an endorsement. Check the seller, contents, age guidance, current price and delivery cost before buying. eBay search links are not affiliate links until our Partner Network campaign is configured.</p></details>
+      <details class="affiliate-details"><summary>How to use these ideas</summary><p>As an Amazon Associate I earn from qualifying purchases. Search links open Amazon UK or eBay UK, or the named alternative retailer; they do not confirm a product, price or availability. Alternative retailer links may be affiliate links when an approved programme is configured. A &ldquo;Matched Amazon listing&rdquo; or &ldquo;Matched eBay listing&rdquo; label applies only to that retailer's offer. An eBay-sourced example photo illustrates the gift idea and is not clickable; choose a shop below it. It does not confirm the same product is available on Amazon. When available, Amazon listing photos take priority and link to their Amazon listing. Matching is not a review or an endorsement. Check the seller, contents, age guidance, current price and delivery cost before buying. eBay search links are not affiliate links until our Partner Network campaign is configured. Sponsored Picks are separately labelled paid placements; demo placements are not paid endorsements. Optional experience and subscription cards require current verified partner inventory and show provider terms.</p></details>
     </div>
-    <ul class="cards" id="cards"></ul>
+    <p class="swipe-progress" id="swipe-progress" role="status" aria-live="polite" hidden></p>
+    <ul class="cards" id="cards" aria-label="Gift recommendations"></ul>
+    <div class="swipe-actions" id="swipe-actions" role="group" aria-label="Choose what to do with this gift" hidden>
+      <button type="button" data-swipe="left" title="Pass · Left arrow" aria-label="Not for them"><span class="swipe-action-icon" aria-hidden="true"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></span><span>Pass</span></button>
+      <button type="button" data-swipe="save" title="Save to a wishlist · Up arrow" aria-label="Add to a wishlist"><span class="swipe-action-icon" aria-hidden="true"><svg width="23" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-4-6 4Z"/></svg></span><span>Save</span></button>
+      <button type="button" data-swipe="right" title="Like and shop · Right arrow" aria-label="Like and shop"><span class="swipe-action-icon" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg></span><span>Like</span></button>
+    </div>
+    <p class="swipe-help" id="swipe-help" hidden>Swipe left to pass, right to shop. Save a possibility to a wishlist.<br>Buttons work too, or focus the card stack and use &larr; &uarr; &rarr;.</p>
+    <div class="deck-footnote" hidden><span>Ad &middot; We may earn a commission.</span><button type="button" id="deck-about-button" aria-label="How the gift finder and shopping links work">How it works <span aria-hidden="true">&#x2197;</span></button></div>
+    <div id="deck-status" role="status" aria-live="polite"></div>
+    <div id="shared-list-notice" class="shared-list-notice" hidden>
+      <p>This is a shared gift list. Partner links are rebuilt from current configuration; expired partner offers are not linked. Nothing is saved on this device unless you choose to save it.</p>
+      <button type="button" class="btn btn-outline" id="save-shared-list">Save this list on my device</button>
+    </div>
     <p class="feedback-toast" id="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
+    <section id="gift-addons" class="gift-addons" aria-label="Optional gift add-on" hidden></section>
+    <div id="results-ad" hidden></div>
     <div class="more">
-      <button type="button" class="btn btn-outline" id="more">Try another set of ideas</button>
+      <button type="button" class="btn btn-outline" id="more">Find more ideas</button>
       <p class="source" id="source"></p>
     </div>
   </section>
@@ -279,7 +316,18 @@ window.GIFT_CONFIG = {
   <div class="dlg">
     <h2 id="dlg-title">Your shortlist</h2>
     <p class="disclosure" style="margin:0"><span id="shortlist-storage">Saved on this device only.</span> We may earn a commission if you buy through an affiliate link.</p>
+    <div class="wishlist-controls">
+      <label for="wishlist-select">Your wishlists</label>
+      <select id="wishlist-select"></select>
+      <form class="wishlist-create" id="wishlist-create">
+        <label class="sr-only" for="wishlist-name">New wishlist name</label>
+        <input id="wishlist-name" type="text" maxlength="60" placeholder="Sarah's gifts" required>
+        <button type="submit" class="btn btn-outline">Create wishlist</button>
+      </form>
+    </div>
     <ul id="dlg-list"></ul>
+    <div id="gift-sharing" class="gift-sharing" aria-label="Share saved gift ideas"></div>
+    <details class="gift-reminder"><summary>Remind me later / add a birthday reminder</summary><div id="gift-reminder"></div></details>
     <div class="dlg-actions">
       <button type="button" class="btn btn-outline" id="copylist">Copy list</button>
       <button type="button" class="btn btn-primary" id="closelist">Done</button>
@@ -287,21 +335,60 @@ window.GIFT_CONFIG = {
   </div>
 </dialog>
 
+<dialog id="deck-about" class="deck-about-dialog" aria-labelledby="deck-about-title">
+  <div class="detail-top"><span class="eyebrow">A little guidance</span><button type="button" class="detail-close" id="deck-about-close" aria-label="Close gift finder information">&times;</button></div>
+  <div class="deck-about-content">
+    <h2 id="deck-about-title">Good gifts. Less guesswork.</h2>
+    <p>One possibility at a time. Swipe left to pass, right to see shopping options, or use the bookmark to save to a wishlist. The buttons work too; when the stack has focus, use the left, right and up arrow keys.</p>
+    <p>Tap the information button on a card to see why it might suit them. Wishlist names and saved gifts stay on this device. Open your wishlists to share a saved list or add a reminder.</p>
+    <div id="deck-about-recipient"></div>
+    <div id="deck-about-disclosure"></div>
+  </div>
+</dialog>
+
+<dialog id="wishlist-picker" class="wishlist-picker" aria-labelledby="wishlist-picker-title">
+  <form class="dlg" id="wishlist-save-form">
+    <p class="eyebrow">Keep a little possibility</p>
+    <h2 id="wishlist-picker-title">Add to a wishlist</h2>
+    <p id="wishlist-gift-title"></p>
+    <div class="wishlist-controls">
+      <label for="wishlist-target">Choose a wishlist</label>
+      <select id="wishlist-target"></select>
+      <label for="wishlist-new-name">Or create a new one</label>
+      <input id="wishlist-new-name" type="text" maxlength="60" placeholder="Sarah's gifts">
+    </div>
+    <p class="source">Names and gifts stay on this device. Names aren't sent to our AI or included in shared links.</p>
+    <p id="wishlist-picker-status" class="wishlist-picker-status" role="status"></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn btn-outline" id="wishlist-cancel">Cancel</button>
+      <button type="submit" class="btn btn-primary">Save gift</button>
+    </div>
+  </form>
+</dialog>
+
 <footer class="site-footer">
   <div class="wrap">
-    <div class="footer-top"><a class="brand" href="/">Santa's Helper<svg class="brand-mark" width="18" height="24" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="m16 0 2.5 11 8.8-6.3-6.3 8.8L32 16l-11 2.5 6.3 8.8-8.8-6.3L16 32l-2.5-11-8.8 6.3 6.3-8.8L0 16l11-2.5-6.3-8.8 8.8 6.3Z"/></svg></a><nav aria-label="Footer"><a href="/#form">Find a gift</a><a href="/gifts/">Gift guides</a><a href="/about">About and contact</a><a href="/privacy">Privacy</a></nav></div>
+    <div class="footer-top"><a class="brand" href="/">Santa's Helper<svg class="brand-mark" width="18" height="24" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="m16 0 2.5 11 8.8-6.3-6.3 8.8L32 16l-11 2.5 6.3 8.8-8.8-6.3L16 32l-2.5-11-8.8 6.3 6.3-8.8L0 16l11-2.5-6.3-8.8 8.8 6.3Z"/></svg></a><nav aria-label="Footer"><a href="/#form">Find a gift</a><a href="/gifts/">Gift guides</a><a href="/about">About and contact</a><a href="/privacy">Privacy</a><button type="button" class="footer-partner" data-partner>Advertise / Sponsor a Gift</button></nav></div>
     <div class="footer-bottom"><p>As an Amazon Associate I earn from qualifying purchases. We have not tested the products in these searches. Check the seller, product details, age guidance and total price before buying.</p></div>
   </div>
 </footer>
 
 <script type="module">
 import { fetchIdeas, fetchProductBatches, sendFeedback as postFeedback } from "/api.js";
+import { selectPhotographedIdeas } from "/product-selection.js";
 import { createTurnstileTokenGate, TurnstileTokenError } from "/turnstile-token.js";
 import { amazonUrl as amazonSearchUrl, ebayUrl as ebaySearchUrl, validProduct, validProductImage } from "/merchant-links.js";
 import { INTEREST_GROUPS, ABOUT_GROUPS, renderCheckboxGroups, selectedValues, updateCheckboxSummary } from "/guided-options.js";
+import { DEFAULT_MONETIZATION_CONFIG } from "/config/affiliates.config.js";
+import { MONETIZATION_CONFIG } from "/monetization-config.js";
+import { retailerLinks } from "/affiliateRouter.js";
+import { savedIdea, savedKey, RECIPIENT_LABELS, verifiedGiftDisclosure } from "/monetization-data.js";
+import { createMonetizationUI } from "/monetization-ui.js";
+import { createSwipeDeck, shouldPrefetch } from "/swipe-deck.js";
+import { WISHLISTS_KEY, readWishlists, writeWishlists, activeWishlist, addWishlist } from "/wishlists.js";
 (() => {
 "use strict";
-const CFG = window.GIFT_CONFIG || {};
+const CFG = { ...DEFAULT_MONETIZATION_CONFIG, ...window.GIFT_CONFIG, ...MONETIZATION_CONFIG };
 const $ = (s) => document.querySelector(s);
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 if (/^\d+$/.test(CFG.EBAY_CAMPAIGN_ID || "")) $("#ebay-disclosure").textContent = "eBay shopping links are affiliate links too.";
@@ -381,26 +468,30 @@ setMode("describe");
 
 /* ---------- shortlist storage ---------- */
 let shortlistPersistent = true;
+let wishlists = { version: 1, activeId: "default", lists: [{ id: "default", name: "My gift shortlist", items: [] }] };
 const store = {
   get(){
     try {
-      const saved = JSON.parse(localStorage.getItem("ci-shortlist") || "[]");
-      if (!Array.isArray(saved)) throw new TypeError("Invalid shortlist format");
-      return saved;
+      wishlists = readWishlists(localStorage);
+      shortlistPersistent = true;
+      return activeWishlist(wishlists).items;
     } catch {
       shortlistPersistent = false;
       console.warn("Shortlist storage could not be read.");
-      return [];
+      return activeWishlist(wishlists).items;
     }
   },
   set(v){
+    activeWishlist(wishlists).items = v;
     try {
-      localStorage.setItem("ci-shortlist", JSON.stringify(v));
+      writeWishlists(localStorage, wishlists);
       shortlistPersistent = true;
+      return true;
     } catch {
       shortlistPersistent = false;
       console.warn("Shortlist storage could not be updated.");
       showFeedback("Your shortlist is available for this visit only; browser storage is unavailable.");
+      return false;
     }
   }
 };
@@ -496,9 +587,14 @@ async function fillProducts(ideas){
 }
 
 /* ---------- rendering ---------- */
-const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-8-4.7-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.3-8 10-8 10Z"/></svg>';
+const HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg>';
 const cardsByTitle = new Map();
-const isSaved = (t) => shortlist.some((x) => x.title === t);
+const swipeDeck = createSwipeDeck({
+  cards: $("#cards"), toolbar: $("#swipe-actions"), progress: $("#swipe-progress"),
+  onAdvance: () => { updateCardLayout(); requestPrefetch(); },
+  onLike: (card) => card.querySelector(".idea-feedback button")?.click(),
+});
+const isSaved = (t, recipientTag = monetization.recipientTag()) => shortlist.some((x) => x.title === t && x.recipientTag === recipientTag);
 let feedbackTimer;
 function showFeedback(message){
   clearTimeout(feedbackTimer);
@@ -528,6 +624,9 @@ function setVerifiedProduct(card, idea, product){
   if (product.price?.currency === "GBP" && Number.isFinite(Number(product.price.amount))
       && Number.isFinite(retrieved) && Number.isFinite(expires) && retrieved <= Date.now() && expires > Date.now()) {
     price = document.createElement("p"); price.className = "product-price";
+    price.dataset.amount = product.price.amount;
+    price.dataset.retrievedAt = product.retrievedAt;
+    price.dataset.expiresAt = expires;
     price.textContent = `${merchant}: ${new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(product.price.amount)}${product.provider === "ebay" ? " incl. listed delivery" : ""}`;
     listing.after(price);
   }
@@ -540,6 +639,10 @@ function setVerifiedProduct(card, idea, product){
     if (photo && media.querySelector(".product-image") === photo){
       photo.remove(); media.querySelector(".product-badge")?.remove();
       card.classList.remove("verified"); note.textContent = "Product photo unavailable";
+      if (card.dataset?.photoRequired === "true") {
+        card.hidden = true; updateCardLayout();
+        showFeedback("An expired product photo was removed from your ideas.");
+      }
     }
     disclosure.textContent = "Ad · Check both shops for current listings and prices.";
   }, Math.max(0, expires - Date.now()));
@@ -556,7 +659,7 @@ function setVerifiedProduct(card, idea, product){
   photo = document.createElement(product.provider === "ebay" ? "div" : "a");
   photo.className = "product-image"; photo.dataset.provider = product.provider;
   if (product.provider === "amazon"){
-    photo.href = product.affiliateUrl; photo.target = "_blank"; photo.rel = "sponsored noopener";
+    photo.href = product.affiliateUrl; photo.target = "_blank"; photo.rel = "sponsored noopener noreferrer";
     photo.setAttribute("aria-label", `View ${product.title} on Amazon (affiliate link, opens in new tab)`);
   }
   const image = document.createElement("img"); image.className = "image-loading";
@@ -568,7 +671,10 @@ function setVerifiedProduct(card, idea, product){
     if (media.querySelector(".product-image") !== photo) return;
     photo.remove(); badge.remove(); card.classList.remove("verified");
     note.textContent = "Product photo unavailable";
-    showFeedback(`The ${merchant} photo couldn't load. The shop links are still available.`);
+    if (card.dataset?.photoRequired === "true") {
+      card.hidden = true; updateCardLayout();
+      showFeedback(`An idea was removed because its ${merchant} photo couldn't load.`);
+    } else showFeedback(`The ${merchant} photo couldn't load. The shop links are still available.`);
   });
   photo.append(image); media.prepend(photo);
   note.textContent = product.provider === "ebay" ? "Example photo: eBay. Amazon product may differ." : "Photo from Amazon listing";
@@ -597,18 +703,30 @@ function renderUnderstood(recipient){
   return list.childElementCount > 0;
 }
 
-function renderCards(ideas){
-  const ul = $("#cards"); ul.textContent = ""; cardsByTitle.clear();
+function renderCards(ideas, { shared = false, photoFirst = false, verifiedOffers = new Map(), append = false } = {}){
+  if (!shared) ideas = monetization.decorateIdeas(ideas, { includeInventory: !photoFirst });
+  const ul = $("#cards");
+  if (!append) { ul.textContent = ""; cardsByTitle.clear(); }
+  else ideas = ideas.filter((idea) => !cardsByTitle.has(idea.title));
+  const offset = cardsByTitle.size;
+  document.body.classList.toggle("swipe-mode", !shared);
+  $("#swipe-help").hidden = shared;
+  $("#deck-status").hidden = shared;
+  (shared ? $("#results-ad") : $("#dlg .dlg-actions")).before($("#gift-sharing"));
+  swipeDeck.enable(!shared, !append);
   showFeedback("");
   ideas.forEach((idea, idx) => {
+    const feedbackPosition = Math.min(11, ideas.slice(0, idx).filter((item) => !item.inventoryId).length);
     const li = document.createElement("li"); li.className = "card reveal"; li.style.setProperty("--i", idx);
+    li.dataset.title = idea.title;
+    if (photoFirst) li.dataset.photoRequired = "true";
     const media = document.createElement("div"); media.className = "media";
     const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = idea.category || "Gift idea";
     const imageNote = document.createElement("span"); imageNote.className = "image-note"; imageNote.textContent = "Product photo unavailable";
     media.append(cat, imageNote);
     const body = document.createElement("div"); body.className = "card-body";
     const kicker = document.createElement("p"); kicker.className = "card-kicker";
-    kicker.textContent = `${String(idx + 1).padStart(2, "0")} / ${idea.category || "Gift idea"}`;
+    kicker.textContent = `${String(offset + idx + 1).padStart(2, "0")} / ${idea.category || "Gift idea"}`;
     if (idea.discovery === true){ const tag = document.createElement("span"); tag.className = "discovery-tag"; tag.textContent = "A new direction"; kicker.append(tag); }
     const h = document.createElement("h3"); h.textContent = idea.title;
     const why = document.createElement("p"); why.className = "why"; why.textContent = idea.why;
@@ -620,18 +738,26 @@ function renderCards(ideas){
     }
     const row = document.createElement("div"); row.className = "row";
     const shops = document.createElement("div"); shops.className = "merchant-links";
-    for (const [provider, merchant, url] of [["amazon", "Amazon", amazonUrl(idea.query)], ["ebay", "eBay", ebayUrl(idea.query)]]){
+    for (const { merchantId: provider, name: merchant, href: url, affiliate, network, search } of (idea.unavailableInventory ? [] : retailerLinks(idea, CFG))){
       const offer = document.createElement("div"); offer.className = "merchant-offer";
       const a = document.createElement("a"); a.className = "shop"; a.href = url; a.dataset.provider = provider;
-      a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = `Search ${merchant}`;
-      const affiliate = provider === "amazon" || /^\d+$/.test(CFG.EBAY_CAMPAIGN_ID || "");
+      a.target = "_blank"; a.rel = "sponsored noopener noreferrer"; a.textContent = search ? `Search ${merchant}` : `View on ${merchant}`;
+      a.dataset.network = network;
       a.setAttribute("aria-label", `Search ${merchant} for ${idea.title} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
-      a.addEventListener("click", () => { void sendFeedback({ event: "click", item: fbItem(idea, idx) }); });
+      a.addEventListener("click", () => { if (!shared && !idea.inventoryId) void sendFeedback({ event: "click", item: fbItem(idea, feedbackPosition) }); });
       offer.append(a); shops.append(offer);
     }
     const save = document.createElement("button"); save.type = "button"; save.className = "save"; save.innerHTML = HEART;
-    const sync = () => { const on = isSaved(idea.title); save.setAttribute("aria-pressed", String(on)); save.setAttribute("aria-label", on ? `Remove ${idea.title} from shortlist` : `Save ${idea.title} to shortlist`); };
-    save.addEventListener("click", () => { const adding = !isSaved(idea.title); toggleSave(idea); sync(); if (adding) void sendFeedback({ event: "save", item: fbItem(idea, idx) }); });
+    const sync = () => { const on = isSaved(idea.title, idea.recipientTag); save.setAttribute("aria-pressed", String(on)); save.setAttribute("aria-label", `Add ${idea.title} to a wishlist${on ? " (already saved in the selected list)" : ""}`); };
+    save.addEventListener("click", () => {
+      chooseWishlist(idea, () => {
+        sync();
+        if (!shared) {
+          swipeDeck.advance(li, "save");
+          if (!idea.inventoryId) void sendFeedback({ event: "save", item: fbItem(idea, feedbackPosition) });
+        }
+      });
+    });
     sync();
     const aff = document.createElement("p"); aff.className = "aff"; aff.textContent = "Ad";
     const dismiss = document.createElement("button"); dismiss.type = "button"; dismiss.className = "dismiss"; dismiss.textContent = "Not quite right";
@@ -647,15 +773,19 @@ function renderCards(ideas){
       dismiss.disabled = true;
       rejectedTitles = [...rejectedTitles.filter((title) => title !== idea.title), idea.title].slice(-24);
       const position = [...ul.querySelectorAll(".card:not([hidden])")].indexOf(li);
-      li.hidden = true;
+      if (shared) li.hidden = true;
+      else swipeDeck.advance(li);
       updateCardLayout();
       const remaining = [...ul.querySelectorAll(".card:not([hidden]) .dismiss")];
-      const next = remaining[position] || remaining[position - 1] || $("#more");
+      const next = !shared ? $("#swipe-actions button") : remaining[position] || remaining[position - 1] || $("#more");
       next.focus({ preventScroll: true });
-      showFeedback(`Set aside: ${idea.title}.`);
-      setStatus("Idea hidden from this list.", false);
+      if (shared) {
+        showFeedback(`Set aside: ${idea.title}.`);
+        setStatus("Idea hidden from this list.", false);
+      }
       const revision = statusRevision;
-      void sendFeedback({ event, item: fbItem(idea, idx) }).then((recorded) => {
+      if (shared || idea.inventoryId) return;
+      void sendFeedback({ event, item: fbItem(idea, feedbackPosition) }).then((recorded) => {
         if (apiOn() && !recorded && statusRevision === revision){
           const message = "Idea hidden. We couldn't send feedback about it, but you can keep browsing.";
           setStatus(message, false);
@@ -667,7 +797,7 @@ function renderCards(ideas){
     good.addEventListener("click", () => {
       good.disabled = true; bad.disabled = true;
       good.setAttribute("aria-pressed", "true");
-      void sendFeedback({ event: "good", item: fbItem(idea, idx) });
+      void sendFeedback({ event: "good", item: fbItem(idea, feedbackPosition) });
     });
     bad.addEventListener("click", () => {
       good.disabled = true; bad.disabled = true;
@@ -675,7 +805,7 @@ function renderCards(ideas){
     });
     bought.addEventListener("click", () => {
       bought.disabled = true; bought.setAttribute("aria-pressed", "true");
-      void sendFeedback({ event: "bought", item: fbItem(idea, idx) });
+      void sendFeedback({ event: "bought", item: fbItem(idea, feedbackPosition) });
     });
     ratings.append(good, bad, bought);
     row.append(shops, save);
@@ -685,14 +815,18 @@ function renderCards(ideas){
     li.append(media, body);
     ul.append(li);
     cardsByTitle.set(idea.title, li);
+    monetization.annotateCard(li, idea);
+    if (!shared && idea.inventoryId && !li.querySelector(".dismiss")) body.append(dismiss);
+    for (const product of verifiedOffers.get(idea.title) || []) setVerifiedProduct(li, idea, product);
+    if (shared) ratings.remove();
   });
   updateCardLayout();
-  void sendFeedback({ event: "shown", items: ideas.slice(0, 12).map(fbItem) });
+  if (!shared) void sendFeedback({ event: "shown", items: ideas.filter((idea) => !idea.inventoryId).slice(0, 12).map(fbItem) });
 }
 
 function updateCardLayout(){
   const visible = [...$("#cards").querySelectorAll(".card:not([hidden])")];
-  for (const card of cardsByTitle.values()){
+  for (const card of $("#cards").querySelectorAll(".card")){
     card.classList.toggle("featured", card === visible[0]);
     card.classList.toggle("companion", card === visible[1]);
     card.classList.toggle("solo", visible.length === 1 && card === visible[0]);
@@ -701,90 +835,198 @@ function updateCardLayout(){
   if (visible.length) empty?.remove();
   else if (!empty){
     const note = document.createElement("li"); note.className = "empty-selection";
-    note.textContent = "None of these feel right? Try another set of ideas.";
+    const title = document.createElement("p"); title.textContent = "A little closer.";
+    const text = document.createElement("small"); text.textContent = "You've explored this set. Your saved possibilities are waiting in your wishlists.";
+    const more = document.createElement("button"); more.type = "button"; more.className = "btn btn-primary";
+    more.textContent = "Find more ideas"; more.addEventListener("click", () => $("#more").click());
+    note.append(title, text, more);
     $("#cards").append(note);
   }
+  swipeDeck.refresh();
 }
 
-function toggleSave(idea){
-  if (isSaved(idea.title)) shortlist = shortlist.filter((x) => x.title !== idea.title);
-  else shortlist = [...shortlist, { title: idea.title, query: idea.query, category: idea.category || "" }].slice(-50);
-  store.set(shortlist); renderBar();
-}
 let collectionInView = false;
 function renderBar(){
   $("#listbar").hidden = shortlist.length === 0 || !collectionInView;
-  $("#openlist").textContent = `Your shortlist (${shortlist.length})`;
-  $("#nav-count").textContent = shortlist.length;
-  $("#nav-shortlist").setAttribute("aria-label", `Open your shortlist, ${shortlist.length} saved ${shortlist.length === 1 ? "idea" : "ideas"}`);
+  $("#openlist").textContent = `${activeWishlist(wishlists).name} (${shortlist.length})`;
+  const total = wishlists.lists.reduce((sum, list) => sum + list.items.length, 0);
+  $("#nav-count").textContent = total;
+  $("#deck-saved-count").textContent = total;
+  $("#deck-wishlists").setAttribute("aria-label", `Open your wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
+  $("#nav-shortlist").setAttribute("aria-label", `Open your wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
 }
 new IntersectionObserver(([entry]) => {
   collectionInView = entry.isIntersecting;
   renderBar();
 }).observe($("#results"));
 function renderDialog(){
+  fillWishlistSelect($("#wishlist-select"));
+  $("#dlg-title").textContent = activeWishlist(wishlists).name;
   $("#shortlist-storage").textContent = shortlistPersistent
     ? "Saved on this device only."
     : "Available for this visit only; browser storage is unavailable.";
   const ul = $("#dlg-list"); ul.textContent = "";
-  if (!shortlist.length){ const li = document.createElement("li"); li.textContent = "No ideas saved yet. Use the heart button to keep one for later."; ul.append(li); return; }
-  for (const item of shortlist){
+  if (!shortlist.length){ const li = document.createElement("li"); li.textContent = "No gifts saved here yet. Use the wishlist button to keep a possibility."; ul.append(li); return; }
+  for (const recipientTag of [...new Set(shortlist.map((item) => item.recipientTag))]){
+    const group = document.createElement("li"); group.className = "shortlist-group";
+    group.textContent = RECIPIENT_LABELS[recipientTag]; ul.append(group);
+  for (const saved of shortlist.filter((item) => item.recipientTag === recipientTag)){
+    const item = monetization.resolve(saved);
     const li = document.createElement("li");
     const div = document.createElement("div");
     const title = document.createElement("strong"); title.textContent = item.title;
     const small = document.createElement("small"); small.textContent = item.category;
     const shops = document.createElement("div"); shops.className = "merchant-links";
-    for (const [merchant, url] of [["Amazon", amazonUrl(item.query)], ["eBay", ebayUrl(item.query)]]){
-      const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "sponsored noopener"; a.textContent = `Search ${merchant}`;
+    for (const { name: merchant, href: url, network, search } of monetization.linksFor(item)){
+      const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "sponsored noopener noreferrer"; a.textContent = search ? `Search ${merchant}` : `View on ${merchant}`;
+      a.className = "shop"; a.dataset.network = network; a.dataset.category = item.category; a.dataset.recipient = item.recipientTag;
+      if (item.sponsored) a.dataset.sponsored = "true";
       a.setAttribute("aria-label", `Search ${merchant} for ${item.title} (opens in new tab)`);
       shops.append(a);
     }
     div.append(title, small, shops);
+    if (item.verifiedGift) {
+      const terms = document.createElement("p"); terms.className = "source"; terms.textContent = verifiedGiftDisclosure(item.verifiedGift);
+      const link = document.createElement("a"); link.href = item.verifiedGift.termsUrl; link.target = "_blank";
+      link.rel = "noopener noreferrer"; link.textContent = "Read provider terms"; terms.append(" ", link); div.append(terms);
+    }
+    if (item.sponsored) {
+      const badge = document.createElement("p"); badge.className = "sponsored-badge";
+      badge.textContent = `Sponsored Pick${item.demo ? " · Demo placement" : ""}`; div.prepend(badge);
+    }
+    if (item.unavailableInventory) {
+      const unavailable = document.createElement("p"); unavailable.textContent = "Partner offer no longer available."; div.append(unavailable);
+    }
     const x = document.createElement("button"); x.type = "button"; x.className = "x"; x.textContent = "Remove";
     x.addEventListener("click", () => {
-      shortlist = shortlist.filter((s) => s.title !== item.title);
-      store.set(shortlist); renderDialog(); renderBar(); syncSaveButtons();
+      shortlist = shortlist.filter((s) => savedKey(s) !== savedKey(item));
+      store.set(shortlist); renderDialog(); renderBar(); syncSaveButtons(); monetization.update();
       ($("#dlg-list .x") || $("#closelist")).focus({ preventScroll: true });
     });
     li.append(div, x); ul.append(li);
   }
-}
-function syncSaveButtons(){
-  for (const [title, li] of cardsByTitle){
-    const save = li.querySelector(".save"), on = isSaved(title);
-    save.setAttribute("aria-pressed", String(on));
-    save.setAttribute("aria-label", on ? `Remove ${title} from shortlist` : `Save ${title} to shortlist`);
   }
 }
+function syncSaveButtons(){
+  for (const li of $("#cards").querySelectorAll(".card")){
+    const title = li.dataset.title;
+    const save = li.querySelector(".save"), on = isSaved(title, li.dataset.recipient);
+    save.setAttribute("aria-pressed", String(on));
+    save.setAttribute("aria-label", `Add ${title} to a wishlist${on ? " (already saved in the selected list)" : ""}`);
+  }
+}
+function fillWishlistSelect(select){
+  select.replaceChildren();
+  for (const list of wishlists.lists){
+    const option = document.createElement("option"); option.value = list.id;
+    option.textContent = `${list.name} (${list.items.length})`;
+    select.append(option);
+  }
+  select.value = wishlists.activeId;
+}
+function selectWishlist(id){
+  if (!wishlists.lists.some((list) => list.id === id)) throw new TypeError("Choose an existing wishlist.");
+  wishlists.activeId = id;
+  shortlist = activeWishlist(wishlists).items;
+  store.set(shortlist); renderBar(); syncSaveButtons(); monetization.update();
+}
+$("#wishlist-select").addEventListener("change", (event) => {
+  selectWishlist(event.target.value); renderDialog();
+});
+$("#wishlist-create").addEventListener("submit", (event) => {
+  event.preventDefault();
+  try {
+    wishlists = addWishlist(wishlists, $("#wishlist-name").value);
+    selectWishlist(wishlists.activeId); $("#wishlist-name").value = ""; renderDialog();
+  } catch (error) {
+    console.warn("Wishlist could not be created.", error);
+    $("#shortlist-storage").textContent = error.message;
+  }
+});
+let pendingWishlist = null;
+function chooseWishlist(idea, onSaved){
+  pendingWishlist = { idea, onSaved, opener: document.activeElement };
+  fillWishlistSelect($("#wishlist-target"));
+  $("#wishlist-gift-title").textContent = idea.title;
+  $("#wishlist-new-name").value = ""; $("#wishlist-picker-status").textContent = "";
+  $("#wishlist-picker").showModal();
+}
+$("#wishlist-cancel").addEventListener("click", () => $("#wishlist-picker").close());
+$("#wishlist-picker").addEventListener("close", () => {
+  pendingWishlist?.opener?.focus({ preventScroll: true });
+  pendingWishlist = null;
+});
+$("#wishlist-save-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!pendingWishlist) return;
+  try {
+    const name = $("#wishlist-new-name").value.trim();
+    const next = name ? addWishlist(wishlists, name) : { ...wishlists, activeId: $("#wishlist-target").value };
+    const target = activeWishlist(next);
+    const item = savedIdea(pendingWishlist.idea, monetization.recipientTag());
+    const exists = target.items.some((gift) => savedKey(gift) === savedKey(item));
+    if (!exists && target.items.length >= 50) throw new RangeError("This wishlist has 50 gifts. Choose another list or create a new one.");
+    wishlists = next; shortlist = target.items;
+    if (!exists) shortlist = [...shortlist, item];
+    store.set(shortlist); renderBar(); syncSaveButtons(); monetization.update();
+    const { onSaved, opener } = pendingWishlist;
+    pendingWishlist = null;
+    $("#wishlist-picker").close();
+    opener?.focus({ preventScroll: true });
+    onSaved();
+    showFeedback(shortlistPersistent ? `Saved to ${target.name}.` : `Saved to ${target.name} for this visit only; browser storage is unavailable.`);
+  } catch (error) {
+    console.warn("Gift could not be added to a wishlist.", error);
+    $("#wishlist-picker-status").textContent = error.message;
+  }
+});
 let shortlistOpener = null;
 function openShortlist(event){
   shortlistOpener = event.currentTarget;
+  $("#dlg .dlg-actions").before($("#gift-sharing"));
   renderDialog(); $("#dlg").showModal();
 }
 $("#openlist").addEventListener("click", openShortlist);
 $("#nav-shortlist").addEventListener("click", openShortlist);
+$("#deck-wishlists").addEventListener("click", openShortlist);
+$("#deck-about-button").addEventListener("click", () => {
+  const disclosure = $("#deck-about-disclosure");
+  const copy = $(".recommendation-disclosure").cloneNode(true);
+  copy.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+  disclosure.replaceChildren(copy);
+  const recipient = $("#deck-about-recipient"); recipient.replaceChildren();
+  if (!$("#recipient-insight").hidden) {
+    const heading = document.createElement("h3"); heading.textContent = "What we picked up";
+    recipient.append(heading);
+    if ($("#recipient-summary").textContent) {
+      const summary = document.createElement("p"); summary.textContent = $("#recipient-summary").textContent; recipient.append(summary);
+    }
+    if (!$("#understood").hidden) {
+      const facts = $("#understood-list").cloneNode(true); facts.removeAttribute("id"); recipient.append(facts);
+    }
+  }
+  $("#deck-about").showModal();
+});
+$("#deck-about-close").addEventListener("click", () => $("#deck-about").close());
 $("#closelist").addEventListener("click", () => $("#dlg").close());
 $("#dlg").addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   event.preventDefault(); $("#dlg").close();
 });
 $("#dlg").addEventListener("close", () => {
+  if (!$("#shared-list-notice").hidden) $("#results-ad").before($("#gift-sharing"));
   const opener = shortlistOpener === $("#openlist") && $("#listbar").hidden
     ? ($(".card:not([hidden]) .save") || $("#nav-shortlist")) : shortlistOpener;
   opener?.focus({ preventScroll: true });
 });
 $("#copylist").addEventListener("click", async (e) => {
-  const text = "My gift shortlist\n" + shortlist.map((s) => `- ${s.title}`).join("\n");
-  try { await navigator.clipboard.writeText(text); e.target.textContent = "Copied"; } catch {
-    e.target.textContent = "Couldn't copy";
-    $("#shortlist-storage").textContent = "Couldn't copy automatically. Select and copy the idea names above.";
-  }
-  setTimeout(() => { e.target.textContent = "Copy list"; }, 1800);
+  await monetization.copyList();
 });
 
 function setStatus(msg, isErr, canRetry = false){
   statusRevision += 1;
-  const el = $("#status"); el.textContent = "";
+  $("#status").textContent = ""; $("#deck-status").textContent = "";
+  const el = $("#results").hidden ? $("#status") : $("#deck-status");
   if (!msg) return;
   const p = document.createElement("p"); p.className = "status" + (isErr ? " err" : ""); p.textContent = msg; el.append(p);
   if (canRetry && current){
@@ -794,15 +1036,33 @@ function setStatus(msg, isErr, canRetry = false){
       if (turnstileEnabled && tsGate.failed) {
         try { resetTurnstile(); } catch (error) { setStatus(error.message, true); return; }
       }
-      void run(current);
+      void run(current, { append: !$("#results").hidden });
     });
     el.append(retry);
+  }
+  if (el === $("#deck-status")) {
+    const close = document.createElement("button"); close.type = "button"; close.className = "deck-notice-close";
+    close.textContent = "\u00d7"; close.setAttribute("aria-label", "Dismiss message");
+    close.addEventListener("click", () => { el.replaceChildren(); $("#cards").focus({ preventScroll: true }); });
+    el.append(close);
   }
 }
 
 /* ---------- form flow ---------- */
 let current = null, shownTitles = [], statusRevision = 0;
 let activeController = null;
+let prefetchPaused = false, seenTitles = new Set();
+function requestPrefetch(){
+  const remaining = $("#cards").querySelectorAll(".card:not([hidden])").length;
+  if (current && !$("#results").hidden && shouldPrefetch(remaining, {
+    busy: Boolean(activeController), paused: prefetchPaused, visible: !document.hidden,
+  })) {
+    void run(nextInput(), { append: true, background: true });
+  }
+}
+function nextInput(){
+  return { ...current, exclude: [...new Set([...shownTitles.filter((title) => !rejectedTitles.includes(title)), ...rejectedTitles])].slice(-24) };
+}
 function readForm(){
   const f = $("#form");
   const mode = (f.querySelector('input[name="mode"]:checked') || {}).value || "describe";
@@ -825,18 +1085,20 @@ function readForm(){
   };
 }
 
-async function run(input){
+async function run(input, { append = false, background = false } = {}){
   if (activeController) return;
   current = input;
   const go = $("#go"), more = $("#more");
   const controller = new AbortController();
   activeController = controller;
-  const timer = setTimeout(() => controller.abort("timeout"), 35000);
+  swipeDeck.setBusy(true);
+  if (append) prefetchPaused = true;
+  const timer = setTimeout(() => controller.abort("timeout"), 60000);
   go.disabled = true; more.disabled = true; $("#cancel").disabled = false; $("#cancel").textContent = "Cancel search";
   $("#restart").disabled = true;
   $("#form").setAttribute("aria-busy", "true");
-  setStatus(""); $("#loading").hidden = false;
-  $("#loading").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
+  setStatus(""); $("#loading-text").textContent = "Finding gift ideas from the details you shared..."; $("#loading").hidden = background;
+  if (!background) $("#loading").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "nearest" });
   try {
     if (turnstileEnabled && tsGate.failed) resetTurnstile();
     const fetch = (turnstileToken = "") => fetchIdeas(input, { enabled: apiOn(), turnstileToken, signal: controller.signal });
@@ -857,18 +1119,47 @@ async function run(input){
       return;
     }
     if (!out.ideas.length){ setStatus(out.notice || "We couldn't find another idea from that description. Add a little more about what they like and try again.", out.error, out.error); return; }
-    setStatus(out.notice || "", false);
-    shownTitles = [...shownTitles, ...out.ideas.map((i) => i.title)].slice(-24);
-    renderCards(out.ideas);
+    await monetization.inventoryReady;
+    if (controller.signal.aborted) throw new Error("Search cancelled while loading partner inventory");
+    const consideredTitles = [...out.ideas, ...(out.replacementIdeas || [])].map((idea) => idea.title);
+    if (append) {
+      out.ideas = out.ideas.filter((idea) => !seenTitles.has(idea.title.toLowerCase()));
+      out.replacementIdeas = (out.replacementIdeas || []).filter((idea) => !seenTitles.has(idea.title.toLowerCase()));
+      if (!out.ideas.length) {
+        setStatus("No new ideas in this batch. Your remaining cards and wishlists are still here. Try more ideas or change the recipient details.", false);
+        return;
+      }
+    }
+    let verifiedOffers = new Map();
+    if (out.photoFirst) {
+      $("#loading-text").textContent = "Checking product photos and looking for suitable alternatives...";
+      const checked = await selectPhotographedIdeas(out.ideas, out.replacementIdeas, {
+        config: CFG, signal: controller.signal, enabled: out.productDiscoveryEnabled,
+      });
+      out.ideas = checked.selected.map((entry) => entry.idea);
+      verifiedOffers = new Map(checked.selected.map((entry) => [entry.idea.title, entry.offers]));
+      out.notice = [out.notice, checked.notice].filter(Boolean).join(" ");
+      if (!out.ideas.length) {
+        if (!append) $("#results").hidden = true;
+        setStatus(out.notice || "No suitable ideas with working product photos were found. Try another interest or budget.", true, true);
+        return;
+      }
+    }
+    shownTitles = [...shownTitles, ...(out.photoFirst ? consideredTitles : out.ideas.map((i) => i.title))].slice(-24);
+    for (const title of consideredTitles) seenTitles.add(title.toLowerCase());
+    prefetchPaused = out.source !== "ai";
+    renderCards(out.ideas, { photoFirst: out.photoFirst, verifiedOffers, append });
+    $("#more").hidden = false; $("#shared-list-notice").hidden = true;
+    $("#results-title").textContent = "A little closer to their gift";
     const summary = out.source === "ai" && typeof out.recipientSummary === "string" ? out.recipientSummary.trim() : "";
     $("#recipient-summary").textContent = summary;
     const understood = renderUnderstood(out.recipient);
     $("#recipient-insight").hidden = !summary && !understood;
     $("#results").hidden = false;
+    setStatus(out.notice || "", false);
     $("#source").textContent = out.source === "ai" ? "Ideas suggested by AI using the details you shared." : "Ideas selected from our catalogue using your answers.";
-    const title = $("#results-title"); title.focus({ preventScroll: true });
-    title.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-    if (out.productDiscoveryEnabled) fillProducts(out.ideas);
+    if (!append) $("#cards").focus({ preventScroll: true });
+    if (out.productDiscoveryEnabled && !out.photoFirst) fillProducts(out.ideas);
   } catch (error) {
     if (error instanceof TurnstileTokenError) {
       setStatus(error.message, true, Boolean(current && tsWidget !== null));
@@ -887,6 +1178,7 @@ async function run(input){
   } finally {
     clearTimeout(timer);
     activeController = null;
+    swipeDeck.setBusy(false);
     $("#form").removeAttribute("aria-busy");
     const returnToForm = controller.signal.reason === "cancelled" || document.activeElement === $("#cancel");
     $("#loading").hidden = true; go.disabled = false; more.disabled = false;
@@ -912,7 +1204,7 @@ $("#form").addEventListener("submit", (e) => {
     setStatus("Tick at least one interest or something about them so we can suggest ideas.", true);
     $("#interests").querySelector("input").focus(); return;
   }
-  current = input; shownTitles = []; rejectedTitles = [];
+  current = input; shownTitles = []; rejectedTitles = []; seenTitles = new Set(); prefetchPaused = false;
   void run(input);
 });
 $("#cancel").addEventListener("click", () => {
@@ -924,7 +1216,7 @@ $("#cancel").addEventListener("click", () => {
 $("#more").addEventListener("click", () => {
   if (current && !activeController){
     void sendFeedback({ event: "more" });
-    void run({ ...current, exclude: [...new Set([...shownTitles.filter((title) => !rejectedTitles.includes(title)), ...rejectedTitles])].slice(-24) });
+    void run(nextInput(), { append: true });
   }
 });
 $("#restart").addEventListener("click", () => {
@@ -932,10 +1224,26 @@ $("#restart").addEventListener("click", () => {
   updateGuidedFields();
   $("#description-count").textContent = "0 / 1,200";
   setMode("describe");
-  $("#results").hidden = true; setStatus(""); current = null; shownTitles = []; rejectedTitles = [];
+  document.body.classList.remove("swipe-mode");
+  swipeDeck.enable(false); $("#swipe-help").hidden = true;
+  $("#results").hidden = true; setStatus(""); current = null; shownTitles = []; rejectedTitles = []; seenTitles = new Set(); prefetchPaused = false;
+  $("#shared-list-notice").hidden = true;
   showFeedback("");
   window.scrollTo({ top: 0 }); $("#description").focus({ preventScroll: true });
 });
+function editRecipient(event){
+  if (!document.body.classList.contains("swipe-mode")) return;
+  event.preventDefault();
+  activeController?.abort("cancelled");
+  document.body.classList.remove("swipe-mode");
+  swipeDeck.enable(false); $("#swipe-help").hidden = true; $("#results").hidden = true;
+  setMode($("#form").querySelector('input[name="mode"]:checked').value);
+  setStatus("");
+  $("#form").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  $("#form").focus({ preventScroll: true });
+}
+$("#deck-edit").addEventListener("click", editRecipient);
+document.querySelectorAll('a[href="#form"]').forEach((link) => link.addEventListener("click", editRecipient));
 $("#website-feedback").addEventListener("submit", (event) => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -954,6 +1262,29 @@ $("#website-feedback").addEventListener("submit", (event) => {
   const subject = encodeURIComponent("Santa's Helper website feedback");
   window.location.href = `mailto:support@christmasidea.co.uk?subject=${subject}&body=${encodeURIComponent(message)}`;
   $("#site-feedback-status").textContent = "Your email app should open with your feedback. Review it and choose Send when you're ready.";
+});
+const monetization = createMonetizationUI({
+  config: CFG,
+  notify: (message) => { showFeedback(message); $("#monetization-status").textContent = message; if ($("#dlg").open) $("#shortlist-storage").textContent = message; },
+  getShortlist: () => shortlist, getInput: () => current,
+  onInventoryExpiry: () => { if ($("#dlg").open) renderDialog(); },
+  setShortlist: (items) => { shortlist = items; const persistent = store.set(items); renderBar(); syncSaveButtons(); return persistent; },
+  renderShared: (ideas) => {
+    activeController?.abort("cancelled"); current = null; prefetchPaused = true;
+    renderCards(ideas, { shared: true });
+    $("#results").hidden = false; $("#results-title").textContent = "A shared gift shortlist";
+    $("#more").hidden = true; $("#source").textContent = "Gift ideas shared by someone else; not verified recommendations or endorsements.";
+  },
+});
+void monetization.initialise();
+window.addEventListener("hashchange", () => { void monetization.initialise(); });
+window.addEventListener("storage", (event) => {
+  if (event.key === WISHLISTS_KEY || event.key === null) {
+    shortlist = store.get(); renderBar(); syncSaveButtons(); monetization.refreshStorage();
+    if ($("#dlg").open) renderDialog();
+  } else if (event.key === "ci-recent-ideas") {
+    monetization.refreshStorage();
+  }
 });
 renderBar();
 const pageUrl = new URL(location.href);

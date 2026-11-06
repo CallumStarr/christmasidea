@@ -113,9 +113,17 @@ const SECURITY_HEADERS = {
   ].join("; "),
 };
 
-function withHeaders(res, extra) {
+function withHeaders(res, extra, env = {}) {
   const out = new Response(res.body, res);
   for (const [k, v] of Object.entries(extra)) out.headers.set(k, v);
+  const hosts = [env.MONETIZATION_AD_HOST, env.MONETIZATION_ANALYTICS_HOST]
+    .filter((host) => typeof host === "string" && /^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i.test(host))
+    .map((host) => `https://${host.toLowerCase()}`);
+  if (hosts.length) {
+    const csp = out.headers.get("Content-Security-Policy");
+    out.headers.set("Content-Security-Policy", csp.replace(/script-src ([^;]+)/, `$& ${hosts.join(" ")}`)
+      .replace(/connect-src ([^;]+)/, `$& ${hosts.join(" ")}`));
+  }
   return out;
 }
 
@@ -143,10 +151,10 @@ export default {
         cache: typeof caches !== "undefined" ? caches.default : null,
         waitUntil: (p) => ctx.waitUntil(p),
       });
-      return withHeaders(res, SECURITY_HEADERS);
+      return withHeaders(res, SECURITY_HEADERS, env);
     }
 
     const res = await env.ASSETS.fetch(request);
-    return withHeaders(res, SECURITY_HEADERS);
+    return withHeaders(res, SECURITY_HEADERS, env);
   },
 };
