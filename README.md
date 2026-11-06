@@ -137,6 +137,12 @@ collision backfilling. Its external-evidence registry is intentionally empty unt
 sources are reviewed. `node scripts/evaluate-products.mjs cases.json [evidence-policy.json]` evaluates product
 coverage and optional graded relevance judgments without network calls; it does not claim proven gift quality.
 
+The [actual catalogue enrichment audit](docs/awin-product-catalogue.md#actual-enrichment-audit-6-november-2026)
+records a locally processed 25,045-product snapshot, retailer-asserted facts, improved identifier coverage,
+and safeguards against one barcode representing incompatible pack sizes. Use the importer's `--snapshot`
+option to work without D1 quota, and `scripts/screen-product-safety.mjs` for review-only public safety leads.
+Apply `0002_awin_catalogue_facts.sql` before deploying the updated provider or importing into D1.
+
 Not On The High Street already participates in personalised-gift alternatives. The three new merchant profiles accept reviewed same-merchant product/collection URLs through the shared router; they do not automatically add generic buttons or unverified inventory. Before adding placements, enforce programme restrictions: Virginia Hayward hampers are adult-only; Green Tulip delivers only to mainland UK and excludes gift vouchers from commission; only authorised voucher codes may be promoted. Review these restrictions again when enabling inventory.
 
 The other original merchant placeholders remain disabled. [Buyagift's official programme](https://www.buyagift.co.uk/affiliateinfo) uses Partnerize, not Awin; do not invent an Awin advertiser ID for it. No applications or new accounts were created on other networks.

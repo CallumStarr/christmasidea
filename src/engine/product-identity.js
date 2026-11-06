@@ -6,7 +6,7 @@ const ASIN = /^(?:B0[0-9A-Z]{8}|[0-9]{9}[0-9X])$/;
 /** True for a GTIN-8/12/13/14 (EAN/UPC) with a valid GS1 mod-10 check digit. */
 export function isValidGtin(value) {
   const s = String(value ?? "").trim();
-  if (!/^(?:\d{8}|\d{12,14})$/.test(s)) return false;
+  if (!/^(?:\d{8}|\d{12,14})$/.test(s) || /^0+$/.test(s)) return false;
   const digits = [...s].map(Number);
   const check = digits.pop();
   // Weights alternate 3,1,3,... starting from the digit next to the check digit.

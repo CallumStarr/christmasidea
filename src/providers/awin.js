@@ -1,6 +1,7 @@
 import { cleanText, words } from "../text.js";
 import { validateOffer } from "../offer-validation.js";
 import { allowedAwinAdvertisers } from "./awin-advertisers.js";
+import { catalogueFacts, normaliseCatalogueClaims } from "../catalogue-facts.js";
 
 const PRODUCT_ID = /^(\d{1,8}):([A-Za-z0-9._-]{1,80})$/;
 const MAX_FEED_AGE_MS = 24 * 60 * 60 * 1000;
@@ -112,12 +113,15 @@ export function validateAwinProduct(product, env = {}, now = Date.now(), adverti
   if (!normalised) return null;
 
   const merchantName = cleanText(product.merchantName, 80);
-  const gtin = cleanText(product.gtin, 14);
+  const facts = product.catalogueFacts;
+  const validatedFacts = facts?.version === "catalogue-facts-v1" && facts.source === "advertiser-feed"
+    && facts.trust === "retailer-asserted" && facts.sourceUrl === merchantProductUrl
+    ? catalogueFacts(facts.claims, merchantProductUrl, normalised.retrievedAt, normalised.expiresAt) : null;
   return {
     ...normalised,
     merchantProductUrl,
     ...(merchantName ? { merchantName } : {}),
-    ...(gtin && /^(?:\d{8}|\d{12,14})$/.test(gtin) ? { gtin } : {}),
+    ...(validatedFacts ? { catalogueFacts: validatedFacts } : {}),
     ...(deliveryKnown ? {
       deliveryCost: { amount: deliveryAmount, currency: "GBP" },
       deliveryIncluded: true,
@@ -169,7 +173,7 @@ export function createAwinProvider(env = {}) {
           p.category, p.price_gbp AS price, p.delivery_cost_gbp AS deliveryCost,
           p.delivery_known AS deliveryKnown, p.image_url AS imageUrl,
           p.merchant_url AS merchantProductUrl, p.affiliate_url AS affiliateUrl,
-          p.gtin, p.generation, p.in_stock AS inStock
+          p.gtin, p.facts_json AS factsJson, p.generation, p.in_stock AS inStock
         FROM awin_products_fts
         JOIN awin_products p
           ON p.product_id = awin_products_fts.product_id
@@ -204,6 +208,9 @@ export function createAwinProvider(env = {}) {
             deliveryIncluded: true,
           } : {}),
           gtin: row.gtin,
+          catalogueFacts: catalogueFacts(
+            normaliseCatalogueClaims(JSON.parse(row.factsJson || "{}")), row.merchantProductUrl,
+            new Date(publishedAt).toISOString(), new Date(publishedAt + MAX_FEED_AGE_MS).toISOString()),
           availability: Number(row.inStock) === 1 ? "IN_STOCK" : "UNKNOWN",
           condition: "NEW",
           retrievedAt: new Date(publishedAt).toISOString(),

@@ -1,5 +1,5 @@
 import { createReadStream } from "node:fs";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile, readFile, open } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,6 +7,7 @@ import { spawnSync } from "node:child_process";
 import { createGunzip } from "node:zlib";
 import { AWIN_ADVERTISER_IDS } from "../src/providers/awin-advertisers.js";
 import { isAwinProductUrl } from "../src/providers/awin.js";
+import { feedIdentity, normaliseCatalogueClaims, catalogueClaim, packagingSignature } from "../src/catalogue-facts.js";
 
 const INSERT_BATCH_SIZE = 50;
 const SQL_FILE_SIZE = 1000;
@@ -26,6 +27,8 @@ function argumentsFrom(argv) {
     else if (arg.startsWith("--default-currency=")) options.defaultCurrency = arg.slice(19);
     else if (arg === "--output") options.output = argv[++index];
     else if (arg.startsWith("--output=")) options.output = arg.slice(9);
+    else if (arg === "--snapshot") options.snapshot = argv[++index];
+    else if (arg.startsWith("--snapshot=")) options.snapshot = arg.slice(11);
     else if (arg === "--remote" || arg === "--local") options.mode = arg.slice(2);
     else if (arg === "--apply") options.apply = true;
     else if (arg === "--help" || arg === "-h") options.help = true;
@@ -43,6 +46,7 @@ function usage() {
     "",
     "--apply requires --database and exactly one of --remote or --local.",
     "--advertisers accepts a comma-separated allowlist; defaults to IDs supplied in src/providers/awin-advertisers.js.",
+    "--snapshot path.sqlite creates a local enriched SQLite snapshot alongside --output SQL (never with --apply).",
   ].join("\n");
 }
 
@@ -230,7 +234,14 @@ function normaliseRow(row, headers, { allowed, publisherId, rejectionCounts, def
   const deliveryText = field(row, headers, ["delivery_cost", "shipping_cost"]);
   const deliveryCost = deliveryText ? money(deliveryText) : null;
   const deliveryKnown = deliveryCost !== null;
-  const gtin = field(row, headers, ["ean", "gtin", "upc", "isbn"]).replace(/\D/g, "").slice(0, 14);
+  const identity = feedIdentity(["ean", "gtin", "product_gtin", "upc", "isbn"]
+    .map((name) => field(row, headers, [name])));
+  const claims = normaliseCatalogueClaims({
+    model: ["model_number", "product_model"].map((name) => catalogueClaim(field(row, headers, [name]), 120)).find(Boolean),
+    mpn: field(row, headers, ["mpn"]),
+    dimensions: field(row, headers, ["dimensions"]),
+    warranty: field(row, headers, ["warranty"]),
+  });
   return {
     advertiserId,
     productId,
@@ -246,7 +257,9 @@ function normaliseRow(row, headers, { allowed, publisherId, rejectionCounts, def
     imageUrl: image?.href || "",
     merchantUrl: merchantUrl.href,
     affiliateUrl: affiliate.href,
-    gtin,
+    gtin: identity.gtin,
+    identityStatus: identity.status,
+    claims,
     inStock: 1,
   };
 }
@@ -257,12 +270,12 @@ function insertStatement(generation, rows) {
   const columns = [
     "generation", "product_id", "advertiser_id", "title", "description", "brand", "merchant_name", "category",
     "price_gbp", "delivery_cost_gbp", "delivery_known", "currency", "image_url", "merchant_url", "affiliate_url",
-    "gtin", "in_stock",
+    "gtin", "in_stock", "facts_json",
   ];
   const values = rows.map((row) => `(${[
     generation, row.productId, row.advertiserId, row.title, row.description, row.brand, row.merchantName, row.category,
     row.price, row.deliveryKnown ? row.deliveryCost : null, row.deliveryKnown ? 1 : 0, row.currency, row.imageUrl,
-    row.merchantUrl, row.affiliateUrl, row.gtin, row.inStock,
+    row.merchantUrl, row.affiliateUrl, row.gtin, row.inStock, JSON.stringify(row.claims),
   ].map(sql).join(",")})`).join(",\n");
   return `INSERT INTO awin_products (${columns.join(",")}) VALUES\n${values}\nON CONFLICT(generation, product_id) DO UPDATE SET\n${
     columns.filter((column) => column !== "generation" && column !== "product_id")
@@ -319,6 +332,9 @@ async function main() {
     throw new Error("--apply requires --database and either --remote or --local.");
   }
   if (!options.apply && !options.output) throw new Error("Use --output for a dry run or --apply to import the feed.");
+  if (options.snapshot && (options.apply || !options.output)) {
+    throw new Error("--snapshot requires --output and cannot be combined with --apply.");
+  }
 
   const ids = String(options.advertisers || process.env.AWIN_ALLOWED_ADVERTISERS || AWIN_ADVERTISER_IDS.join(","))
     .split(",").map((id) => id.trim()).filter((id) => /^\d{1,8}$/.test(id));
@@ -333,12 +349,20 @@ async function main() {
   const outputDir = options.output ? resolve(options.output) : await mkdtemp(join(tmpdir(), "awin-feed-"));
   const temporary = !options.output;
   await mkdir(outputDir, { recursive: true });
+  const snapshotPath = options.snapshot ? resolve(options.snapshot) : null;
+  if (snapshotPath) {
+    const reserved = await open(snapshotPath, "wx");
+    await reserved.close();
+  }
+  let snapshotComplete = false;
   const staging = [];
   let accepted = 0;
   let rejected = 0;
   let rowsSeen = 0;
   const rejectionCounts = {};
   const feedHeaders = [];
+  const enrichment = { identities: {}, claims: {} };
+  const productIdentities = new Map();
   let batch = [];
   let statements = [];
   let fileIndex = 0;
@@ -373,6 +397,9 @@ async function main() {
           continue;
         }
         accepted++;
+        productIdentities.set(product.productId, { gtin: product.gtin, packaging: packagingSignature(product.title) });
+        enrichment.identities[product.identityStatus] = (enrichment.identities[product.identityStatus] || 0) + 1;
+        for (const name of Object.keys(product.claims)) enrichment.claims[name] = (enrichment.claims[name] || 0) + 1;
         batch.push(product);
         if (batch.length >= INSERT_BATCH_SIZE) await flushRows();
       }
@@ -385,6 +412,28 @@ async function main() {
       throw new Error("No eligible in-stock GBP products were found. The active catalogue was not changed.");
     }
 
+    const packages = new Map();
+    for (const { gtin, packaging } of productIdentities.values()) {
+      if (!gtin) continue;
+      if (!packages.has(gtin)) packages.set(gtin, new Set());
+      packages.get(gtin).add(packaging);
+    }
+    const conflicts = [...packages].filter(([, values]) => values.size > 1).map(([gtin]) => gtin);
+    enrichment.packagingConflicts = {
+      gtinGroups: conflicts.length,
+      products: [...productIdentities.values()].filter(({ gtin }) => conflicts.includes(gtin)).length,
+    };
+    if (conflicts.length) {
+      const guardFile = join(outputDir, "awin-identity-guards.sql");
+      const guards = [];
+      for (let offset = 0; offset < conflicts.length; offset += 100) {
+        guards.push(`UPDATE awin_products SET gtin='' WHERE generation=${sql(generation)} AND gtin IN (${
+          conflicts.slice(offset, offset + 100).map(sql).join(",")});`);
+      }
+      await writeFile(guardFile, guards.join("\n"), "utf8");
+      if (options.apply) runWrangler(options.database, options.mode, guardFile);
+      else staging.push(guardFile);
+    }
     const publishFile = join(outputDir, "awin-publish.sql");
     await writeFile(publishFile,
       `UPDATE awin_catalogue_state SET active_generation=${sql(generation)}, published_at=${sql(publishedAt)} WHERE id=1;\n`,
@@ -397,10 +446,34 @@ async function main() {
         throw new Error(`Generation ${generation} is active, but cleanup of previous products failed: ${error.message}`);
       }
     } else staging.push(publishFile);
+    if (options.snapshot) {
+      const { DatabaseSync } = await import("node:sqlite");
+      const db = new DatabaseSync(snapshotPath);
+      try {
+        db.exec(await readFile(new URL("../migrations/0001_awin_catalog.sql", import.meta.url), "utf8"));
+        db.exec(await readFile(new URL("../migrations/0002_awin_catalogue_facts.sql", import.meta.url), "utf8"));
+        for (const file of staging) db.exec(await readFile(file, "utf8"));
+        const coverage = db.prepare(`SELECT COUNT(*) AS products,
+          COUNT(DISTINCT advertiser_id) AS advertisers,
+          SUM(CASE WHEN gtin <> '' THEN 1 ELSE 0 END) AS validGtin,
+          SUM(CASE WHEN facts_json <> '{}' THEN 1 ELSE 0 END) AS withClaims
+          FROM awin_products WHERE generation = ?`).get(generation);
+        await writeFile(join(outputDir, "catalogue-enrichment-report.json"), JSON.stringify({
+          generation, publishedAt, coverage, inputRows: rowsSeen, acceptedRows: accepted,
+          rejectedRows: rejected, rejectionCounts, enrichment,
+          externalQualityAssessments: 0, independentQualityClaim: false,
+        }, null, 2), "utf8");
+        console.log(`Local enriched snapshot: ${snapshotPath}; ${coverage.products} unique products.`);
+        snapshotComplete = true;
+      } finally {
+        db.close();
+      }
+    }
     console.log(`Awin feed import prepared: ${accepted} eligible, ${rejected} rejected, generation ${generation}.`);
     if (!options.apply) console.log(`SQL files: ${staging.join(", ")}`);
     else console.log(`Generation published to ${options.mode} D1 database "${options.database}".`);
   } finally {
+    if (snapshotPath && !snapshotComplete) await rm(snapshotPath, { force: true });
     if (temporary) await rm(outputDir, { recursive: true, force: true });
   }
 }

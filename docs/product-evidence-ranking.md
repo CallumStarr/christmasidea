@@ -58,6 +58,11 @@ Legacy clients and separate frontend product batches can encounter the same prod
 the existing browser listing-ID deduplication remains, but there is no cross-request GTIN uniqueness guarantee.
 No new user identifier or cross-request tracking is introduced to solve that.
 
+The subsequent [actual catalogue enrichment audit](awin-product-catalogue.md#actual-enrichment-audit-6-november-2026)
+now withholds Awin GTINs reused across conflicting pack/unit-size signatures and preserves bounded
+retailer-asserted model/MPN/warranty facts. These claims are kept separate from independent assessments.
+It also documents a real, OGL-attributed public-safety screening and the remaining source-licensing decisions.
+
 The engine does not scrape reviews, purchase a testing licence, query a recall service, infer legal compliance,
 or claim that absence from its exclusion registry establishes safety. Batch-limited recalls must not be blindly
 expanded to an entire model: a reviewer must establish whether the offered stock is affected, or explicitly
