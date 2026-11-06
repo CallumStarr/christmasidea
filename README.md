@@ -8,6 +8,14 @@ One Cloudflare Worker that serves the website and its small API:
 
 If the AI is unavailable or its daily cap is reached, the Worker selects from `src/catalogue.js` and runs the candidates through the same recipient-aware validator as AI ideas. It uses stated age, explicit exclusions, owned items and budget bands, and returns fewer than eight when that is all that survives. The catalogue has only coarse price bands (not verified product prices), so a strict budget below £10 may have no verified fallback idea. Product discovery is optional; when unavailable or disabled, the site shows typographic idea cards without pretend product photographs and keeps the Amazon search link.
 
+## Interactive visual language
+
+`site/theme.css` owns the shared paper, control-border, selected, success and warning tokens, native text/select controls, writing surfaces, buttons and base dialogs. `site/home.css` composes the guided choice cards, correspondence-style feedback and finder messages; `site/swipe-deck.css` adapts these to the results canvas. Guides and sponsor dialogs use the same shared actions rather than a separate button system.
+
+Keep the festive photography, parchment canvas, Fraunces headings and burgundy identity intact. Selection controls retain native inputs and keyboard behaviour, with visible focus and non-colour selection indicators. Textareas retain resizing and integrated character counts; validation associates invalid fields with the live status message. Motion respects reduced-motion preferences. Feedback still opens an email draft: it does not submit a new API payload or claim that an email has been sent.
+
+Run `node --test test\interactive-design.test.js test\editorial-theme.test.js test\guided-finder.test.js test\site.test.js` for focused checks. The combined theme, homepage and guide stylesheet budget is 11 kB gzipped. For browser QA use `npm run dev`; production Turnstile rejects localhost, so test request states with browser-only fixtures rather than weakening the production security check.
+
 ## Swipe finder and named wishlists
 
 The photographic landing page and both input modes stay in place until a successful search. Results become a dedicated viewport-fitting cream-and-burgundy discovery canvas, rather than a section of the landing page. Only the product image, gift name and small information control appear on each card. The portrait card, compact navigation and three thumb-friendly actions fit desktop, mobile, short screens and landscape using dynamic viewport units and safe-area insets, without scrolling the page. Product images use `object-fit: contain` rather than cropping a product to mimic a dating photo. Photo-less ideas have an abstract, clearly non-photographic treatment; no competitor imagery or invented product photos are used.

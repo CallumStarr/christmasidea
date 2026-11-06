@@ -91,7 +91,7 @@ test("canvas text remains readable over the photographic linen reading area", as
 test("editorial styles stay lightweight and avoid gradients, shadows and uniform three-column cards", async () => {
   const styles = await Promise.all(["theme.css", "home.css", "guide.css"].map(read));
   const css = styles.join("\n");
-  assert.ok(gzipSync(css).length < 10000, "combined styles must stay below 10 kB gzipped");
+  assert.ok(gzipSync(css).length < 11000, "combined editorial and interactive styles must stay below 11 kB gzipped");
   assert.doesNotMatch(css, /gradient\(|box-shadow:|drop-shadow\(|repeat\(3,1fr\)/);
   assert.match(styles[1], /\.card\.featured\{\s*grid-column:span 7/);
   assert.match(styles[1], /\.card\.companion\{grid-column:span 5/);

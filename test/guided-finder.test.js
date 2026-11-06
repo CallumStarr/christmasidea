@@ -67,7 +67,7 @@ test("guided budget defaults enabled and can be switched off and restored", asyn
     "relation-other-field", "relation-other", "budget-slider", "budget-amount", "budget-any",
     "budget-controls", "budget-hint", "interests", "about", "interests-selected",
     "about-selected",
-  ].map((id) => [`#${id}`, {}]));
+  ].map((id) => [`#${id}`, { removeAttribute(name) { delete this[name]; } }]));
   fields["#budget-any"].checked = false;
   let other = false;
   let count = 2;
@@ -77,7 +77,9 @@ test("guided budget defaults enabled and can be switched off and restored", asyn
     selectedValues: () => Array(count).fill("selected"),
     updateCheckboxSummary: () => {},
   });
+  fields["#interests"]["aria-invalid"] = "true";
   update();
+  assert.equal(fields["#interests"]["aria-invalid"], undefined, "a selected detail clears the group error");
   assert.equal(fields["#budget-controls"].hidden, false);
   assert.equal(fields["#budget-hint"].hidden, false);
   assert.equal(fields["#budget-amount"].disabled, false);

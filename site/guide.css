@@ -39,7 +39,7 @@
 .idea .merchant-links a span{font-size:20px;transition:transform .2s}
 .idea .merchant-links a:hover span{transform:translate(2px,-2px)}
 .idea:first-child,.idea:nth-child(2){padding:28px;margin-bottom:24px;border:0;background:var(--surface)}
-.idea:first-child{background:#591125;--ink:#fbf7f0;--muted:#edd5d6;--accent:#fbf0df;--gold-ink:#ebc99a;--focus:#ebc99a;color:var(--ink)}
+.idea:first-child{background:#591125;--ink:#fbf7f0;--muted:#edd5d6;--accent:#fbf0df;--accent-hover:#f3dcc3;--on-accent:#591125;--gold-ink:#ebc99a;--focus:#ebc99a;--field-paper:#6b2235;--selected-paper:#7d3146;--control-line:#b78f98;--line:#b78f98;color:var(--ink)}
 .finder-cta{display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px;padding:32px 36px;background:var(--surface);border-block:3px double var(--accent);margin:48px 0}
 .finder-cta .eyebrow{font-size:11px;margin:0 0 12px}
 .finder-cta h2{font-size:34px}

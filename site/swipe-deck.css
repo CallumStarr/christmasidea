@@ -54,9 +54,9 @@
 .swipe-cards .card:not(.verified):not(.has-partner-image) .media{background:radial-gradient(ellipse at 50% 40%,#faf4ec,#eae0d4)}
 .swipe-cards .card:not(.verified):not(.has-partner-image) .media::before{content:"";position:absolute;inset:25% 35% 45%;border:1px solid #aa815144;border-radius:10px;transform:rotate(-8deg)}
 .swipe-cards .card:not(.verified):not(.has-partner-image) .media::after{content:"";position:absolute;inset:25% 35% 45%;border-left:1px solid #aa815144;border-right:1px solid #aa815144;transform:rotate(8deg)}
-.swipe-cards .card-body{position:absolute;inset:auto 0 0;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) 40px;align-items:end;gap:16px;padding:64px 26px 26px;background:linear-gradient(0deg,#fff 48%,#fffffff2 75%,#ffffff00);pointer-events:none}
+.swipe-cards .card-body{position:absolute;inset:auto 0 0;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:end;gap:16px;padding:64px 26px 26px;background:linear-gradient(0deg,#fff 48%,#fffffff2 75%,#ffffff00);pointer-events:none}
 .swipe-cards .card-body h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;margin:0;max-width:none;color:var(--accent);font:400 clamp(25px,3.8dvh,36px)/1.08 var(--display);letter-spacing:-.045em;text-wrap:pretty;overflow-wrap:anywhere}
-.swipe-cards .card-info{display:grid;place-items:center;pointer-events:auto;width:40px;height:40px;border:1px solid #6d102824;border-radius:50%;background:#ffffffa8;color:var(--accent);cursor:pointer;transition:background .18s,transform .18s}
+.swipe-cards .card-info{display:grid;place-items:center;pointer-events:auto;width:44px;height:44px;border:1px solid var(--control-line);border-radius:50%;background:var(--field-paper);color:var(--accent);cursor:pointer;transition:background .18s,transform .18s}
 .swipe-cards .card-info:hover{background:var(--surface);transform:translateY(-2px)}
 .swipe-cards .swipe-stamp{position:absolute;z-index:5;top:32px;left:24px;opacity:var(--swipe-opacity,0);padding:6px 12px;border:2px solid currentColor;border-radius:7px;transform:rotate(-14deg);font:600 24px/1.2 var(--body);letter-spacing:.08em;color:#9e3f53;background:#fff9;pointer-events:none}
 .swipe-cards .card[data-direction=right] .swipe-stamp{left:auto;right:24px;transform:rotate(14deg);color:#32654f}
@@ -76,25 +76,26 @@
 .swipe-mode .deck-footnote{grid-row:4;display:flex!important;align-items:center;justify-content:center;gap:12px;align-self:stretch;font:400 10px/1.4 var(--body);color:var(--muted)}
 .deck-footnote button{padding:8px 0;border:0;background:transparent;color:var(--accent);font:inherit;cursor:pointer}
 .deck-footnote button:hover{text-decoration:underline}
-.swipe-mode #deck-status{position:absolute;bottom:140px;left:50%;translate:-50% 0;z-index:9;width:min(380px,calc(100% - 48px));max-height:35%;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 32px #42241615;padding:12px 16px;font-size:12px;pointer-events:auto}
+.swipe-mode #deck-status{position:absolute;bottom:140px;left:50%;translate:-50% 0;z-index:9;width:min(380px,calc(100% - 48px));max-height:35%;overflow:auto;background:var(--paper);border:1px solid var(--control-line);border-radius:var(--control-radius);padding:16px;font-size:12px;pointer-events:auto}
 .swipe-mode #deck-status:empty{display:none}
 .swipe-mode #deck-status p{margin:0}
-.swipe-mode #deck-status{padding-right:40px}
-.deck-notice-close{position:absolute;top:3px;right:3px;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--accent);font-size:22px;cursor:pointer}
-.swipe-mode #deck-status .btn{min-height:36px;margin-top:8px;font-size:12px;padding:6px 14px}
-.swipe-mode .feedback-toast{left:50%;bottom:142px;translate:-50% 0;border:1px solid var(--line);border-radius:24px;padding:10px 18px;max-width:calc(100vw - 48px);font-size:12px;box-shadow:0 6px 20px #4224160a}
+.swipe-mode #deck-status{padding-right:48px}
+.deck-notice-close{position:absolute;top:0;right:0;width:44px;height:44px;padding:0;border:0;background:transparent;color:var(--accent);font-size:22px;cursor:pointer}
+.swipe-mode #deck-status .status{padding:0;border:0;background:transparent;font-size:12px}
+.swipe-mode #deck-status .btn{min-height:44px;margin-top:12px;font-size:12px;padding:8px 14px}
+.swipe-mode .feedback-toast{left:50%;bottom:142px;translate:-50% 0;border-radius:var(--control-radius);padding:14px 18px;max-width:calc(100vw - 48px);font-size:12px}
 .swipe-mode .empty-selection{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;padding:28px;border:1px solid var(--line);border-radius:26px;background:#fff9;color:var(--accent);text-align:center;font:400 28px/1.2 var(--display)}
 .empty-selection p{margin:0}
 .empty-selection small{font:400 13px/1.5 var(--body);color:var(--muted)}
-.empty-selection .btn{margin-top:8px;border-radius:28px;font-size:13px}
-.gift-detail,.deck-about-dialog{width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 40px);padding:0;border:1px solid #e8dfd8;border-radius:26px;background:var(--paper);color:var(--ink);box-shadow:0 24px 80px #23141b26;overscroll-behavior:contain}
+.empty-selection .btn{margin-top:8px;font-size:13px}
+.gift-detail,.deck-about-dialog{width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 40px);padding:0;border:1px solid var(--control-line);border-top:3px double var(--accent);border-radius:var(--control-radius);background:var(--paper);color:var(--ink);overscroll-behavior:contain}
 .gift-detail{cursor:auto;user-select:text;-webkit-user-select:text}
 .gift-detail[open],.deck-about-dialog[open]{animation:detail-appear .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes detail-appear{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}
 .gift-detail::backdrop,.deck-about-dialog::backdrop{background:#2c1a234f;backdrop-filter:blur(8px)}
 .detail-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 20px 10px;background:var(--paper)}
 .detail-top .eyebrow{margin:0;font-size:10px}
-.detail-close{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--accent);font:400 26px/1 var(--body);cursor:pointer}
+.detail-close{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--control-line);border-radius:50%;background:var(--field-paper);color:var(--accent);font:400 26px/1 var(--body);cursor:pointer}
 .gift-detail-content,.deck-about-content{padding:0 28px 28px}
 .gift-detail-content h2,.deck-about-content h2{color:var(--accent);font-size:32px;margin:12px 0 20px}
 .gift-detail-content .why,.gift-detail-content .connection,.deck-about-content p{font-size:14px;line-height:1.6;color:var(--muted)}
@@ -103,12 +104,12 @@
 .gift-detail-content .merchant-links{display:grid;grid-template-columns:1fr;gap:0;width:100%}
 .gift-detail-content .merchant-offer{padding:0}
 .gift-detail-content .shop{min-height:54px;border-color:#d7c2bf;font-size:15px}
-.gift-detail-content .save{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;margin:0;border:1px solid var(--accent);border-radius:28px;font:500 13px/1.3 var(--body);background:transparent;color:var(--accent)}
+.gift-detail-content .save{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;margin:0;border:1px solid var(--accent);border-radius:var(--control-radius);font:500 13px/1.3 var(--body);background:var(--field-paper);color:var(--accent)}
 .gift-detail-content .save svg{width:18px}
 .gift-detail-content .aff,.detail-photo-note,.detail-disclosure{font-size:11px;line-height:1.6;color:var(--muted);margin:16px 0 0}
 .gift-detail-content .idea-feedback,.gift-detail-content .dismiss,.gift-detail-content>.btn,.gift-detail-content .offer-comparison{display:none}
 .detail-footer{position:sticky;bottom:0;padding:14px 28px 22px;background:var(--paper)}
-.detail-footer .deck-next{width:100%;border-radius:28px;min-height:48px;font-size:13px}
+.detail-footer .deck-next{width:100%;min-height:48px;font-size:13px}
 .deck-about-content .disclosure{font-size:12px;line-height:1.6}
 .deck-about-content .recommendation-disclosure{display:block;padding:0}
 .deck-about-content .affiliate-details{font-size:12px;margin-top:16px}
@@ -118,12 +119,12 @@
 .wishlist-create{display:flex;gap:8px;align-items:center}
 .wishlist-create input{flex:1}
 .wishlist-create .btn{flex:none}
-.wishlist-picker{max-width:460px;width:calc(100% - 32px);border-radius:24px}
+.wishlist-picker{max-width:460px;width:calc(100% - 32px)}
 .wishlist-picker h2{font-size:30px;color:var(--accent);margin:0 0 12px}
 .wishlist-picker .dlg{padding:24px}
 .wishlist-picker .dlg-actions{justify-content:space-between}
-.wishlist-picker-status{font-size:13px;color:var(--accent)}
-.swipe-mode #dlg{border-radius:24px}
+.wishlist-picker-status{font-size:13px;color:var(--error)}
+.wishlist-picker-status:not(:empty){padding:12px 14px;border-left:2px solid var(--error);background:var(--error-bg)}
 @media(min-height:900px){.swipe-mode .results{grid-template-rows:88px minmax(0,1fr) 112px 44px;padding-bottom:max(24px,env(safe-area-inset-bottom,0px))}.swipe-cards{max-height:660px}}
 @media(max-width:600px){
   .swipe-mode .results{--deck-width:min(100%,440px);grid-template-rows:64px minmax(0,1fr) 100px 30px;padding-inline:16px}
@@ -136,7 +137,10 @@
   .swipe-cards .card-body h3{font-size:clamp(25px,3.8dvh,34px)}
   .swipe-cards .media img{padding:8% 5% 29%}
   .swipe-mode .swipe-actions{gap:34px}
-  .wishlist-create{flex-wrap:wrap}
+  .wishlist-create{display:grid;grid-template-columns:minmax(0,1fr)}
+  .wishlist-create .btn{width:100%}
+  .dlg li:not(.shortlist-group){align-items:stretch;flex-direction:column;gap:8px}
+  .dlg li .x{align-self:flex-end}
 }
 @media(max-height:600px){
   .swipe-mode .results{--deck-width:min(340px,calc((100dvh - 142px)*.95),calc(100vw - 32px));grid-template-rows:48px minmax(0,1fr) 72px 22px}
@@ -147,7 +151,7 @@
   .swipe-actions svg{width:21px;height:21px}
   .swipe-cards .card-body{padding:32px 18px 16px}
   .swipe-cards .card-body h3{font-size:23px}
-  .swipe-cards .card-info{width:32px;height:32px}
+  .swipe-cards .card-info{width:44px;height:44px}
   .deck-wordmark{font-size:22px}
   .swipe-mode .deck-footnote{font-size:9px}
 }

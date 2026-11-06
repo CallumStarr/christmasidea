@@ -98,10 +98,10 @@ window.GIFT_CONFIG = {
 
     <div id="quick-fields" class="quick-fields">
       <div>
-        <label class="sr-only" for="description">Describe the person you're buying for</label>
         <p class="sr-only" id="description-hint">Share their age, interests and your budget. Let us know what they already own or would rather not receive. Please leave out names and sensitive details.</p>
         <div class="writing-field">
-          <textarea id="description" name="description" maxlength="1200" rows="3" aria-describedby="description-hint description-count" placeholder="My dad loves gardening and coffee. He has most of the tools already, and I'd like to spend about £40."></textarea>
+          <label class="writing-label" for="description">A little about them</label>
+          <textarea id="description" name="description" maxlength="1200" rows="3" aria-describedby="description-hint description-count status" placeholder="My dad loves gardening and coffee. He has most of the tools already, and I'd like to spend about £40."></textarea>
           <div class="field-foot"><span>Interests, age, budget</span><span class="count" id="description-count">0 / 1,200</span></div>
         </div>
         <div class="prompt-examples" role="group" aria-label="Example descriptions">
@@ -116,6 +116,7 @@ window.GIFT_CONFIG = {
     </div>
 
     <div id="guided-fields" class="grid2" hidden>
+      <p class="guided-intro full"><span class="eyebrow">A few thoughtful details</span>Start with what you know. Choose at least one interest or detail about them; everything else can be left as it is.</p>
       <fieldset class="full">
         <legend>Who are you buying for?</legend>
         <div class="chips" id="relation"></div>
@@ -160,7 +161,7 @@ window.GIFT_CONFIG = {
         <div class="budget-controls" id="budget-controls">
           <label class="sr-only" for="budget-slider">Maximum budget in pounds</label>
           <input type="range" id="budget-slider" min="1" max="1000" step="1" value="40" aria-describedby="budget-hint">
-          <div class="budget-amount"><span aria-hidden="true">£</span><label class="sr-only" for="budget-amount">Maximum budget in pounds</label><input type="number" id="budget-amount" min="1" max="1000" step="1" value="40" aria-describedby="budget-hint"></div>
+          <div class="budget-amount"><span aria-hidden="true">£</span><label class="sr-only" for="budget-amount">Maximum budget in pounds</label><input type="number" id="budget-amount" min="1" max="1000" step="1" value="40" aria-describedby="budget-hint status"></div>
         </div>
         <p class="hint" id="budget-hint">Slide or enter £1 to £1,000, in £1 steps.</p>
       </fieldset>
@@ -169,7 +170,7 @@ window.GIFT_CONFIG = {
         <legend>What are they into?</legend>
         <p class="hint" id="interests-hint">Tick anything they enjoy. All categories are shown below, and you can choose as many as you like.</p>
         <p class="selection-summary" id="interests-selected" aria-live="polite"></p>
-        <div id="interests" class="choice-groups" role="group" aria-label="Their interests" aria-describedby="interests-hint"></div>
+        <div id="interests" class="choice-groups" role="group" aria-label="Their interests" aria-describedby="interests-hint status"></div>
       </fieldset>
 
       <fieldset class="full guided-choices">
@@ -273,18 +274,21 @@ window.GIFT_CONFIG = {
       <fieldset>
         <legend>How useful is Santa's Helper? <span>(optional)</span></legend>
         <div class="feedback-rating">
-          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="1"><span aria-label="1 out of 5">1</span></label>
-          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="2"><span aria-label="2 out of 5">2</span></label>
-          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="3"><span aria-label="3 out of 5">3</span></label>
-          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="4"><span aria-label="4 out of 5">4</span></label>
-          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="5"><span aria-label="5 out of 5">5</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="1" aria-label="1 out of 5, not very useful"><span aria-hidden="true">1</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="2" aria-label="2 out of 5"><span aria-hidden="true">2</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="3" aria-label="3 out of 5"><span aria-hidden="true">3</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="4" aria-label="4 out of 5"><span aria-hidden="true">4</span></label>
+          <label class="feedback-rating-option"><input type="radio" name="site-rating" value="5" aria-label="5 out of 5, very useful"><span aria-hidden="true">5</span></label>
         </div>
-        <p class="feedback-scale">1 is not very useful; 5 is very useful.</p>
+        <p class="feedback-scale"><span>1 &mdash; Not very useful</span><span>5 &mdash; Very useful</span></p>
       </fieldset>
       <div>
         <label class="q" for="site-feedback-note">What should we work on? <span>(optional)</span></label>
         <p class="hint" id="feedback-prompt">For example, gift ideas, the finder, gift guides or anything else you'd like to share.</p>
-        <textarea id="site-feedback-note" name="note" maxlength="500" rows="3" aria-describedby="feedback-prompt feedback-guidance"></textarea>
+        <div class="writing-field">
+          <textarea id="site-feedback-note" name="note" maxlength="500" rows="3" aria-describedby="feedback-prompt feedback-guidance feedback-count" placeholder="A small suggestion, a lovely discovery, or something we could do better..."></textarea>
+          <div class="field-foot"><span>A note to Santa's Helper</span><span class="count" id="feedback-count">0 / 500</span></div>
+        </div>
         <p class="privacy" id="feedback-guidance">This opens your email app with your feedback filled in. Nothing is sent until you choose to send the email. Please leave out personal or sensitive details. <a href="/privacy">Read our privacy notice</a>.</p>
       </div>
       <button type="submit" class="btn btn-primary">Share your feedback <span class="button-arrow" aria-hidden="true">&rarr;</span></button>
@@ -420,15 +424,20 @@ function updateGuidedFields(){
   for (const name of ["interests", "about"]) {
     updateCheckboxSummary($(`#${name}`), name, $(`#${name}-selected`));
   }
+  if (selectedValues($("#interests"), "interests").length || selectedValues($("#about"), "about").length) {
+    $("#interests").removeAttribute("aria-invalid");
+  }
 }
 $("#guided-fields").addEventListener("change", updateGuidedFields);
 $("#budget-slider").addEventListener("input", () => {
   $("#budget-amount").value = $("#budget-slider").value;
   $("#budget-amount").setCustomValidity("");
+  $("#budget-amount").removeAttribute("aria-invalid");
 });
 $("#budget-amount").addEventListener("input", () => {
   const amount = $("#budget-amount");
   amount.setCustomValidity("");
+  amount.removeAttribute("aria-invalid");
   if (amount.validity.valid) $("#budget-slider").value = amount.value;
 });
 updateGuidedFields();
@@ -440,7 +449,13 @@ document.querySelectorAll("input[name=relation]").forEach((r) => r.addEventListe
   if (r.value === "grandparent" && !["50s-60s","70-plus"].includes(age.value)) age.value = "70-plus";
   if (r.value === "secret-santa") $("#occasion").value = "secret-santa";
 }));
-$("#description").addEventListener("input", (e) => { $("#description-count").textContent = `${e.target.value.length} / 1,200`; });
+$("#description").addEventListener("input", (e) => {
+  $("#description-count").textContent = `${e.target.value.length} / 1,200`;
+  $("#description").removeAttribute("aria-invalid");
+});
+$("#site-feedback-note").addEventListener("input", (e) => {
+  $("#feedback-count").textContent = `${e.target.value.length} / 500`;
+});
 document.querySelectorAll(".prompt-chip").forEach((button) => button.addEventListener("click", () => {
   document.querySelector('input[name="mode"][value="describe"]').checked = true;
   setMode("describe");
@@ -604,8 +619,9 @@ const swipeDeck = createSwipeDeck({
 });
 const isSaved = (t, recipientTag = monetization.recipientTag()) => shortlist.some((x) => x.title === t && x.recipientTag === recipientTag);
 let feedbackTimer;
-function showFeedback(message){
+function showFeedback(message, tone = "info"){
   clearTimeout(feedbackTimer);
+  $("#feedback").dataset.tone = tone;
   $("#feedback").textContent = message;
   if (message) feedbackTimer = setTimeout(() => { $("#feedback").textContent = ""; }, 6000);
 }
@@ -982,7 +998,7 @@ $("#wishlist-save-form").addEventListener("submit", (event) => {
     $("#wishlist-picker").close();
     opener?.focus({ preventScroll: true });
     onSaved();
-    showFeedback(shortlistPersistent ? `Saved to ${target.name}.` : `Saved to ${target.name} for this visit only; browser storage is unavailable.`);
+    showFeedback(shortlistPersistent ? `Saved to ${target.name}.` : `Saved to ${target.name} for this visit only; browser storage is unavailable.`, shortlistPersistent ? "success" : "warning");
   } catch (error) {
     console.warn("Gift could not be added to a wishlist.", error);
     $("#wishlist-picker-status").textContent = error.message;
@@ -1200,15 +1216,18 @@ $("#form").addEventListener("submit", (e) => {
   e.preventDefault();
   if (activeController) return;
   if (document.querySelector('input[name="mode"][value="guided"]:checked') && !$("#budget-any").checked && !$("#budget-amount").validity.valid){
+    $("#budget-amount").setAttribute("aria-invalid", "true");
     setStatus("Enter a whole-pound budget between £1 and £1,000.", true);
     $("#budget-amount").reportValidity(); $("#budget-amount").focus(); return;
   }
   const input = readForm();
   if (input.mode === "describe" && !input.description){
+    $("#description").setAttribute("aria-invalid", "true");
     setStatus("Add an interest, hobby or something they enjoy. Include your budget if you have one.", true);
     $("#description").focus(); return;
   }
   if (input.mode === "guided" && !input.interests && !input.about){
+    $("#interests").setAttribute("aria-invalid", "true");
     setStatus("Tick at least one interest or something about them so we can suggest ideas.", true);
     $("#interests").querySelector("input").focus(); return;
   }
@@ -1229,6 +1248,7 @@ $("#more").addEventListener("click", () => {
 });
 $("#restart").addEventListener("click", () => {
   $("#form").reset();
+  $("#form").querySelectorAll("[aria-invalid]").forEach((field) => field.removeAttribute("aria-invalid"));
   updateGuidedFields();
   $("#description-count").textContent = "0 / 1,200";
   setMode("describe");
