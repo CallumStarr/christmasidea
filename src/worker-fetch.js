@@ -1,33 +1,16 @@
 import { appFrameHeaders } from "./app-headers.js";
 import { allowedOrigin, canonicalRedirect, corsHeaders, handleRequest } from "./core.js";
+import { INLINE_SCRIPT_HASHES } from "./csp-hashes.js";
+import { securityHeaders } from "./security-headers.js";
 
-const SECURITY_HEADERS = {
-  "X-Content-Type-Options": "nosniff",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-  "X-Frame-Options": "DENY",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-  "Strict-Transport-Security": "max-age=31536000",
-  // Pages use inline scripts and styles, so 'unsafe-inline' is needed until they are moved to hashed files.
-  "Content-Security-Policy": [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https://m.media-amazon.com https://images-eu.ssl-images-amazon.com https://i.ebayimg.com",
-    "font-src 'self'",
-    "connect-src 'self' https://cloudflareinsights.com",
-    "frame-src https://challenges.cloudflare.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-  ].join("; "),
-};
+const SECURITY_HEADERS = securityHeaders(INLINE_SCRIPT_HASHES);
 
 // Static assets are UTF-8; the asset binding omits the charset parameter for text types.
 const TEXTUAL_TYPE = /^(?:text\/[^;]+|application\/(?:javascript|json|xml|manifest\+json)|[^;/]+\/[^;]+\+(?:xml|json))\s*(?:;|$)/i;
 
 function withHeaders(res, extra, env = {}) {
   const out = new Response(res.body, res);
+  if (!Object.hasOwn(extra, "X-Frame-Options")) out.headers.delete("X-Frame-Options");
   for (const [k, v] of Object.entries(extra)) out.headers.set(k, v);
   const type = out.headers.get("Content-Type");
   if (type && TEXTUAL_TYPE.test(type) && !/;\s*charset=/i.test(type)) {
@@ -64,7 +47,10 @@ export async function fetchWorker(request, env, ctx) {
         fetch: (...args) => fetch(...args),
         budget: { consume: (ipHash) => stub.consume(ipHash), reuse: (ipHash) => stub.takeKnowledge(ipHash) },
         productBudget: { take: (ipHash, n) => stub.takeProducts(ipHash, n) },
-        adminAuth: { allowed: (ipHash) => stub.adminAuthAllowed(ipHash), fail: (ipHash) => stub.recordAdminAuthFailure(ipHash) },
+        adminAuth: {
+          reserve: (ipHash) => stub.reserveAdminAuth(ipHash),
+          release: (ipHash, bucket) => stub.releaseAdminAuth(ipHash, bucket),
+        },
         feedback: {
           record: (ipHash, keys, records) => stub.recordFeedback(ipHash, keys, records),
           export: (after, kind) => stub.exportFeedback(after, kind),

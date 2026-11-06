@@ -17,6 +17,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Santa's Helper. A little thought. A lovely gift. Christmas gifts wrapped with burgundy ribbons.">
 <meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://christmasidea.co.uk/#operator","name":"NOAH Neurotech Ltd","legalName":"NOAH NEUROTECH LTD","identifier":"17215758","url":"https://christmasidea.co.uk/","email":"support@christmasidea.co.uk"},{"@type":"WebSite","name":"Santa's Helper","url":"https://christmasidea.co.uk/","publisher":{"@id":"https://christmasidea.co.uk/#operator"}}]}</script>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="color-scheme" content="only light">
 <meta name="theme-color" content="#FBF7F0">
@@ -62,7 +63,7 @@ window.GIFT_CONFIG = {
       </a>
       <div class="nav-links"><a href="#form" aria-current="page">The gift finder</a><a href="/gifts/">The gift guides</a></div>
       <span class="countdown" id="countdown" hidden></span>
-      <button class="nav-shortlist" id="nav-shortlist" type="button" aria-label="Open your shortlist, 0 saved ideas">
+      <button class="nav-shortlist" id="nav-shortlist" type="button" aria-label="Wishlists, 0 saved ideas">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg>
         <span>Wishlists</span><span class="saved-count" id="nav-count">0</span>
       </button>
@@ -184,16 +185,10 @@ window.GIFT_CONFIG = {
     </div>
 
     <div class="form-end">
-      <fieldset id="verified-preferences" hidden>
-        <legend>Optional verified partner ideas</legend>
-        <label><input type="checkbox" id="include-experiences"> Include UK experience vouchers</label>
-        <label><input type="checkbox" id="include-subscriptions"> Include subscriptions with recurring charges clearly shown</label>
-        <p class="hint">For adult guided searches only, and only when current partner availability and terms have been verified.</p>
-      </fieldset>
       <div class="actions">
         <button type="submit" class="btn btn-primary" id="go"><span>Find gift ideas</span><span class="button-arrow" aria-hidden="true">&rarr;</span></button>
       </div>
-      <p class="privacy">Please leave out names and sensitive details. We send your description to our AI provider to suggest ideas. <a href="/privacy">Read our privacy notice</a>.</p>
+      <p class="privacy">For adults aged 18 and over shopping for others, including children. Ideas are suggested by AI, not product advice. Please leave out names and sensitive details. We send your description to our AI provider to suggest ideas. <a href="/privacy">Privacy notice</a> &middot; <a href="/terms">Terms of Use</a>.</p>
       <div id="ts" hidden></div>
     </div>
     <div id="status" role="status" aria-live="polite"></div>
@@ -219,7 +214,7 @@ window.GIFT_CONFIG = {
   </section>
   <section class="results" id="results" hidden aria-labelledby="results-title">
     <div class="deck-topbar" hidden>
-      <button type="button" class="deck-nav-button" id="deck-edit" aria-label="Edit recipient details" title="Edit recipient details"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Back</span></button>
+      <button type="button" class="deck-nav-button" id="deck-edit" aria-label="Back: edit recipient details" title="Edit recipient details"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Back</span></button>
       <span class="deck-wordmark">Santa's Helper <span aria-hidden="true">&#x2736;</span></span>
       <button type="button" class="deck-nav-button" id="deck-wishlists" aria-label="Open your wishlists" title="Your wishlists"><svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg><span class="deck-saved-count" id="deck-saved-count">0</span></button>
     </div>
@@ -239,18 +234,18 @@ window.GIFT_CONFIG = {
       </details>
     </div>
     <div class="recommendation-disclosure">
-      <p class="disclosure"><strong>Ad &middot; Shopping links.</strong> Amazon shopping links are affiliate links. <span id="ebay-disclosure">eBay links are ordinary search links until our Partner Network campaign is configured.</span> We may earn a commission if you buy through affiliate links, at no extra cost to you. These are gift ideas, not products we have tested.</p>
-      <details class="affiliate-details"><summary>How to use these ideas</summary><p>As an Amazon Associate I earn from qualifying purchases. Search links open Amazon UK or eBay UK, or the named alternative retailer; they do not confirm a product, price or availability. Alternative retailer links may be affiliate links when an approved programme is configured. A &ldquo;Matched Amazon listing&rdquo; or &ldquo;Matched eBay listing&rdquo; label applies only to that retailer's offer. An eBay-sourced example photo illustrates the gift idea and is not clickable; choose a shop below it. It does not confirm the same product is available on Amazon. When available, Amazon listing photos take priority and link to their Amazon listing. Matching is not a review or an endorsement. Check the seller, contents, age guidance, current price and delivery cost before buying. eBay search links are not affiliate links until our Partner Network campaign is configured. Sponsored Picks are separately labelled paid placements; demo placements are not paid endorsements. Optional experience and subscription cards require current verified partner inventory and show provider terms.</p></details>
+      <p class="disclosure"><strong>Ad.</strong> We earn a commission if you buy through these links, at no extra cost to you. <span id="ebay-disclosure">eBay links are ordinary search links until our Partner Network campaign is confirmed.</span> As an Amazon Associate I earn from qualifying purchases. As an eBay Partner Network Affiliate, I earn from qualifying purchases.</p>
+      <details class="affiliate-details"><summary>How to use these ideas</summary><p>These are gift ideas, not products we have tested. Search links open the named retailer; they do not confirm a product, price or availability. A matched listing applies only to that retailer's offer. We do not display eBay listing content on mixed-retailer cards. Matching is not a review or endorsement. Check the seller, contents, age guidance, current price and delivery cost before buying. Buy toys from sellers you trust and check for UKCA or CE marking and age warnings. Sponsored Picks are separately labelled paid placements; demo placements are not paid endorsements.</p></details>
     </div>
     <p class="swipe-progress" id="swipe-progress" role="status" aria-live="polite" hidden></p>
     <ul class="cards" id="cards" aria-label="Gift recommendations"></ul>
     <div class="swipe-actions" id="swipe-actions" role="group" aria-label="Choose what to do with this gift" hidden>
-      <button type="button" data-swipe="left" title="Pass · Left arrow" aria-label="Not for them"><span class="swipe-action-icon" aria-hidden="true"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></span><span>Pass</span></button>
-      <button type="button" data-swipe="save" title="Save to a wishlist · Up arrow" aria-label="Add to a wishlist"><span class="swipe-action-icon" aria-hidden="true"><svg width="23" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-4-6 4Z"/></svg></span><span>Save</span></button>
+      <button type="button" data-swipe="left" title="Pass · Left arrow" aria-label="Pass: not for them"><span class="swipe-action-icon" aria-hidden="true"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></span><span>Pass</span></button>
+      <button type="button" data-swipe="save" title="Save to a wishlist · Up arrow" aria-label="Save to a wishlist"><span class="swipe-action-icon" aria-hidden="true"><svg width="23" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-4-6 4Z"/></svg></span><span>Save</span></button>
       <button type="button" data-swipe="right" title="Like and shop · Right arrow" aria-label="Like and shop"><span class="swipe-action-icon" aria-hidden="true"><svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg></span><span>Like</span></button>
     </div>
     <p class="swipe-help" id="swipe-help" hidden>Swipe left to pass, right to shop. Save a possibility to a wishlist.<br>Buttons work too, or focus the card stack and use &larr; &uarr; &rarr;.</p>
-    <div class="deck-footnote" hidden><span>Ad &middot; We may earn a commission.</span><button type="button" id="deck-about-button" aria-label="How the gift finder and shopping links work">How it works <span aria-hidden="true">&#x2197;</span></button></div>
+    <div class="deck-footnote" hidden><span>Ad. We earn a commission if you buy through these links, at no extra cost to you.</span><button type="button" id="deck-about-button" aria-label="How it works: the gift finder and shopping links">How it works <span aria-hidden="true">&#x2197;</span></button></div>
     <div id="deck-status" role="status" aria-live="polite"></div>
     <div id="shared-list-notice" class="shared-list-notice" hidden>
       <p>This is a shared gift list. Partner links are rebuilt from current configuration; expired partner offers are not linked. Nothing is saved on this device unless you choose to save it.</p>
@@ -305,9 +300,9 @@ window.GIFT_CONFIG = {
       <a class="text-link" href="/gifts/">Explore the gift guides <span aria-hidden="true">&rarr;</span></a>
     </div>
     <ul class="guide-shelf">
-      <li class="guide-garden"><a href="/gifts/gifts-for-gardeners"><div class="guide-art"><img class="editorial-photo" src="/images/garden-800.webp" srcset="/images/garden-400.webp 400w, /images/garden-800.webp 800w, /images/garden-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="guide-index" aria-hidden="true">01</span>For the gardener</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Useful tools, seeds for spring and a few small comforts for time outdoors.</p></a></li>
-      <li class="guide-books"><a href="/gifts/gifts-for-book-lovers"><div class="guide-art"><img class="editorial-photo" src="/images/books-800.webp" srcset="/images/books-400.webp 400w, /images/books-800.webp 800w, /images/books-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="guide-index" aria-hidden="true">02</span>For the book lover</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Little things to make reading more comfortable, wherever they settle in.</p></a></li>
-      <li class="guide-gesture"><a href="/gifts/secret-santa-gifts-under-10"><div class="guide-art"><img class="editorial-photo" src="/images/gesture-800.webp" srcset="/images/gesture-400.webp 400w, /images/gesture-800.webp 800w, /images/gesture-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="guide-index" aria-hidden="true">03</span>For Secret Santa</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Ideas to look for within a £10 budget, with reminders to check the full price.</p></a></li>
+      <li class="guide-garden"><a href="/gifts/gifts-for-gardeners"><div class="guide-art"><img class="editorial-photo" src="/images/garden-800.webp" srcset="/images/garden-400.webp 400w, /images/garden-800.webp 800w, /images/garden-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="ad-label">Ad &middot; </span><span class="guide-index" aria-hidden="true">01</span>For the gardener</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Useful tools, seeds for spring and a few small comforts for time outdoors.</p></a></li>
+      <li class="guide-books"><a href="/gifts/gifts-for-book-lovers"><div class="guide-art"><img class="editorial-photo" src="/images/books-800.webp" srcset="/images/books-400.webp 400w, /images/books-800.webp 800w, /images/books-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="ad-label">Ad &middot; </span><span class="guide-index" aria-hidden="true">02</span>For the book lover</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Little things to make reading more comfortable, wherever they settle in.</p></a></li>
+      <li class="guide-gesture"><a href="/gifts/secret-santa-gifts-under-10"><div class="guide-art"><img class="editorial-photo" src="/images/gesture-800.webp" srcset="/images/gesture-400.webp 400w, /images/gesture-800.webp 800w, /images/gesture-1200.webp 1200w" sizes="(max-width: 760px) 32vw, 400px" width="1200" height="840" alt="" loading="lazy" decoding="async"></div><div class="guide-copy"><h3><span class="ad-label">Ad &middot; </span><span class="guide-index" aria-hidden="true">03</span>For Secret Santa</h3><span class="round-arrow" aria-hidden="true">&nearr;</span></div><p>Ideas to look for within a £10 budget, with reminders to check the full price.</p></a></li>
     </ul>
     <p class="source">The guide images are AI-created illustrations, not photos of products we've tested.</p>
   </section>
@@ -321,7 +316,7 @@ window.GIFT_CONFIG = {
 <dialog id="dlg" aria-labelledby="dlg-title">
   <div class="dlg">
     <h2 id="dlg-title">Your shortlist</h2>
-    <p class="disclosure" style="margin:0"><span id="shortlist-storage">Saved on this device only.</span> We may earn a commission if you buy through an affiliate link.</p>
+    <p class="disclosure" style="margin:0"><span id="shortlist-storage">Saved on this device only.</span> Ad. We earn a commission if you buy through these links, at no extra cost to you.</p>
     <div class="wishlist-controls">
       <label for="wishlist-select">Your wishlists</label>
       <select id="wishlist-select"></select>
@@ -375,7 +370,7 @@ window.GIFT_CONFIG = {
 <footer class="site-footer">
   <div class="wrap">
     <div class="footer-top"><a class="brand" href="/">Santa's Helper<svg class="brand-mark" width="18" height="24" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="m16 0 2.5 11 8.8-6.3-6.3 8.8L32 16l-11 2.5 6.3 8.8-8.8-6.3L16 32l-2.5-11-8.8 6.3 6.3-8.8L0 16l11-2.5-6.3-8.8 8.8 6.3Z"/></svg></a><nav aria-label="Footer"><a href="/#form">Find a gift</a><a href="/gifts/">Gift guides</a><a href="/about">About and contact</a><a href="/privacy">Privacy</a><button type="button" class="footer-partner" data-partner>Advertise / Sponsor a Gift</button></nav></div>
-    <div class="footer-bottom"><p>As an Amazon Associate I earn from qualifying purchases. We have not tested the products in these searches. Check the seller, product details, age guidance and total price before buying.</p></div>
+    <div class="footer-bottom"><p>Ad. We earn a commission if you buy through these links, at no extra cost to you. As an Amazon Associate I earn from qualifying purchases. As an eBay Partner Network Affiliate, I earn from qualifying purchases. We have not tested the products in these searches. Check the seller, product details, age guidance and total price before buying.</p><p>Santa's Helper is a product of NOAH Neurotech Ltd (registered name: NOAH NEUROTECH LTD), company number 17215758, registered in England and Wales. Registered office: 1 Tryelyn, Bodmin, England, PL31 1GD. Email: <a href="mailto:support@christmasidea.co.uk">support@christmasidea.co.uk</a>. <a href="/terms">Terms of Use</a>.</p></div>
   </div>
 </footer>
 
@@ -654,8 +649,9 @@ function showFeedback(message, tone = "info"){
 }
 
 function setVerifiedProduct(card, idea, product){
-  const merchant = product.provider === "ebay" ? "eBay"
-    : product.provider === "awin" ? product.merchantName || "retailer" : "Amazon";
+  // Mixed-retailer cards must not use eBay listing content to promote other shops.
+  if (product.provider === "ebay") return;
+  const merchant = product.provider === "awin" ? product.merchantName || "retailer" : "Amazon";
   const media = card.querySelector(".media");
   let shop = card.querySelector(`.shop[data-provider="${product.provider}"]`);
   if (!shop && product.provider === "awin") {
@@ -668,16 +664,15 @@ function setVerifiedProduct(card, idea, product){
   if (!shop) return;
   const disclosure = card.querySelector(".aff");
   const note = media.querySelector(".image-note");
-  const affiliate = product.provider === "amazon" || product.provider === "awin"
-    || /^\d+$/.test(CFG.EBAY_CAMPAIGN_ID || "");
+  const affiliate = true;
   shop.href = product.affiliateUrl;
   shop.textContent = `View on ${merchant}`;
-  shop.setAttribute("aria-label", `View ${product.title} on ${merchant} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
+  shop.setAttribute("aria-label", `View on ${merchant}: ${product.title} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
   const listing = document.createElement("p"); listing.className = "offer-detail";
   listing.textContent = `Matched ${merchant} listing: ${product.title}`;
   shop.after(listing);
   disclosure.textContent = product.provider === "awin"
-    ? "Ad · This retailer link may earn us a commission; other buttons remain searches."
+    ? "Ad. We earn a commission if you buy through this link, at no extra cost to you."
     : "Ad · Matched offers are retailer-specific; other buttons remain searches.";
 
   const retrieved = Date.parse(product.retrievedAt), expires = Date.parse(product.expiresAt);
@@ -689,14 +684,14 @@ function setVerifiedProduct(card, idea, product){
     price.dataset.amount = product.price.amount;
     price.dataset.retrievedAt = product.retrievedAt;
     price.dataset.expiresAt = expires;
-    price.textContent = `${merchant}: ${new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(product.price.amount)}${product.provider === "ebay" || product.deliveryIncluded ? " incl. listed delivery" : product.provider === "awin" ? " + delivery" : ""}`;
+    price.textContent = `${merchant}: ${new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(product.price.amount)}${product.deliveryIncluded ? " incl. listed delivery" : product.provider === "awin" ? " + delivery" : ""} (price when checked, may change)`;
     listing.after(price);
   }
   setTimeout(() => {
     if (!card.isConnected || shop.href !== product.affiliateUrl) return;
     if (product.provider === "awin") shop.parentElement.remove();
     else {
-      shop.href = product.provider === "ebay" ? ebayUrl(idea.query) : amazonUrl(idea.query);
+      shop.href = amazonUrl(idea.query);
       shop.textContent = `Search ${merchant}`;
       shop.setAttribute("aria-label", `Search ${merchant} for ${idea.title} (${affiliate ? "affiliate link, " : ""}opens in new tab)`);
     }
@@ -704,10 +699,7 @@ function setVerifiedProduct(card, idea, product){
     if (photo && media.querySelector(".product-image") === photo){
       photo.remove(); media.querySelector(".product-badge")?.remove();
       card.classList.remove("verified"); note.textContent = "Product photo unavailable";
-      if (card.dataset?.photoRequired === "true") {
-        card.hidden = true; updateCardLayout();
-        showFeedback("An expired product photo was removed from your ideas.");
-      }
+      showFeedback("An expired product photo was removed. The gift idea and shop searches are still available.");
     }
     disclosure.textContent = "Ad · Check the shopping links for current listings and prices.";
   }, Math.max(0, expires - Date.now()));
@@ -719,17 +711,14 @@ function setVerifiedProduct(card, idea, product){
   media.querySelector(".product-badge")?.remove();
   card.classList.add("verified");
   const badge = document.createElement("span"); badge.className = "product-badge";
-  badge.textContent = product.provider === "ebay" ? "Example product"
-    : product.provider === "awin" ? "Matched retailer product" : "Matched Amazon listing";
+  badge.textContent = product.provider === "awin" ? "Matched retailer product" : "Matched Amazon listing";
   media.append(badge);
-  photo = document.createElement(product.provider === "ebay" ? "div" : "a");
+  photo = document.createElement("a");
   photo.className = "product-image"; photo.dataset.provider = product.provider;
-  if (product.provider !== "ebay"){
-    photo.href = product.affiliateUrl; photo.target = "_blank"; photo.rel = "sponsored noopener noreferrer";
-    photo.setAttribute("aria-label", `View ${product.title} on ${merchant} (affiliate link, opens in new tab)`);
-  }
+  photo.href = product.affiliateUrl; photo.target = "_blank"; photo.rel = "sponsored noopener noreferrer";
+  photo.setAttribute("aria-label", `View ${product.title} on ${merchant} (affiliate link, opens in new tab)`);
   const image = document.createElement("img"); image.className = "image-loading";
-  image.alt = product.provider === "ebay" ? `Example of ${idea.title}: ${product.title}` : product.title;
+  image.alt = product.title;
   image.loading = "lazy"; image.decoding = "async";
   image.src = product.imageUrl; image.sizes = "(max-width:760px) 100vw, 360px";
   image.addEventListener("load", () => image.classList.remove("image-loading"));
@@ -737,14 +726,10 @@ function setVerifiedProduct(card, idea, product){
     if (media.querySelector(".product-image") !== photo) return;
     photo.remove(); badge.remove(); card.classList.remove("verified");
     note.textContent = "Product photo unavailable";
-    if (card.dataset?.photoRequired === "true") {
-      card.hidden = true; updateCardLayout();
-      showFeedback(`An idea was removed because its ${merchant} photo couldn't load.`);
-    } else showFeedback(`The ${merchant} photo couldn't load. The shop links are still available.`);
+    showFeedback(`The ${merchant} photo couldn't load. The gift idea and shop links are still available.`);
   });
   photo.append(image); media.prepend(photo);
-  note.textContent = product.provider === "ebay" ? "Example photo: eBay. Amazon product may differ."
-    : product.provider === "awin" ? `Photo from ${merchant} product feed` : "Photo from Amazon listing";
+  note.textContent = product.provider === "awin" ? `Photo from ${merchant} product feed` : "Photo from Amazon listing";
 }
 
 /* ---------- feedback (enumerated fields only, never titles or text) ---------- */
@@ -784,9 +769,9 @@ function renderCards(ideas, { shared = false, photoFirst = false, verifiedOffers
   showFeedback("");
   ideas.forEach((idea, idx) => {
     const feedbackPosition = Math.min(11, ideas.slice(0, idx).filter((item) => !item.inventoryId).length);
+    if (idea.feedbackToken && !idea.inventoryId) lastFeedbackItem = fbItem(idea, feedbackPosition);
     const li = document.createElement("li"); li.className = "card reveal"; li.style.setProperty("--i", idx);
     li.dataset.title = idea.title;
-    if (photoFirst) li.dataset.photoRequired = "true";
     const media = document.createElement("div"); media.className = "media";
     const cat = document.createElement("span"); cat.className = "cat"; cat.textContent = idea.category || "Gift idea";
     const imageNote = document.createElement("span"); imageNote.className = "image-note"; imageNote.textContent = "Product photo unavailable";
@@ -815,7 +800,7 @@ function renderCards(ideas, { shared = false, photoFirst = false, verifiedOffers
       offer.append(a); shops.append(offer);
     }
     const save = document.createElement("button"); save.type = "button"; save.className = "save"; save.innerHTML = HEART;
-    const sync = () => { const on = isSaved(idea.title, idea.recipientTag); save.setAttribute("aria-pressed", String(on)); save.setAttribute("aria-label", `Add ${idea.title} to a wishlist${on ? " (already saved in the selected list)" : ""}`); };
+    const sync = () => { const on = isSaved(idea.title, idea.recipientTag); save.setAttribute("aria-pressed", String(on)); save.setAttribute("aria-label", `Save to a wishlist: ${idea.title}${on ? " (already saved in the selected list)" : ""}`); };
     save.addEventListener("click", () => {
       chooseWishlist(idea, () => {
         sync();
@@ -828,7 +813,7 @@ function renderCards(ideas, { shared = false, photoFirst = false, verifiedOffers
     sync();
     const aff = document.createElement("p"); aff.className = "aff"; aff.textContent = "Ad";
     const dismiss = document.createElement("button"); dismiss.type = "button"; dismiss.className = "dismiss"; dismiss.textContent = "Not quite right";
-    dismiss.setAttribute("aria-label", `Not for them: ${idea.title}`);
+    dismiss.setAttribute("aria-label", `Not quite right: ${idea.title}`);
     const ratings = document.createElement("div"); ratings.className = "idea-feedback";
     ratings.setAttribute("role", "group"); ratings.setAttribute("aria-label", `Feedback on ${idea.title}`);
     const good = document.createElement("button"); good.type = "button"; good.textContent = "Good idea";
@@ -919,8 +904,8 @@ function renderBar(){
   const total = wishlists.lists.reduce((sum, list) => sum + list.items.length, 0);
   $("#nav-count").textContent = total;
   $("#deck-saved-count").textContent = total;
-  $("#deck-wishlists").setAttribute("aria-label", `Open your wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
-  $("#nav-shortlist").setAttribute("aria-label", `Open your wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
+  $("#deck-wishlists").setAttribute("aria-label", `Wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
+  $("#nav-shortlist").setAttribute("aria-label", `Wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
 }
 new IntersectionObserver(([entry]) => {
   collectionInView = entry.isIntersecting;
@@ -979,7 +964,7 @@ function syncSaveButtons(){
     const title = li.dataset.title;
     const save = li.querySelector(".save"), on = isSaved(title, li.dataset.recipient);
     save.setAttribute("aria-pressed", String(on));
-    save.setAttribute("aria-label", `Add ${title} to a wishlist${on ? " (already saved in the selected list)" : ""}`);
+    save.setAttribute("aria-label", `Save to a wishlist: ${title}${on ? " (already saved in the selected list)" : ""}`);
   }
 }
 function fillWishlistSelect(select){
@@ -1120,6 +1105,7 @@ function setStatus(msg, isErr, canRetry = false){
 
 /* ---------- form flow ---------- */
 let current = null, shownTitles = [], statusRevision = 0;
+let lastFeedbackItem = null;
 let activeController = null;
 let prefetchPaused = false, seenTitles = new Set();
 function requestPrefetch(){
@@ -1300,7 +1286,7 @@ $("#cancel").addEventListener("click", () => {
 });
 $("#more").addEventListener("click", () => {
   if (current && !activeController){
-    void sendFeedback({ event: "more" });
+    if (lastFeedbackItem) void sendFeedback({ event: "more", item: lastFeedbackItem });
     void run(nextInput(), { append: true });
   }
 });

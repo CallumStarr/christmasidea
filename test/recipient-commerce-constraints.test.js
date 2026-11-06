@@ -88,7 +88,7 @@ test("complete product search rejects excluded listings and retains suitable alt
 });
 
 test("issued receipts bind product constraints, identity and budget without storing their text", async () => {
-  const env = { IP_SALT: "product-receipt-fixture-salt-0123456789abcdef",
+  const env = { IP_SALT: "product-receipt-fixture-salt-0123456789abcdef", RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
     ALLOWED_ORIGINS: "https://gifts.example.test" };
   const now = Date.now();
   const idea = curateIdeas({ ideas: [journal()] }, input("My 35 year old friend likes travel. No leather. Under 30 pounds.")).ideas[0];

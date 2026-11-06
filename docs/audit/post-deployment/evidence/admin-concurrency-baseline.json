@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-11-06T21:47:55.635Z",
+  "limitPerHour": 10,
+  "results": [
+    {
+      "name": "A sequential brute force (15 wrong tokens)",
+      "ms": 465,
+      "submitted": 15,
+      "statuses": {
+        "401": 10,
+        "429": 5
+      },
+      "tokenComparisons": 10
+    },
+    {
+      "name": "B/C concurrent burst (60 wrong tokens, one IP)",
+      "ms": 616,
+      "submitted": 60,
+      "statuses": {
+        "401": 60
+      },
+      "tokenComparisons": 60,
+      "nextAttempt": 429
+    },
+    {
+      "name": "B/C concurrent burst (100 wrong tokens, one IP)",
+      "ms": 806,
+      "submitted": 100,
+      "statuses": {
+        "401": 100
+      },
+      "tokenComparisons": 100,
+      "nextAttempt": 429
+    },
+    {
+      "name": "B/C concurrent burst (400 wrong tokens, one IP)",
+      "ms": 2630,
+      "submitted": 400,
+      "statuses": {
+        "401": 123,
+        "429": 277
+      },
+      "tokenComparisons": 123,
+      "nextAttempt": 429
+    },
+    {
+      "name": "D correct token inside a 100-request concurrent attack (same IP)",
+      "ms": 1015,
+      "submitted": 101,
+      "statuses": {
+        "401": 100
+      },
+      "tokenComparisons": 100,
+      "legitDuring": 200,
+      "legitAfter": 429
+    },
+    {
+      "name": "E repeated waves after lockout (5 waves x 50)",
+      "ms": 1548,
+      "submitted": 250,
+      "waves": [
+        {
+          "401": 50
+        },
+        {
+          "429": 50
+        },
+        {
+          "429": 50
+        },
+        {
+          "429": 50
+        },
+        {
+          "429": 50
+        }
+      ],
+      "tokenComparisons": 50
+    },
+    {
+      "name": "F other visitors during a 100-request attack",
+      "ms": 1040,
+      "submitted": 102,
+      "statuses": {
+        "401": 100
+      },
+      "otherVisitorCorrectToken": 200,
+      "otherVisitorWrongToken": 401
+    }
+  ]
+}

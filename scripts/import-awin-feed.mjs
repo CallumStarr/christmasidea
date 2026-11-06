@@ -12,9 +12,47 @@ import { feedIdentity, normaliseCatalogueClaims, catalogueClaim, packagingSignat
 const INSERT_BATCH_SIZE = 50;
 const SQL_FILE_SIZE = 1000;
 const CLEANUP_BATCH_SIZE = 250;
-// Bounds memory for hostile or corrupt feeds; real Awin fields and rows are far smaller.
-export const MAX_FEED_FIELD_CHARS = 1_000_000;
-export const MAX_FEED_ROW_FIELDS = 2000;
+// Bounds memory, disk and time for hostile or corrupt feeds. Real Awin rows have tens of columns and
+// descriptions of a few KiB; the 6 November 2026 import's largest feed (cardfactory) held ~20k products.
+export const MAX_FEED_FIELD_CHARS = 65_536;
+export const MAX_FEED_ROW_FIELDS = 512;
+export const FEED_LIMIT_DEFAULTS = Object.freeze({
+  maxDecompressedBytes: 512 * 1024 * 1024,
+  maxRows: 500_000,
+  maxTotalRows: 2_000_000,
+  maxImportMs: 40 * 60 * 1000,
+});
+const FEED_LIMIT_CEILINGS = Object.freeze({
+  maxDecompressedBytes: 2 * 1024 * 1024 * 1024,
+  maxRows: 2_000_000,
+  maxTotalRows: 5_000_000,
+  maxImportMs: 50 * 60 * 1000,
+});
+const FEED_LIMIT_ENV = {
+  maxDecompressedBytes: "AWIN_MAX_FEED_DECOMPRESSED_BYTES",
+  maxRows: "AWIN_MAX_FEED_ROWS",
+  maxTotalRows: "AWIN_MAX_TOTAL_ROWS",
+  maxImportMs: "AWIN_IMPORT_MAX_MS",
+};
+
+/** Reads an optional limit; unset uses the default, anything else must be an integer in 1..ceiling. */
+export function boundedLimit(value, fallback, ceiling, name) {
+  if (value === undefined || value === null || String(value).trim() === "") return fallback;
+  const text = String(value).trim();
+  const number = /^\d{1,16}$/.test(text) ? Number(text) : NaN;
+  if (!Number.isSafeInteger(number) || number < 1 || number > ceiling) {
+    throw new Error(`${name} must be a whole number between 1 and ${ceiling}.`);
+  }
+  return number;
+}
+
+export function feedLimits(env = process.env, overrides = {}) {
+  const limits = {};
+  for (const [key, name] of Object.entries(FEED_LIMIT_ENV)) {
+    limits[key] = boundedLimit(env[name], FEED_LIMIT_DEFAULTS[key], FEED_LIMIT_CEILINGS[key], name);
+  }
+  return { ...limits, deadline: Date.now() + limits.maxImportMs, ...overrides };
+}
 
 function argumentsFrom(argv) {
   const options = { feeds: [], apply: false, mode: "" };
@@ -53,18 +91,35 @@ function usage() {
   ].join("\n");
 }
 
-export async function* csvRows(path) {
+const GZIP_MAGIC = [0x1f, 0x8b];
+const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
+const startsWith = (buffer, magic) => buffer.length >= magic.length && magic.every((byte, index) => buffer[index] === byte);
+
+/**
+ * Streams CSV rows from a plain or gzip feed. Decompressed bytes, rows, field size, columns and elapsed time
+ * are all enforced while streaming, so a small compressed file cannot expand without bound.
+ */
+export async function* csvRows(path, limits = feedLimits()) {
   const input = createReadStream(path);
-  const stream = /\.gz$/i.test(path) ? input.pipe(createGunzip()) : input;
-  stream.setEncoding("utf8");
+  const gzip = /\.gz$/i.test(path);
+  const gunzip = gzip ? createGunzip() : null;
+  if (gunzip) input.on("error", (error) => gunzip.destroy(error));
+  const source = gunzip ? input.pipe(gunzip) : input;
+  const decoder = new TextDecoder("utf-8");
+  let bytes = 0;
+  let rows = 0;
   let field = "";
   let row = [];
   let quoted = false;
   let quotePending = false;
   let skipAfterQuote = false;
   let first = true;
-  for await (const chunk of stream) {
-    const text = chunk;
+  const ready = [];
+  const emit = (completed) => {
+    if (++rows > limits.maxRows) throw new Error(`Feed exceeds ${limits.maxRows} rows: ${path}`);
+    ready.push(completed);
+  };
+  const consume = (text) => {
     for (let index = 0; index < text.length; index++) {
       const char = text[index];
       if (field.length > MAX_FEED_FIELD_CHARS) throw new Error(`Feed field exceeds ${MAX_FEED_FIELD_CHARS} characters: ${path}`);
@@ -104,17 +159,42 @@ export async function* csvRows(path) {
         if (row.length >= MAX_FEED_ROW_FIELDS) throw new Error(`Feed row exceeds ${MAX_FEED_ROW_FIELDS} fields: ${path}`);
       } else if (char === "\n") {
         row.push(field.replace(/\r$/, ""));
-        yield row;
+        emit(row);
         row = [];
         field = "";
       } else field += char;
     }
-  }
-  if (quotePending) quoted = false;
-  if (quoted) throw new Error(`Feed has an unterminated quoted field: ${path}`);
-  if (field || row.length) {
-    row.push(field.replace(/\r$/, ""));
-    yield row;
+  };
+  try {
+    for await (const chunk of source) {
+      if (bytes === 0 && (startsWith(chunk, GZIP_MAGIC) || startsWith(chunk, ZIP_MAGIC))) {
+        throw new Error(`Feed contains nested or unsupported compression: ${path}`);
+      }
+      bytes += chunk.length;
+      if (bytes > limits.maxDecompressedBytes) {
+        throw new Error(`Feed exceeds the ${limits.maxDecompressedBytes}-byte decompressed limit: ${path}`);
+      }
+      if (Date.now() > limits.deadline) throw new Error("Awin import exceeded its processing time limit.");
+      consume(decoder.decode(chunk, { stream: true }));
+      while (ready.length) yield ready.shift();
+    }
+    consume(decoder.decode());
+    while (ready.length) yield ready.shift();
+    if (quotePending) quoted = false;
+    if (quoted) throw new Error(`Feed has an unterminated quoted field: ${path}`);
+    if (field || row.length) {
+      row.push(field.replace(/\r$/, ""));
+      emit(row);
+      yield ready.shift();
+    }
+  } catch (error) {
+    if (String(error?.code || "").startsWith("Z_") || /unexpected end of file/i.test(error?.message || "")) {
+      throw new Error(`Feed compression is truncated or corrupt: ${path}`);
+    }
+    throw error;
+  } finally {
+    source.destroy();
+    input.destroy();
   }
 }
 
@@ -299,11 +379,18 @@ function runWrangler(database, mode, file) {
   if (result.status !== 0) throw new Error(`Wrangler D1 import failed with exit code ${result.status}.`);
 }
 
-async function deleteOldProducts(database, mode, generation, file) {
-  const command = `DELETE FROM awin_products WHERE id IN (` +
-    `SELECT id FROM awin_products WHERE generation NOT IN (${sql(generation)}) LIMIT ${CLEANUP_BATCH_SIZE}` +
+/** One bounded delete batch: previous generations, or (discard) this run's unpublished rows but never the live one. */
+export function generationDeleteSql(generation, discard = false) {
+  return `DELETE FROM awin_products WHERE id IN (` +
+    `SELECT id FROM awin_products WHERE generation ${discard ? "=" : "NOT IN"} (${sql(generation)})` +
+    // A discard must never remove the live catalogue, even if a publish committed but reported failure.
+    (discard ? " AND generation <> (SELECT active_generation FROM awin_catalogue_state WHERE id = 1)" : "") +
+    ` LIMIT ${CLEANUP_BATCH_SIZE}` +
     ");\n";
-  await writeFile(file, command, "utf8");
+}
+
+async function deleteOldProducts(database, mode, generation, file, discard = false) {
+  await writeFile(file, generationDeleteSql(generation, discard), "utf8");
   const args = ["wrangler", "d1", "execute", database, `--${mode}`, "--file", file, "--json", "--yes"];
   const result = spawnSync("npx", args, { encoding: "utf8", shell: process.platform === "win32" });
   if (result.error) throw result.error;
@@ -317,6 +404,13 @@ async function deleteOldProducts(database, mode, generation, file) {
   } catch {
     throw new Error("Wrangler returned an invalid response while cleaning old Awin catalogue rows.");
   }
+}
+
+async function discardGeneration(database, mode, generation, outputDir) {
+  for (let batch = 0; batch < 100_000; batch++) {
+    if (!await deleteOldProducts(database, mode, generation, join(outputDir, "awin-discard.sql"), true)) return;
+  }
+  throw new Error("Discarding the unpublished generation did not finish.");
 }
 
 async function cleanupOldProducts(database, mode, generation, outputDir) {
@@ -353,6 +447,7 @@ async function main() {
   if (!allowed.size || !/^\d{1,8}$/.test(publisherId)) throw new Error("The Awin publisher or advertiser allowlist is invalid.");
   if (defaultCurrency && !/^[A-Z]{3}$/.test(defaultCurrency)) throw new Error("The default currency must be a three-letter currency code.");
 
+  const limits = feedLimits();
   const generation = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   const publishedAt = new Date().toISOString();
   const outputDir = options.output ? resolve(options.output) : await mkdtemp(join(tmpdir(), "awin-feed-"));
@@ -364,6 +459,8 @@ async function main() {
     await reserved.close();
   }
   let snapshotComplete = false;
+  let appliedRows = false;
+  let published = false;
   const staging = [];
   let accepted = 0;
   let rejected = 0;
@@ -381,7 +478,11 @@ async function main() {
     await writeFile(file, statements.join("\n"), "utf8");
     staging.push(file);
     statements = [];
-    if (options.apply) runWrangler(options.database, options.mode, file);
+    if (Date.now() > limits.deadline) throw new Error("Awin import exceeded its processing time limit.");
+    if (options.apply) {
+      appliedRows = true;
+      runWrangler(options.database, options.mode, file);
+    }
   };
   const flushRows = async () => {
     if (!batch.length) return;
@@ -393,13 +494,13 @@ async function main() {
   try {
     for (const feed of options.feeds) {
       const path = resolve(feed);
-      const iterator = csvRows(path);
+      const iterator = csvRows(path, limits);
       const first = await iterator.next();
       if (first.done || first.value.length < 2) throw new Error(`Feed has no usable header row: ${path}`);
       const headers = headerMap(first.value);
       feedHeaders.push([...headers.keys()]);
       for await (const row of iterator) {
-        rowsSeen++;
+        if (++rowsSeen > limits.maxTotalRows) throw new Error(`Awin import exceeds ${limits.maxTotalRows} rows in total.`);
         const product = normaliseRow(row, headers, { allowed, publisherId, rejectionCounts, defaultCurrency });
         if (!product) {
           rejected++;
@@ -449,6 +550,7 @@ async function main() {
       "utf8");
     if (options.apply) {
       runWrangler(options.database, options.mode, publishFile);
+      published = true;
       try {
         await cleanupOldProducts(options.database, options.mode, generation, outputDir);
       } catch (error) {
@@ -481,6 +583,17 @@ async function main() {
     console.log(`Awin feed import prepared: ${accepted} eligible, ${rejected} rejected, generation ${generation}.`);
     if (!options.apply) console.log(`SQL files: ${staging.join(", ")}`);
     else console.log(`Generation published to ${options.mode} D1 database "${options.database}".`);
+  } catch (error) {
+    if (options.apply && appliedRows && !published) {
+      // The active generation never changed; remove this run's unpublished rows so retries start clean.
+      try {
+        await discardGeneration(options.database, options.mode, generation, outputDir);
+        console.error(`Discarded unpublished Awin generation ${generation}; the previous catalogue remains active.`);
+      } catch {
+        console.error(`Unpublished Awin generation ${generation} could not be removed; the next successful import cleans it.`);
+      }
+    }
+    throw error;
   } finally {
     if (snapshotPath && !snapshotComplete) await rm(snapshotPath, { force: true });
     if (temporary) await rm(outputDir, { recursive: true, force: true });

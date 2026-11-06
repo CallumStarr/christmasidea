@@ -1,0 +1,43 @@
+name: Live gift finder monitor
+
+on:
+  schedule:
+    - cron: "17 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: live-finder-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Check real ideas and photo fallback
+        run: node scripts/check-finder.mjs
+        env:
+          FINDER_MONITOR_TOKEN: ${{ secrets.FINDER_MONITOR_TOKEN }}
+      - name: Alert on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Live gift finder monitor is failing"
+          issue=$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number // empty')
+          body="The scheduled live finder check failed. Investigate before announcing the site. Run: $RUN_URL"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body" --assignee CallumStarr
+          fi

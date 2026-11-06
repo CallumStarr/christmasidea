@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
-import { csvRows, field, headerMap } from "./import-awin-feed.mjs";
+import { boundedLimit, csvRows, field, headerMap } from "./import-awin-feed.mjs";
 
 const FEED_LIST_ORIGIN = "https://ui.awin.com";
 const FEED_ORIGINS = new Set([
@@ -14,16 +14,39 @@ const FEED_ORIGINS = new Set([
   "https://datafeed.api.productserve.com",
 ]);
 const MAX_REDIRECTS = 5;
-const MAX_FEED_LIST_BYTES = 32 * 1024 * 1024;
-const DEFAULT_MAX_FEED_BYTES = 2 * 1024 * 1024 * 1024;
+// The feed list can include every programme row, not only joined ones, so it keeps a looser cap.
+export const MAX_FEED_LIST_BYTES = 32 * 1024 * 1024;
+export const DEFAULT_MAX_FEED_BYTES = 256 * 1024 * 1024;
+export const DEFAULT_MAX_TOTAL_DOWNLOAD_BYTES = 1024 * 1024 * 1024;
+const FEED_BYTES_CEILING = 1024 * 1024 * 1024;
+const TOTAL_DOWNLOAD_CEILING = 4 * 1024 * 1024 * 1024;
 
-function maxFeedBytes() {
-  const configured = Number(process.env.AWIN_MAX_FEED_BYTES);
-  return Number.isSafeInteger(configured) && configured > 0 ? configured : DEFAULT_MAX_FEED_BYTES;
+export function downloadLimits(env = process.env) {
+  return {
+    maxFeedBytes: boundedLimit(env.AWIN_MAX_FEED_BYTES, DEFAULT_MAX_FEED_BYTES, FEED_BYTES_CEILING, "AWIN_MAX_FEED_BYTES"),
+    maxTotalBytes: boundedLimit(env.AWIN_MAX_TOTAL_DOWNLOAD_BYTES, DEFAULT_MAX_TOTAL_DOWNLOAD_BYTES,
+      TOTAL_DOWNLOAD_CEILING, "AWIN_MAX_TOTAL_DOWNLOAD_BYTES"),
+  };
+}
+
+/** Removes feed URLs and the feed key from any diagnostic before it is printed. */
+export function redactAwinDiagnostic(message, secrets = [process.env.AWIN_DATAFEEDS_API_KEY]) {
+  let text = String(message || "");
+  for (const secret of secrets) {
+    if (secret && String(secret).length >= 4) text = text.split(String(secret)).join("[redacted]");
+  }
+  return text
+    .replace(/https?:\/\/[^\s"'<>]+/gi, "[redacted-url]")
+    .replace(/\/(?:apikey|publisher)\/[^\s/]+/gi, "/[redacted]");
 }
 
 /** Streams a response body to disk, failing (without echoing any URL) once it exceeds maxBytes. */
-export async function writeLimited(body, path, maxBytes, label) {
+export async function writeLimited(body, path, maxBytes, label, declaredLength) {
+  const declared = Number(declaredLength);
+  if (declaredLength != null && String(declaredLength).trim() !== "" && Number.isFinite(declared) && declared > maxBytes) {
+    await body?.cancel?.();
+    throw new Error(`${label} exceeded the ${maxBytes}-byte download limit.`);
+  }
   let total = 0;
   const limit = new Transform({
     transform(chunk, _encoding, callback) {
@@ -162,7 +185,7 @@ async function fetchFeedList({ publisherId, apiKey, signal } = {}) {
   return response;
 }
 
-async function downloadFeed(startUrl, destination, signal) {
+async function downloadFeed(startUrl, destination, signal, maxBytes) {
   let url = trustedFeedUrl(startUrl);
   if (!url) throw new Error("Awin returned a product-feed URL outside the approved hosts.");
   let response;
@@ -181,14 +204,21 @@ async function downloadFeed(startUrl, destination, signal) {
   }
   if (!response?.ok || !response.body) throw new Error(`Awin product-feed download failed with status ${response?.status || 0}.`);
   const downloaded = `${destination}.download`;
-  await writeLimited(response.body, downloaded, maxFeedBytes(), "An Awin product feed");
+  let written;
+  try {
+    written = await writeLimited(response.body, downloaded, maxBytes, "An Awin product feed",
+      response.headers.get("content-length"));
+  } catch (error) {
+    if (/download limit/.test(error?.message || "")) throw error;
+    throw new Error("Awin product-feed download was interrupted or could not be written.");
+  }
   const handle = await open(downloaded, "r");
   const prefix = Buffer.alloc(2);
   const { bytesRead } = await handle.read(prefix, 0, prefix.length, 0);
   await handle.close();
   const path = `${destination}${bytesRead === 2 && prefix[0] === 0x1f && prefix[1] === 0x8b ? ".csv.gz" : ".csv"}`;
   await rename(downloaded, path);
-  return path;
+  return { path, bytes: written };
 }
 
 function runImporter(options, feeds, advertisers) {
@@ -218,6 +248,7 @@ async function main() {
   const advertiserIds = parseAllowlist(options.advertisers ?? process.env.AWIN_ALLOWED_ADVERTISERS);
   if (advertiserIds && !advertiserIds.length) throw new Error("The Awin advertiser allowlist is invalid.");
   const publisherId = String(process.env.AWIN_PUBLISHER_ID || "3146453").trim();
+  const limits = downloadLimits();
   const apiKey = process.env.AWIN_DATAFEEDS_API_KEY;
   const tempDir = await mkdtemp(join(tmpdir(), "awin-sync-"));
   const controller = new AbortController();
@@ -225,7 +256,8 @@ async function main() {
   try {
     const feedList = await fetchFeedList({ publisherId, apiKey, signal: controller.signal });
     const feedListPath = join(tempDir, "feed-list.csv");
-    await writeLimited(feedList.body, feedListPath, MAX_FEED_LIST_BYTES, "Awin's feed list");
+    await writeLimited(feedList.body, feedListPath, MAX_FEED_LIST_BYTES, "Awin's feed list",
+      feedList.headers.get("content-length"));
     const result = await readAwinFeedList(feedListPath, advertiserIds ? new Set(advertiserIds) : null);
     if (options.listOnly) {
       console.log("Joined advertisers in Awin's feed list:");
@@ -250,8 +282,13 @@ async function main() {
       console.warn(`No supported UK Awin-format feed found for joined advertisers: ${details.join(", ")}.`);
     }
     const feeds = [];
+    let downloadedBytes = 0;
     for (let index = 0; index < result.feeds.length; index++) {
-      const path = await downloadFeed(result.feeds[index].url, join(tempDir, `feed-${index}`), controller.signal);
+      const remaining = limits.maxTotalBytes - downloadedBytes;
+      if (remaining <= 0) throw new Error(`Awin feeds exceeded the ${limits.maxTotalBytes}-byte total download limit.`);
+      const { path, bytes } = await downloadFeed(result.feeds[index].url, join(tempDir, `feed-${index}`),
+        controller.signal, Math.min(limits.maxFeedBytes, remaining));
+      downloadedBytes += bytes;
       feeds.push(path);
     }
     const supportedAdvertisers = [...new Set(result.feeds.map((feed) => feed.advertiserId))];
@@ -264,7 +301,7 @@ async function main() {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {
-    console.error(error.message);
+    console.error(redactAwinDiagnostic(error?.message));
     process.exitCode = 1;
   });
 }

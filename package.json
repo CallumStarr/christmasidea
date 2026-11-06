@@ -6,7 +6,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "node --test",
-    "build:pages": "node scripts/build-site-pages.mjs",
+    "build:pages": "node scripts/build-site-pages.mjs && node scripts/build-csp-hashes.mjs",
     "awin:sync": "node scripts/sync-awin-catalogue.mjs",
     "benchmark": "node scripts/run-benchmark.js",
     "benchmark:score": "node scripts/score-benchmark.js",

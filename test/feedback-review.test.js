@@ -196,7 +196,7 @@ function adminRequest(body, token = adminEnv.FEEDBACK_ADMIN_TOKEN, method = "POS
 
 test("review endpoint shares export authentication, validates actions and surfaces conflicts", async () => {
   const calls = [];
-  const deps = { feedback: { review: async (...args) => { calls.push(args); return { ok: false, error: "Changed" }; } } };
+  const deps = { adminAuth: { reserve: async () => ({ ok: true, bucket: "H2026-11-06T21" }), release: async () => true }, feedback: { review: async (...args) => { calls.push(args); return { ok: false, error: "Changed" }; } } };
   assert.equal((await handleRequest(adminRequest({ action: "check" }, "wrong"), adminEnv, deps)).status, 401);
   assert.equal((await handleRequest(adminRequest({ action: "check" }, undefined, "GET"), adminEnv, deps)).status, 405);
   assert.equal((await handleRequest(adminRequest({ action: "ack", id: "wrong" }), adminEnv, deps)).status, 400);

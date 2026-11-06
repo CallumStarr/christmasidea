@@ -6,8 +6,11 @@ const origin = "https://gifts.example.com";
 const env = {
   ALLOWED_ORIGINS: `${origin},https://www.gifts.example.com,capacitor://localhost,https://localhost`,
   IP_SALT: "synthetic-test-salt-0123456789abcdef",
+  RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   FEEDBACK_ADMIN_TOKEN: "synthetic-admin-token-0123456789abcdef",
 };
+// Allow-all throttle double; throttling itself is covered by admin-auth-throttle and workerd-admin-auth tests.
+const deps = { adminAuth: { reserve: async () => ({ ok: true, bucket: "H2026-11-06T21" }), release: async () => true } };
 const routes = [
   ["ideas", 8000], ["products", 12000], ["feedback", 16000],
   ["feedback/export", 2000], ["knowledge/export", 2000], ["feedback/review", 2000],
@@ -32,7 +35,7 @@ for (const [route, limit] of routes) {
     for (const [options, expected] of cases) {
       const result = await handleRequest(new Request(`${origin}/api/${route}`, {
         method: "POST", headers, ...options,
-      }), env, {});
+      }), env, deps);
       assert.equal(result.status, expected, `${route}: ${JSON.stringify(options).slice(0,160)}`);
       assert.match(result.headers.get("Content-Type"), /application\/json/);
       assert.equal(result.headers.get("Cache-Control"), "no-store");
@@ -48,7 +51,7 @@ for (const [route, limit] of routes) {
     });
     const result = await handleRequest(new Request(`${origin}/api/${route}`, {
       method: "POST", headers: { ...headers, "Content-Length": "2" }, body: stream, duplex: "half",
-    }), env, {});
+    }), env, deps);
     assert.equal(result.status, 413);
   });
 }
@@ -58,7 +61,7 @@ test("every administrative endpoint independently requires bearer authorization"
     for (const authorization of ["", "Bearer wrong-token", "Basic synthetic"]) {
       const result = await handleRequest(new Request(`${origin}/api/${route}`, {
         method: "POST", headers: { ...headers, Authorization: authorization }, body: "{}",
-      }), env, {});
+      }), env, deps);
       assert.equal(result.status, 401, `${route}: unauthorized caller`);
     }
   }
@@ -68,7 +71,7 @@ test("preflight distinguishes all deployed origin classes from spoofed or malfor
   for (const allowed of env.ALLOWED_ORIGINS.split(",")) {
     const result = await handleRequest(new Request(`${origin}/api/ideas`, {
       method: "OPTIONS", headers: { Origin: allowed },
-    }), env, {});
+    }), env, deps);
     assert.equal(result.status, 204);
     assert.equal(result.headers.get("Access-Control-Allow-Origin"), allowed);
     assert.match(result.headers.get("Vary"), /Origin/i);
@@ -77,7 +80,7 @@ test("preflight distinguishes all deployed origin classes from spoofed or malfor
   for (const rejected of ["null", "", "http://gifts.example.com", `${origin}.`, `${origin}/`, `${origin}:444`, "https://gifts.example.com@attacker.invalid"]) {
     const result = await handleRequest(new Request(`${origin}/api/ideas`, {
       method: "OPTIONS", headers: { Origin: rejected },
-    }), env, {});
+    }), env, deps);
     assert.equal(result.status, 403, rejected);
     assert.equal(result.headers.get("Access-Control-Allow-Origin"), null);
   }

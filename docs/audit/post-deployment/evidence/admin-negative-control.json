@@ -1,0 +1,7 @@
+{
+    "result":  "1 of 3 failed: concurrent burst actual token comparisons 100, expected 10",
+    "withFix":  "3 of 3 pass; full suite 581 tests, 580 pass, 0 fail, 1 todo",
+    "againstSource":  "acb2c91 (src/core.js,index.js,budget-storage.js,worker-fetch.js restored via git stash)",
+    "recordedUtc":  "2026-11-06T21:53:13.5132329Z",
+    "test":  "test/workerd-admin-auth.test.js"
+}

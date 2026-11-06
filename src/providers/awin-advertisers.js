@@ -1,5 +1,7 @@
-// Advertiser IDs supplied by the publisher. Add newly approved programmes here or override
-// AWIN_ALLOWED_ADVERTISERS at runtime; feed contents never expand this allowlist.
+// Advertiser IDs supplied by the publisher: the default allowlist for manual imports and validation.
+// Scheduled syncs instead import every advertiser Awin's authenticated feed list marks active/joined
+// (see docs/awin-product-catalogue.md), and served products are validated against the active generation.
+// Setting AWIN_ALLOWED_ADVERTISERS (a GitHub Actions variable for scheduled runs) restricts which feeds are imported.
 export const AWIN_ADVERTISER_IDS = [
   "488", "48471", "1268", "121560", "20856", "129", "35023", "12011", "736", "23764",
   "26458", "10862", "44681", "20978", "114352", "72583", "81459", "125272", "24874", "118721",

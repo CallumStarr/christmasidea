@@ -30,12 +30,13 @@ function syncGuideSaves() {
   if (count && nav) {
     const total = wishlists ? wishlists.lists.reduce((sum, list) => sum + list.items.length, 0) : saved.length;
     count.textContent = total;
-    nav.setAttribute("aria-label", `Open your wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
+    nav.setAttribute("aria-label", `Wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
   }
   for (const button of document.querySelectorAll("[data-guide-save]")) {
     const on = saved.some((item) => savedKey(item) === button.dataset.guideSave);
     button.setAttribute("aria-pressed", String(on));
     button.textContent = on ? "Saved idea" : "Save idea";
+    button.setAttribute("aria-label", `${button.textContent}: ${button.dataset.guideTitle}`);
     if (storageNotice) button.nextElementSibling.textContent = storageNotice;
   }
 }
@@ -47,7 +48,7 @@ for (const article of document.querySelectorAll(".idea")) {
     why: article.querySelector(".idea-why").textContent, category: link.dataset.category, recipientTag: link.dataset.recipient });
   const button = document.createElement("button"); button.type = "button"; button.className = "guide-save";
   button.dataset.guideSave = savedKey(item);
-  button.setAttribute("aria-label", `Save or remove ${item.title} from your shortlist`);
+  button.dataset.guideTitle = item.title;
   const status = document.createElement("p"); status.className = "source"; status.setAttribute("role", "status");
   button.addEventListener("click", () => {
     const saved = readSaved(), key = savedKey(item);

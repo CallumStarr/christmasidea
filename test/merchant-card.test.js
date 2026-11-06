@@ -81,34 +81,29 @@ const product = (provider, overrides = {}) => ({
   ...overrides,
 });
 
-test("photo-first cards are hidden if their current image fails or expires", async () => {
+test("ideas survive when their current image fails or expires", async () => {
   for (const event of ["error", "expiry"]) {
     const ui = await fixture();
     ui.card.dataset.photoRequired = "true";
-    ui.apply(ui.card, idea, product("ebay"));
+    ui.apply(ui.card, idea, product("amazon"));
     if (event === "error") ui.media.querySelector(".product-image").children[0].listeners.error();
     else ui.timers[0]();
-    assert.equal(ui.card.hidden, true);
+    assert.notEqual(ui.card.hidden, true);
     assert.equal(ui.media.querySelector(".product-image"), null);
     assert.equal(ui.notices.length, 1);
   }
 });
-test("eBay example photo is not a merchant link and leaves both shopping choices available", async () => {
+test("mixed-retailer cards do not display any eBay listing content", async () => {
   const ui = await fixture(), ebay = product("ebay");
   ui.apply(ui.card, idea, ebay);
   const photo = ui.media.querySelector(".product-image");
-  assert.equal(photo.tagName, "div");
-  assert.equal(photo.href, undefined);
-  assert.equal(photo.attributes.tabindex, undefined);
-  assert.equal(photo.children[0].alt, "Example of Coffee mug gift idea: ebay coffee mug listing");
-  assert.equal(ui.note.textContent, "Example photo: eBay. Amazon product may differ.");
-  assert.equal(ui.media.querySelector(".product-badge").textContent, "Example product");
-  assert.equal(ui.shops.ebay.href, ebay.affiliateUrl);
-  assert.doesNotMatch(ui.shops.ebay.attributes["aria-label"], /affiliate/);
+  assert.equal(photo, null);
+  assert.equal(ui.media.querySelector(".product-badge"), null);
+  assert.equal(ui.shops.ebay.href, "https://search.example/ebay");
   assert.equal(ui.shops.amazon.href, "https://search.example/amazon");
   assert.equal(ui.heading.textContent, idea.title);
-  assert.equal(ui.shops.ebay.parent.querySelector(".offer-detail").textContent, "Matched eBay listing: ebay coffee mug listing");
-  assert.equal(ui.shops.ebay.parent.querySelector(".product-price").textContent, "eBay: £14.50 incl. listed delivery");
+  assert.equal(ui.shops.ebay.parent.querySelector(".offer-detail"), null);
+  assert.equal(ui.shops.ebay.parent.querySelector(".product-price"), null);
 });
 
 test("Awin products add an attributed retailer link and remove it with the expiring offer", async () => {
@@ -126,54 +121,53 @@ test("Awin products add an attributed retailer link and remove it with the expir
   assert.equal(ui.media.querySelector(".product-image"), null);
 });
 
-test("Amazon photos replace eBay examples without old expiry or error callbacks removing them", async () => {
+test("Amazon photos remain retailer-specific and expiry restores its search", async () => {
   const ui = await fixture(), ebay = product("ebay"), amazon = product("amazon");
   ui.apply(ui.card, idea, ebay);
   const previous = ui.media.querySelector(".product-image");
   ui.apply(ui.card, idea, amazon);
   assert.equal(ui.shops.amazon.href, amazon.affiliateUrl);
-  assert.equal(ui.shops.ebay.href, ebay.affiliateUrl);
+  assert.equal(ui.shops.ebay.href, "https://search.example/ebay");
   const photo = ui.media.querySelector(".product-image");
   assert.equal(photo.tagName, "a");
   assert.equal(photo.href, amazon.affiliateUrl);
   assert.equal(ui.note.textContent, "Photo from Amazon listing");
   assert.equal(ui.media.children.filter((child) => child.className === "product-image").length, 1);
   assert.equal(ui.shops.amazon.parent.querySelector(".offer-detail").textContent, "Matched Amazon listing: amazon coffee mug listing");
-  ui.timers[0]();
-  previous.children[0].listeners.error();
+  assert.equal(previous, null);
   assert.equal(ui.media.querySelector(".product-image"), photo);
   assert.equal(ui.card.classes.has("verified"), true);
   assert.equal(ui.notices.length, 0);
   assert.equal(ui.shops.ebay.href, "https://search.example/ebay");
   assert.equal(ui.shops.ebay.parent.querySelector(".product-price"), null);
   assert.equal(ui.shops.amazon.href, amazon.affiliateUrl);
-  ui.timers[1]();
+  ui.timers[0]();
   assert.equal(ui.media.querySelector(".product-image"), null);
   assert.equal(ui.shops.amazon.href, "https://search.example/amazon");
 });
 
 test("image failures hide broken media and notify the visitor without losing either shopping link", async () => {
-  const ui = await fixture(), ebay = product("ebay");
-  ui.apply(ui.card, idea, ebay);
+  const ui = await fixture(), amazon = product("amazon");
+  ui.apply(ui.card, idea, amazon);
   ui.media.querySelector(".product-image").children[0].listeners.error();
   assert.equal(ui.card.classes.has("verified"), false);
   assert.equal(ui.media.querySelector(".product-image"), null);
-  assert.equal(ui.shops.ebay.href, ebay.affiliateUrl);
-  assert.equal(ui.shops.amazon.href, "https://search.example/amazon");
+  assert.equal(ui.shops.ebay.href, "https://search.example/ebay");
+  assert.equal(ui.shops.amazon.href, amazon.affiliateUrl);
   assert.match(ui.notices[0], /photo couldn't load/);
 });
 
 test("unapproved image hosts never expose media even when the offer itself is valid", async () => {
   const ui = await fixture();
-  ui.apply(ui.card, idea, product("ebay", { imageUrl: "https://evil.example/photo.jpg" }));
+  ui.apply(ui.card, idea, product("amazon", { imageUrl: "https://evil.example/photo.jpg" }));
   assert.equal(ui.card.classes.has("verified"), false);
   assert.equal(ui.media.querySelector(".product-image"), null);
-  assert.equal(ui.shops.ebay.textContent, "View on eBay");
+  assert.equal(ui.shops.amazon.textContent, "View on Amazon");
 });
 
-test("eBay examples expire without leaving a stale image or price", async () => {
+test("Amazon offers expire without leaving a stale image or price", async () => {
   const ui = await fixture();
-  ui.apply(ui.card, idea, product("ebay"));
+  ui.apply(ui.card, idea, product("amazon"));
   ui.timers[0]();
   assert.equal(ui.media.querySelector(".product-image"), null);
   assert.equal(ui.card.classes.has("verified"), false);

@@ -202,7 +202,7 @@ test("offline readiness reports exact bypass and abstention counts without claim
 });
 
 const ORIGIN = "https://gifts.example.com";
-const env = { ...enabled, ALLOWED_ORIGINS: ORIGIN, IP_SALT: "test-ip-salt-0123456789abcdef01234567",
+const env = { ...enabled, ALLOWED_ORIGINS: ORIGIN, IP_SALT: "test-ip-salt-0123456789abcdef01234567", RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   FEEDBACK_ADMIN_TOKEN: "test-admin-token-0123456789abcdef01234567", ANTHROPIC_API_KEY: "test-key" };
 const request = (path, body, token = "") => new Request(`${ORIGIN}${path}`, {
   method: "POST", headers: { Origin: ORIGIN, "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -211,7 +211,7 @@ const request = (path, body, token = "") => new Request(`${ORIGIN}${path}`, {
 
 test("knowledge export is authenticated, paginated and separate from category export", async () => {
   let calls = 0;
-  const deps = { feedback: { export: async (after, kind) => {
+  const deps = { adminAuth: { reserve: async () => ({ ok: true, bucket: "H2026-11-06T21" }), release: async () => true }, feedback: { export: async (after, kind) => {
     calls++;
     assert.equal(kind, "V");
     assert.equal(after, undefined);

@@ -16,6 +16,7 @@ const env = {
   EBAY_CLIENT_ID: "ebay-test-client",
   EBAY_CLIENT_SECRET: "test-secret",
   EBAY_CAMPAIGN_ID: "1234567890",
+  EBAY_AFFILIATE_TRACKING_APPROVED: "true",
 };
 const config = { EBAY_CAMPAIGN_ID: env.EBAY_CAMPAIGN_ID, AMAZON_TAG: "test-21" };
 const id = "v1|123456789012|0";
@@ -46,6 +47,8 @@ test("eBay requires its own opt-in and credentials but an affiliate campaign is 
     assert.equal(productDiscoveryAvailable({ ...env, ...patch }), false);
   }
   assert.equal(productDiscoveryAvailable({ ...env, EBAY_CAMPAIGN_ID: "" }), true);
+  // Without recorded approval the campaign is ignored, so discovery stays available on untracked URLs.
+  assert.equal(productDiscoveryAvailable({ ...env, EBAY_AFFILIATE_TRACKING_APPROVED: "false", EBAY_CAMPAIGN_ID: "invalid" }), true);
   assert.equal(productDiscoveryAvailable({
     ...env, EBAY_CAMPAIGN_ID: "", EBAY_CAMPAIGNID: "1234567890",
   }), true);
@@ -89,14 +92,15 @@ test("photo selection rejects a tracked offer when the public campaign is empty"
   const mismatch = await selectPhotographedIdeas([idea], [], {
     ...options, config: { EBAY_CAMPAIGN_ID: "" },
   });
-  assert.equal(mismatch.selected.length, 0);
-  assert.match(mismatch.notice, /No suitable ideas/);
+  assert.equal(mismatch.selected.length, 1);
+  assert.deepEqual(mismatch.selected[0].offers, []);
+  assert.match(mismatch.notice, /without photos/);
   assert.equal(imageLoads, 0);
 
   const matching = await selectPhotographedIdeas([idea], [], { ...options, config });
   assert.equal(matching.selected.length, 1);
-  assert.equal(matching.selected[0].offers[0].productId, id);
-  assert.equal(imageLoads, 1);
+  assert.deepEqual(matching.selected[0].offers, []);
+  assert.equal(imageLoads, 0, "eBay content stays off mixed-retailer cards even with a matching campaign");
 });
 
 test("OAuth trims credential whitespace and reports only approved error categories", async () => {
@@ -394,14 +398,14 @@ test("frontend preserves multi-merchant offers and partial provider failures", a
 test("the product endpoint returns eBay photos without calling Amazon or requiring AI credentials", async () => {
   const origin = "https://gifts.example.com";
   const salt = "unit-test-ip-salt-0123456789abcdef";
-  const [signed] = await issueFeedbackReceipts([{ ...idea, source: "model" }], { IP_SALT: salt });
+  const [signed] = await issueFeedbackReceipts([{ ...idea, source: "model" }], { IP_SALT: salt, RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef" });
   const request = new Request(`${origin}/api/products`, {
     method: "POST",
     headers: { Origin: origin, "Content-Type": "application/json", "CF-Connecting-IP": "192.0.2.1" },
     body: JSON.stringify({ ideas: [signed] }),
   });
   const result = await handleRequest(request, {
-    ...env, ALLOWED_ORIGINS: origin, IP_SALT: salt,
+    ...env, ALLOWED_ORIGINS: origin, IP_SALT: salt, RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   }, {
     productBudget: { take: async (_ip, count) => count },
     fetch: async (url) => {
@@ -426,7 +430,7 @@ test("the product endpoint refuses unsigned ideas before spending any search bud
     body: JSON.stringify({ ideas: [idea] }),
   });
   const result = await handleRequest(request, {
-    ...env, ALLOWED_ORIGINS: origin, IP_SALT: "unit-test-ip-salt-0123456789abcdef",
+    ...env, ALLOWED_ORIGINS: origin, IP_SALT: "unit-test-ip-salt-0123456789abcdef", RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   }, {
     productBudget: { take: async (_ip, count) => { spent = true; return count; } },
     fetch: async () => { throw new Error("unexpected eBay call"); },

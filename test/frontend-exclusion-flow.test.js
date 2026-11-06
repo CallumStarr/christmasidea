@@ -21,6 +21,7 @@ const env = {
   CANONICAL_HOST: "gifts.example.com",
   ALLOWED_ORIGINS: "https://gifts.example.com",
   IP_SALT: "frontend-test-salt-0123456789abcdef",
+  RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   ANTHROPIC_API_KEY: "test-only",
   TURNSTILE_SECRET: "test-only",
   RECOMMENDATION_MODE: "baseline-v3.3",

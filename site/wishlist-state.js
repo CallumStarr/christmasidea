@@ -77,7 +77,7 @@ export async function wishlistUrl(items, origin) {
 }
 
 export function sharedListText(items, url, linksFor) {
-  const lines = ["My gift shortlist — Santa's Helper", "Shopping links may earn Santa's Helper a commission.", ""];
+  const lines = ["My gift shortlist — Santa's Helper", "Ad. We earn a commission if you buy through these links, at no extra cost to you.", ""];
   for (const item of items) {
     const link = linksFor(item)[0];
     lines.push(`• ${item.title}${link ? `\n  ${link.href}` : "\n  Partner offer is no longer available."}`);

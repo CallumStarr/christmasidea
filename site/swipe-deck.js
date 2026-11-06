@@ -44,7 +44,7 @@ export function createSwipeDeck({ cards, toolbar, progress, onAdvance, onLike })
     }
     const attribution = document.createElement("p"); attribution.className = "detail-photo-note";
     const disclosure = document.createElement("p"); disclosure.className = "detail-disclosure";
-    disclosure.textContent = "Ad \u00b7 We may earn a commission from shopping links, at no extra cost to you. Search links don't confirm stock or price. Check the seller, product details and delivery before buying.";
+    disclosure.textContent = "Ad. We earn a commission if you buy through these links, at no extra cost to you. As an Amazon Associate I earn from qualifying purchases. As an eBay Partner Network Affiliate, I earn from qualifying purchases. Search links don't confirm stock or price. Check the seller, product details and delivery before buying.";
     content.append(attribution, disclosure);
     const footer = document.createElement("div"); footer.className = "detail-footer";
     const next = document.createElement("button"); next.type = "button"; next.className = "btn btn-primary deck-next";

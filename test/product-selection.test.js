@@ -1,15 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { selectPhotographedIdeas } from "../site/product-selection.js";
+import { selectPhotographedIdeas as selectIdeas } from "../site/product-selection.js";
+
+const selectPhotographedIdeas = (ideas, replacements, options) => selectIdeas(ideas, replacements, {
+  config: { AMAZON_TAG: "mcstarrstud0c-21" }, ...options,
+});
 
 const idea = (title) => ({ title, query: title, concept: title, productSpec: {} });
 const offer = (number, patch = {}) => {
   const now = Date.now();
   return ({
-  provider: "ebay", productId: `v1|1234567890${number}|0`, title: "Coffee mug",
-  imageUrl: `https://i.ebayimg.com/image-${number}.jpg`,
-  productUrl: `https://www.ebay.co.uk/itm/1234567890${number}`,
-  affiliateUrl: `https://www.ebay.co.uk/itm/1234567890${number}`,
+  provider: "amazon", productId: `B0123456${number}`, asin: `B0123456${number}`, title: "Coffee mug",
+  imageUrl: `https://m.media-amazon.com/image-${number}.jpg`,
+  productUrl: `https://www.amazon.co.uk/dp/B0123456${number}?tag=mcstarrstud0c-21`,
+  affiliateUrl: `https://www.amazon.co.uk/dp/B0123456${number}?tag=mcstarrstud0c-21`,
   retrievedAt: new Date(now).toISOString(), expiresAt: new Date(now + 3600000).toISOString(),
   availability: "IN_STOCK", condition: "NEW", ...patch,
   });
@@ -34,7 +38,7 @@ test("photo-first selection replaces missing matches and broken photos using val
       loadImage: async (url) => !url.includes("12.jpg"),
     },
   );
-  assert.deepEqual(result.selected.map((entry) => entry.idea.title), ["Keep", "Backup one", "Backup two"]);
+  assert.deepEqual(result.selected.map((entry) => entry.idea.title), ["Keep", "Backup one", "Backup two", "No match", "Broken", "No photo"]);
   assert.equal(requests.length, 2);
   assert.match(result.notice, /couldn't load/);
   assert.ok(result.selected.every((entry) => entry.offers.every((product) => product.imageUrl)));
@@ -49,8 +53,9 @@ test("selection removes duplicate listings and refuses unapproved photos or expi
     }),
     loadImage: async () => true,
   });
-  assert.deepEqual(result.selected.map((entry) => entry.idea.title), ["First"]);
-  assert.match(result.notice, /fewer ideas/);
+  assert.deepEqual(result.selected.map((entry) => entry.idea.title), ["First", "Duplicate", "Bad host", "Expired"]);
+  assert.ok(result.selected.slice(1).every(({ offers }) => offers.length === 0));
+  assert.match(result.notice, /without photos/);
 });
 
 test("eight photographed matches do not perform replacement lookups", async () => {
@@ -77,7 +82,7 @@ test("replacement lookup is bounded to four candidates and the displayed list st
   assert.equal(requests[1].length, 4);
 });
 
-test("capacity errors show fewer results without attempting more searches or restoring photo-less ideas", async () => {
+test("capacity errors retain ideas without photos and do not attempt more searches", async () => {
   let requests = 0;
   const result = await selectPhotographedIdeas([idea("First"), idea("Missing")], [idea("Backup")], {
     fetchBatches: async (_ideas, callback) => {
@@ -87,13 +92,24 @@ test("capacity errors show fewer results without attempting more searches or res
     loadImage: async () => true,
   });
   assert.equal(requests, 1);
-  assert.equal(result.selected.length, 1);
+  assert.equal(result.selected.length, 2);
   assert.match(result.notice, /limit/);
   const disabled = await selectPhotographedIdeas([idea("First")], [], {
     enabled: false, fetchBatches: () => assert.fail("disabled discovery must not search"),
   });
-  assert.equal(disabled.selected.length, 0);
+  assert.equal(disabled.selected.length, 1);
   assert.match(disabled.notice, /unavailable/);
+});
+
+test("eBay listing content is never loaded for mixed-retailer cards", async () => {
+  const result = await selectPhotographedIdeas([idea("First")], [], {
+    fetchBatches: async (_ideas, callback) => callback({ products: [offer(11, {
+      provider: "ebay", imageUrl: "https://i.ebayimg.com/photo.jpg",
+    })] }, 0),
+    loadImage: () => assert.fail("eBay image must not be requested"),
+  });
+  assert.equal(result.selected.length, 1);
+  assert.deepEqual(result.selected[0].offers, []);
 });
 
 test("cancellation during product or image retrieval cannot commit a partial list", async () => {

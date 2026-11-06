@@ -1,6 +1,6 @@
 // Generates the static gift-guide pages, 404 page and sitemap into site/.
 // Run with: npm run build:pages
-import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync as writeFile, readFileSync, existsSync, renameSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { retailerLinks } from "../site/affiliateRouter.js";
@@ -10,8 +10,17 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = join(ROOT, "site");
 const ORIGIN = "https://christmasidea.co.uk";
 
+function writeFileSync(path, content) {
+  if (existsSync(path) && readFileSync(path, "utf8") === content) return;
+  const temporary = `${path}.tmp`;
+  writeFile(temporary, content);
+  renameSync(temporary, path);
+}
+
 // Single source of truth for the affiliate tag: the home page config.
-const home = readFileSync(join(SITE, "index.html"), "utf8");
+const home = readFileSync(join(SITE, "index.html"), "utf8")
+  .replace(/(<div class="guide-copy"><h3>)(?!<span class="ad-label">)/g, '$1<span class="ad-label">Ad &middot; </span>');
+writeFileSync(join(SITE, "index.html"), home);
 const PUBLIC_CONFIG = publicMonetizationConfig();
 const TAG = PUBLIC_CONFIG.AMAZON_TAG || (home.match(/AMAZON_TAG:\s*"([^"]*)"/) || [])[1] || "";
 const EBAY_CAMPAIGN_ID = PUBLIC_CONFIG.EBAY_CAMPAIGN_ID || (home.match(/EBAY_CAMPAIGN_ID:\s*"([^"]*)"/) || [])[1] || "";
@@ -324,7 +333,7 @@ function header(path) {
     .replace('href="#form" aria-current="page"', 'href="/#form"')
     .replace('href="/gifts/">The gift guides</a></div>', `href="/gifts/"${path.startsWith("/gifts") ? ' aria-current="page"' : ""}>The gift guides</a></div>`)
     .replace(/<button class="nav-shortlist"[^>]*>([\s\S]*?)<\/button>/,
-      '<a class="nav-shortlist" id="nav-shortlist" href="/?shortlist=1" aria-label="Open your shortlist">$1</a>');
+      '<a class="nav-shortlist" id="nav-shortlist" href="/?shortlist=1" aria-label="Wishlists, 0 saved ideas">$1</a>');
 }
 
 function art(g, className = "guide-illustration") {
@@ -337,7 +346,7 @@ function art(g, className = "guide-illustration") {
 }
 
 function guideLink(g) {
-  return `<li><a href="/gifts/${g.slug}">${art(g, "directory-art")}<div class="directory-copy"><h3>${esc(EDITS[g.slug].title)}</h3><span class="directory-arrow" aria-hidden="true">&nearr;</span><p>${esc(g.desc)}</p><span class="directory-meta">Eight ideas &middot; What to look for</span></div></a></li>`;
+  return `<li><a href="/gifts/${g.slug}">${art(g, "directory-art")}<div class="directory-copy"><h3>Ad &middot; ${esc(EDITS[g.slug].title)}</h3><span class="directory-arrow" aria-hidden="true">&nearr;</span><p>${esc(g.desc)}</p><span class="directory-meta">Eight ideas &middot; What to look for</span></div></a></li>`;
 }
 
 function head(title, desc, path, extra = "") {
@@ -388,17 +397,21 @@ function guidePage(g) {
     headline: g.h1,
     description: g.desc,
     mainEntityOfPage: `${ORIGIN}${path}`,
+    author: { "@type": "Person", name: "Callum Starr" },
+    publisher: { "@type": "Organization", name: "NOAH Neurotech Ltd" },
+    dateModified: "2026-11-06",
   };
   const related = GUIDES.filter((x) => x.slug !== g.slug)
     .sort((a, b) => Number(EDITS[b.slug].group === EDITS[g.slug].group) - Number(EDITS[a.slug].group === EDITS[g.slug].group))
     .slice(0, 3);
-  return head(title, g.desc, path, `<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
+  const image = EDITS[g.slug].art;
+  return head(title, g.desc, path, `<link rel="preload" as="image" href="/images/${image}-800.webp" imagesrcset="/images/${image}-400.webp 400w, /images/${image}-800.webp 800w, /images/${image}-1200.webp 1200w" imagesizes="(max-width: 600px) calc(100vw - 48px), (max-width: 760px) 92vw, (max-width: 1100px) 40vw, 512px" fetchpriority="high">\n<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
 `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/gifts/">Gift guides</a><span aria-hidden="true">/</span><span aria-current="page">${esc(EDITS[g.slug].title)}</span></nav>
-<div class="guide-intro"><div><h1>${esc(g.h1)}</h1><p class="standfirst">${esc(g.intro)}</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
+<div class="guide-intro"><div><h1>Ad &middot; ${esc(g.h1)}</h1><p class="source">By Callum Starr, NOAH Neurotech Ltd &middot; Updated <time datetime="2026-11-06">6 November 2026</time></p><p class="standfirst">${esc(g.intro)}</p><p>Ideas are selected from fixed gift-concept lists for the topic and budget, with practical buying checks. We have not bought or tested the products in these searches.</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
 <section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><h2 id="choosing-title">Narrow down<br>the options.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section id="gift-ideas" aria-labelledby="ideas-title">
 <div class="ideas-heading"><div><h2 id="ideas-title">Eight options to consider</h2></div></div>
-<p class="disclosure">Ad: Amazon shopping links are affiliate links. We may earn a commission if you buy through affiliate links. eBay links ${EBAY_CAMPAIGN_ID ? "are also affiliate links" : "are ordinary search links until our Partner Network campaign is configured"}. Alternative retailer links may also use approved affiliate programmes. These links search the named retailer, not a specific product we have checked or tested. Check the listing and total price, including delivery. The images are AI-created illustrations, not photos of products we've tested.</p>
+<p class="disclosure">Ad. We earn a commission if you buy through these links, at no extra cost to you. eBay links ${EBAY_CAMPAIGN_ID ? "are also affiliate links" : "are ordinary search links until our Partner Network campaign is confirmed"}. These links search the named retailer, not a specific product we have checked or tested. Check the listing and total price, including delivery. Buy toys from sellers you trust and check for UKCA or CE marking and age warnings. The images are AI-created illustrations, not photos of products we've tested.</p>
 <div class="idea-grid">
 ${g.ideas.map(([name, why, q, note], i) => {
     if (!note) throw new Error(`Missing buying advice: ${g.slug} / ${name}`);
@@ -453,11 +466,11 @@ writeFileSync(join(SITE, "gifts", "index.html"), indexPage());
 for (const g of GUIDES) writeFileSync(join(SITE, "gifts", `${g.slug}.html`), guidePage(g));
 
 // Legal copy stays authored; only the common site shell is synchronised.
-for (const name of ["about", "privacy"]) {
+for (const name of ["about", "privacy", "terms"]) {
   const path = join(SITE, `${name}.html`);
   const page = readFileSync(path, "utf8")
     .replace(/<header\b[\s\S]*?<\/header>/, header(`/${name}`))
-    .replace(/\n?<footer class="site-footer">[\s\S]*?<\/footer>\n?/, "\n")
+    .replace(/\s*<footer class="site-footer">[\s\S]*?<\/footer>\s*(?=<\/body>)/, "\n")
     .replace(/<script type="module" src="\/site-shell\.js"><\/script>\s*/, "")
     .replace(/<link rel="icon"[^>]*>\s*/g, "")
     .replace(/<link rel="apple-touch-icon"[^>]*>\s*/g, "")
@@ -472,7 +485,7 @@ for (const name of ["about", "privacy"]) {
 }
 
 const today = new Date().toISOString().slice(0, 10);
-const urls = ["/", "/gifts/", ...GUIDES.map((g) => `/gifts/${g.slug}`), "/about", "/privacy"];
+const urls = ["/", "/gifts/", ...GUIDES.map((g) => `/gifts/${g.slug}`), "/about", "/privacy", "/terms"];
 writeFileSync(
   join(SITE, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +

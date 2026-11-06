@@ -9,8 +9,8 @@ const encode = (value) => btoa(String.fromCharCode(...value)).replaceAll("+", "-
 const decode = (value) => Uint8Array.from(atob(value.replaceAll("-", "+").replaceAll("_", "/")), (char) => char.charCodeAt(0));
 
 async function signingKey(env) {
-  if (typeof env.IP_SALT !== "string" || env.IP_SALT.length < 32) throw new Error("Feedback signing requires IP_SALT.");
-  return crypto.subtle.importKey("raw", encoder.encode(env.IP_SALT), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+  if (typeof env.RECEIPT_SIGNING_KEY !== "string" || env.RECEIPT_SIGNING_KEY.length < 32) throw new Error("Feedback signing requires RECEIPT_SIGNING_KEY.");
+  return crypto.subtle.importKey("raw", encoder.encode(env.RECEIPT_SIGNING_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 
 const signedBytes = (payload) => encoder.encode(`santas-helper:feedback:v1:${payload}`);
@@ -80,11 +80,10 @@ export async function verifyProductReceipts(ideas, env, now = Date.now()) {
 
 export async function verifyFeedbackReceipts(body, env, now = Date.now()) {
   if (!body || !FEEDBACK_EVENTS.includes(body.event)) return { ok: false, error: "Unknown event." };
-  if (body.event === "more") return { ok: true, legacy: true, body };
   const raw = body.event === "shown" ? body.items : [body.item];
   if (!Array.isArray(raw) || !raw.length || raw.length > 12) return { ok: false, error: "Send between one and twelve feedback items." };
   const signed = raw.filter((item) => item?.feedbackToken !== undefined);
-  if (!signed.length) return { ok: true, legacy: true, body };
+  if (!signed.length) return { ok: false, error: "Feedback requires a signed idea. Request fresh ideas." };
   if (signed.length !== raw.length) return { ok: false, error: "Do not mix signed and unsigned feedback." };
   const key = await signingKey(env);
   const records = [];

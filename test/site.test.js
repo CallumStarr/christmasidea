@@ -23,7 +23,7 @@ test("at least ten gift guides give all eight ideas equal Amazon and eBay search
       assert.match(link, /rel="sponsored noopener noreferrer"/, file);
       assert.ok(link.includes(`tag=${tag}`), `${file} missing affiliate tag`);
     }
-    assert.match(html, /Ad: Amazon shopping links are affiliate links/, `${file} needs a disclosure`);
+    assert.match(html, /Ad\. We earn a commission if you buy through these links, at no extra cost to you\./, `${file} needs a disclosure`);
     assert.match(html, /<link rel="canonical"/, file);
   }
 });
@@ -51,13 +51,17 @@ test("site files are valid UTF-8 without mojibake or a byte-order mark", async (
   }
 });
 
-test("operator contact details use email and offer a postal address on legal request", async () => {
+test("operator contact details show the company and registered office", async () => {
   const about = await read("about.html");
   const privacy = await read("privacy.html");
   const email = '<a href="mailto:support@christmasidea.co.uk">support@christmasidea.co.uk</a>';
-  assert.ok(about.includes(`<p><strong>Callum Starr</strong><br>Email: ${email}</p>`));
-  assert.ok(privacy.includes(`<p>Santa's Helper is operated by <strong>Callum Starr</strong>. Email: ${email}.</p>`));
-  assert.match(privacy, /A physical postal address is available upon legitimate legal request\./);
+  for (const page of [about, privacy]) {
+    assert.match(page, /NOAH Neurotech Ltd/);
+    assert.match(page, /17215758/);
+    assert.match(page, /registered in England and Wales/);
+    assert.match(page, /Registered office: 1 Tryelyn, Bodmin, England, PL31 1GD/);
+    assert.ok(page.includes(email));
+  }
   for (const page of [about, privacy]) {
     const links = [...page.matchAll(/href="mailto:([^"]+)"/g)];
     assert.ok(links.length > 0);
@@ -112,14 +116,14 @@ test("Worker sets CSP and HSTS headers and locks framing", async () => {
   assert.doesNotMatch(csp, /images\.pexels\.com/);
 });
 
-test("product cards keep eBay examples non-clickable and Amazon listing images linked", async () => {
+test("product cards exclude eBay content and keep approved retailer images linked", async () => {
   const html = await read("index.html");
   assert.match(await read("api.js"), /\/api\/products/);
   assert.match(html, /photo\.href = product\.affiliateUrl/);
-  assert.match(html, /document\.createElement\(product\.provider === "ebay" \? "div" : "a"\)/);
+  assert.match(html, /if \(product\.provider === "ebay"\) return;/);
   assert.match(html, /shop\.href = product\.affiliateUrl/);
   assert.match(html, /Matched \$\{merchant\} listing: \$\{product\.title\}/);
-  assert.match(html, /Example photo: eBay\. Amazon product may differ\./);
+  assert.doesNotMatch(html, /Example photo: eBay\. Amazon product may differ\./);
   assert.match(html, /Photo from Amazon listing/);
   assert.match(await read("home.css"), /\.merchant-links\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(html, /shop\[data-provider=/);
@@ -212,7 +216,7 @@ test("shortlist dock is contextual and never covers the finder", async () => {
   notify([{ isIntersecting: false }]);
   assert.equal(elements["#listbar"].hidden, true);
   assert.equal(elements["#nav-count"].textContent, 1);
-  assert.equal(elements["#nav-shortlist"]["aria-label"], "Open your wishlists, 1 saved idea");
+  assert.equal(elements["#nav-shortlist"]["aria-label"], "Wishlists, 1 saved idea");
   notify([{ isIntersecting: true }]);
   assert.equal(elements["#listbar"].hidden, false);
   shortlist.pop();
@@ -225,16 +229,16 @@ test("homepage separates gift concepts from matched listings and offers accessib
   assert.match(html, /Example descriptions/);
   assert.match(html, /class="prompt-chip"/);
   assert.match(html, /a\.textContent = search \? `Search \$\{merchant\}`/);
-  assert.match(html, /Search links open Amazon UK or eBay UK/);
+  assert.match(html, /Search links open the named retailer/);
   const disclosure = html.match(/<div class="recommendation-disclosure">([\s\S]*?)<\/div>/)?.[1];
   assert.ok(disclosure, "shopping links need a dedicated disclosure");
   const visibleDisclosure = disclosure.match(/<p class="disclosure">([\s\S]*?)<\/p>/)?.[1];
   assert.ok(visibleDisclosure, "the concept/product distinction must not be hidden inside details");
-  assert.match(visibleDisclosure, /Amazon shopping links are affiliate links/);
-  assert.match(visibleDisclosure, /gift ideas, not products we have tested/);
+  assert.match(visibleDisclosure, /As an Amazon Associate I earn from qualifying purchases/);
+  assert.match(disclosure, /gift ideas, not products we have tested/);
   assert.match(visibleDisclosure, /earn a commission/);
-  assert.match(disclosure, /Matched Amazon listing/);
-  assert.match(disclosure, /Matching is not a review or an endorsement/);
+  assert.match(disclosure, /matched listing/);
+  assert.match(disclosure, /Matching is not a review or endorsement/);
   assert.ok(html.indexOf(disclosure) < html.indexOf('id="cards"'), "disclosure must precede shopping results");
   const css = await read("home.css");
   assert.match(css, /\.media\{display:none\}/, "gift concepts must not display pretend product images");

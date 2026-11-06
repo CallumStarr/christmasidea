@@ -12,7 +12,7 @@ import { fetchProducts, sendFeedback } from "../site/api.js";
 import { proposePolicy } from "../scripts/review-feedback.mjs";
 
 const now = Date.parse("2026-11-06T15:00:00Z");
-const env = { IP_SALT: "receipt-test-secret-0123456789abcdef01234567", ALLOWED_ORIGINS: "https://gifts.example.com" };
+const env = { IP_SALT: "receipt-test-salt-0123456789abcdef01234567", RECEIPT_SIGNING_KEY: "receipt-test-secret-0123456789abcdef01234567", ALLOWED_ORIGINS: "https://gifts.example.com" };
 const input = normaliseInput({ mode: "describe", description: "My 8-year-old son loves trains. Budget \u00a350." }).value;
 const concept = CONCEPTS[0];
 const ideas = applyLearning([{ title: concept.title, query: concept.query, category: concept.category,
@@ -83,20 +83,19 @@ test("invalid, modified, expired, wrong-key and mixed receipts fail explicitly",
     assert.equal((await verifyFeedbackReceipts({ event: "good", item: { ...item, feedbackToken: token } }, env, now)).ok, false);
   }
   assert.equal((await verifyFeedbackReceipts({ event: "good", item }, env, now + RECEIPT_LIFETIME_MS)).ok, false);
-  assert.equal((await verifyFeedbackReceipts({ event: "good", item }, { IP_SALT: "another-test-secret-0123456789abcdef01234567" }, now)).ok, false);
+  assert.equal((await verifyFeedbackReceipts({ event: "good", item }, { RECEIPT_SIGNING_KEY: "another-test-secret-0123456789abcdef01234567" }, now)).ok, false);
   assert.equal((await verifyFeedbackReceipts({ event: "shown", items: [item, ideas[0]] }, env, now)).ok, false);
   assert.equal((await verifyFeedbackReceipts({ event: "good", item: { ...item, position: 12 } }, env, now)).ok, false);
   assert.equal((await verifyFeedbackReceipts({ event: "shown", items: Array(13).fill(item) }, env, now)).ok, false);
 });
 
-test("legacy clients remain compatible but cannot add learning or concept evidence", async () => {
+test("unsigned feedback is refused for every event type", async () => {
   const legacy = { ...ideas[0], position: 0 };
   const verified = await verifyFeedbackReceipts({ event: "good", item: legacy }, env, now);
-  assert.equal(verified.ok, true);
-  assert.equal(verified.legacy, true);
-  const keys = feedbackKeys(verified.body).keys;
-  assert.ok(keys.includes("good|p:0"), "coarse aggregate counters are still recorded");
-  assert.ok(keys.every((key) => !key.startsWith("L|") && !key.startsWith("V|") && !key.startsWith("K|")));
+  assert.equal(verified.ok, false);
+  for (const event of ["more", "shown", "click", "save", "dismiss", "good", "bad", "bought"]) {
+    assert.equal((await verifyFeedbackReceipts({ event, item: legacy, items: [legacy] }, env, now)).ok, false, event);
+  }
 });
 
 test("receipt-verified cards still contribute learning evidence", async () => {
@@ -104,6 +103,16 @@ test("receipt-verified cards still contribute learning evidence", async () => {
   const { records } = await verifyFeedbackReceipts({ event: "good", item }, env, now);
   assert.ok(records[0].keys.some((key) => key.startsWith("L|good|")));
   assert.ok(records[0].shownKeys.some((key) => key.startsWith("L|shown|")));
+});
+
+test("signed more events are counted once per issued card", async (t) => {
+  const { record, count } = fixture(t);
+  const item = await signedItem();
+  const result = await verifyFeedbackReceipts({ event: "more", item }, env, now);
+  assert.equal(result.ok, true);
+  assert.equal(record(result.records).accepted, 1);
+  assert.equal(record(result.records).accepted, 0);
+  assert.equal(count("more"), 1);
 });
 
 test("forged unsigned feedback cannot manufacture a learning-policy proposal", async () => {
@@ -118,13 +127,13 @@ test("forged unsigned feedback cannot manufacture a learning-policy proposal", a
     body: JSON.stringify(body),
   }), env, deps)).status;
   for (let i = 0; i < 20; i++) {
-    assert.equal(await send({ event: "shown", items: Array.from({ length: 12 }, (_, position) => ({ source: "model", strategy: "unknown", position, learning })) }), 202);
+    assert.equal(await send({ event: "shown", items: Array.from({ length: 12 }, (_, position) => ({ source: "model", strategy: "unknown", position, learning })) }), 400);
   }
-  for (let i = 0; i < 40; i++) assert.equal(await send({ event: "good", item: { source: "model", position: 0, learning } }), 202);
+  for (let i = 0; i < 40; i++) assert.equal(await send({ event: "good", item: { source: "model", position: 0, learning } }), 400);
   const rows = [...counts].filter(([key]) => key.startsWith("L|")).map(([k, n]) => ({ bucket: "F2026-11-06", k, n }));
   assert.equal(rows.length, 0);
   assert.deepEqual(proposePolicy(feedbackCsv(rows)).cells, []);
-  assert.equal(counts.get("good|p:0"), 40, "unsigned events remain visible as coarse aggregates");
+  assert.equal(counts.size, 0, "unsigned events never reach storage");
 });
 
 test("SQLite deduplicates replayed cards, prevents conflicting ratings, and handles rating before shown", async (t) => {

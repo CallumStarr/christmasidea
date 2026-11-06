@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-11-06T21:49:12.310Z",
+  "limitPerHour": 10,
+  "results": [
+    {
+      "name": "A sequential brute force (15 wrong tokens)",
+      "ms": 503,
+      "submitted": 15,
+      "statuses": {
+        "401": 10,
+        "429": 5
+      },
+      "tokenComparisons": 10
+    },
+    {
+      "name": "B/C concurrent burst (60 wrong tokens, one IP)",
+      "ms": 660,
+      "submitted": 60,
+      "statuses": {
+        "401": 10,
+        "429": 50
+      },
+      "tokenComparisons": 10,
+      "nextAttempt": 429
+    },
+    {
+      "name": "B/C concurrent burst (100 wrong tokens, one IP)",
+      "ms": 856,
+      "submitted": 100,
+      "statuses": {
+        "401": 10,
+        "429": 90
+      },
+      "tokenComparisons": 10,
+      "nextAttempt": 429
+    },
+    {
+      "name": "B/C concurrent burst (400 wrong tokens, one IP)",
+      "ms": 2588,
+      "submitted": 400,
+      "statuses": {
+        "401": 10,
+        "429": 390
+      },
+      "tokenComparisons": 10,
+      "nextAttempt": 429
+    },
+    {
+      "name": "D correct token inside a 100-request concurrent attack (same IP)",
+      "ms": 954,
+      "submitted": 101,
+      "statuses": {
+        "401": 10,
+        "429": 90
+      },
+      "tokenComparisons": 10,
+      "legitDuring": 429,
+      "legitAfter": 429
+    },
+    {
+      "name": "E repeated waves after lockout (5 waves x 50)",
+      "ms": 1449,
+      "submitted": 250,
+      "waves": [
+        {
+          "401": 10,
+          "429": 40
+        },
+        {
+          "429": 50
+        },
+        {
+          "429": 50
+        },
+        {
+          "429": 50
+        },
+        {
+          "429": 50
+        }
+      ],
+      "tokenComparisons": 10
+    },
+    {
+      "name": "F other visitors during a 100-request attack",
+      "ms": 868,
+      "submitted": 102,
+      "statuses": {
+        "401": 10,
+        "429": 90
+      },
+      "otherVisitorCorrectToken": 200,
+      "otherVisitorWrongToken": 401
+    }
+  ]
+}

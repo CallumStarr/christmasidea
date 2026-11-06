@@ -1,0 +1,116 @@
+{
+  "capturedUtc": "2026-11-06T22:10:27.904Z",
+  "note": "Read-only GET requests, ~300 ms apart; deployed version is pre-remediation acb2c91.",
+  "results": {
+    "https://christmasidea.co.uk/": {
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "cache": "public, max-age=0, must-revalidate",
+      "location": null,
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null
+    },
+    "https://christmasidea.co.uk/api/health": {
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "cache": "no-store",
+      "location": null,
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null,
+      "body": "{\"ok\":true}"
+    },
+    "https://christmasidea.co.uk/api/ready": {
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "cache": "no-store",
+      "location": null,
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null,
+      "body": "{\"ok\":true}"
+    },
+    "https://christmasidea.co.uk/gifts/gifts-for-mum": {
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "cache": "public, max-age=0, must-revalidate",
+      "location": null,
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null
+    },
+    "https://christmasidea.co.uk/does-not-exist-audit": {
+      "status": 404,
+      "contentType": "text/html; charset=utf-8",
+      "cache": "public, max-age=0, must-revalidate",
+      "location": null,
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null
+    },
+    "https://christmasidea.co.uk/app.js": {
+      "status": 200,
+      "contentType": "text/javascript; charset=utf-8",
+      "cache": "public, max-age=0, must-revalidate",
+      "location": null,
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null
+    },
+    "https://www.christmasidea.co.uk/": {
+      "status": 301,
+      "contentType": null,
+      "cache": null,
+      "location": "https://christmasidea.co.uk/",
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null
+    },
+    "http://christmasidea.co.uk/": {
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "cache": "public, max-age=0, must-revalidate",
+      "location": null,
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null
+    },
+    "https://christmasidea.co.uk/api/feedback/list": {
+      "status": 404,
+      "contentType": "application/json; charset=utf-8",
+      "cache": "no-store",
+      "location": null,
+      "scriptSrc": "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+      "hsts": "max-age=31536000",
+      "xcto": "nosniff",
+      "xfo": "DENY",
+      "referrer": "strict-origin-when-cross-origin",
+      "acao": null
+    }
+  }
+}

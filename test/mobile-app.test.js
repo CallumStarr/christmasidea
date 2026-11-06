@@ -2,10 +2,27 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import vm from "node:vm";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { apiEndpoint, fetchIdeas, fetchProducts, sendFeedback } from "../site/api.js";
 import { APP_ORIGIN, createAppVerification, validVerificationMessage } from "../site/app-verification.js";
 import { appFrameHeaders } from "../src/app-headers.js";
 import { allowedOrigin } from "../src/core.js";
+
+test("unapproved mobile builds contain no Amazon Special Links", async () => {
+  execFileSync(process.execPath, ["scripts/build-mobile.mjs"], {
+    cwd: fileURLToPath(new URL("..", import.meta.url)),
+    env: { ...process.env, AMAZON_MOBILE_APPROVED: "false" }, stdio: "pipe",
+  });
+  const html = await readFile(new URL("../mobile/www/index.html", import.meta.url), "utf8");
+  assert.match(html, /AMAZON_TAG:\s*""/);
+  assert.doesNotMatch(html, /AMAZON_TAG:\s*"mcstarrstud0c-21"/);
+  const config = await readFile(new URL("../mobile/www/monetization-config.js", import.meta.url), "utf8");
+  assert.match(config, /"AMAZON_TAG":\s*""/);
+  const guide = await readFile(new URL("../mobile/www/gifts/gifts-for-mum.html", import.meta.url), "utf8");
+  assert.doesNotMatch(guide, /[&;]tag=/);
+  assert.match(guide, /https:\/\/www\.amazon\.co\.uk\/s\?/);
+});
 
 test("native API routes all request types to HTTPS while browsers remain same-origin", async (t) => {
   t.after(() => { delete globalThis.GIFT_APP_API_BASE; });

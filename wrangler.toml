@@ -5,11 +5,11 @@ workers_dev = false
 preview_urls = false
 
 # The website (site/ folder) is served by this same Worker.
-# Every request runs the Worker first so www can be redirected and security headers added.
+# HTML and API requests run the Worker; other assets use the generated site/_headers without Worker billing.
 [assets]
 directory = "./site"
 binding = "ASSETS"
-run_worker_first = true
+run_worker_first = ["/", "/index", "/index.html", "/about", "/about.html", "/privacy", "/privacy.html", "/terms", "/terms.html", "/gifts", "/gifts/*", "/app-verify", "/app-verify.html", "/404", "/404.html", "/api/*"]
 not_found_handling = "404-page"
 
 # christmasidea.co.uk and www both point at this Worker; www is redirected to the main domain in code.
@@ -47,7 +47,8 @@ PER_VISITOR_MINUTE_LIMIT = "4"
 PRODUCT_DISCOVERY_ENABLED = "true"
 PRODUCT_PHOTO_FIRST = "true"
 AMAZON_PRODUCT_DISCOVERY_ENABLED = "false"
-EBAY_PRODUCT_DISCOVERY_ENABLED = "true"
+# Mixed-retailer cards must not display eBay content. Ordinary eBay search links remain available.
+EBAY_PRODUCT_DISCOVERY_ENABLED = "false"
 AMAZON_PARTNER_TAG = "mcstarrstud0c-21"
 AWIN_PRODUCT_DISCOVERY_ENABLED = "false"
 AWIN_PUBLISHER_ID = "3146453"
@@ -55,6 +56,10 @@ AWIN_IMAGE_HOSTS = ""
 # Public production App ID; the Cert ID is stored only as the EBAY_CLIENT_SECRET Worker secret.
 EBAY_CLIENT_ID = "CallumSt-SantasHe-PRD-5a2eef3be-4793a07b"
 EBAY_CAMPAIGN_ID = "5339240592"
+# "true" only while the campaign is active in eBay Partner Network; the same campaign must be the public
+# EBAY_CAMPAIGN_ID in site/index.html (enforced by test/ebay-config-alignment.test.js). Operator-approved in
+# commit eaf4d3e; set "false" and empty the public ID together to fall back to ordinary eBay listing links.
+EBAY_AFFILIATE_TRACKING_APPROVED = "true"
 PRODUCT_API_TIMEOUT_MS = "8000"
 PRODUCT_SEARCH_DAILY_LIMIT = "4000"
 PRODUCT_SEARCH_HOURLY_LIMIT = "1000"

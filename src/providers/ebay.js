@@ -7,7 +7,10 @@ const tokens = new Map();
 const API_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
 const TOKEN_URL = "https://api.ebay.com/identity/v1/oauth2/token";
 
+// A configured campaign is only used once the operator has explicitly recorded EPN approval; otherwise
+// offers fall back to ordinary (untracked) listing URLs that the public site also accepts.
 export function ebayCampaignId(env = {}) {
+  if (String(env.EBAY_AFFILIATE_TRACKING_APPROVED || "").trim() !== "true") return "";
   return String(env.EBAY_CAMPAIGN_ID || env.EBAY_CAMPAIGNID || "").trim();
 }
 

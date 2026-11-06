@@ -64,7 +64,7 @@ test("CSV proposal uses control explicit ratings only and never approves itself"
 
 test("export requires configured admin secret and returns paginated CSV, not public event data", async () => {
   let called = false;
-  const deps = { feedback: { export: async (after) => {
+  const deps = { adminAuth: { reserve: async () => ({ ok: true, bucket: "H2026-11-06T21" }), release: async () => true }, feedback: { export: async (after) => {
     called = true;
     assert.deepEqual(after, { bucket: "F2026-11-04", key: "L|shown" });
     return { rows: [{ bucket: "F2026-11-05", k: "L|shown|trains|child|15-30|3|control-v1|0", n: 200 }],
@@ -87,7 +87,8 @@ test("UI keeps rejected titles ahead of freshness exclusions and clears them for
   assert.match(html, /shownTitles = \[\]; rejectedTitles = \[\]/);
   assert.match(html, /good\.disabled = true; bad\.disabled = true/);
   assert.match(html, /Self-reported purchase, not verified by the retailer/);
-  for (const [, script] of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) {
+  for (const [, attrs, script] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
+    if (attrs.includes("application/ld+json")) continue;
     const checked = spawnSync(process.execPath, ["--input-type=module", "--check"], { input: script, encoding: "utf8" });
     assert.equal(checked.status, 0, checked.stderr);
   }
@@ -119,7 +120,7 @@ test("actual card handlers send explicit ratings and purchases and preserve reje
     swipeDeck: { enable() {}, advance(card) { card.hidden = true; } },
     $: (selector) => selector === "#cards" ? cards : more,
     isSaved: () => false, toggleSave() {}, updateCardLayout() {}, showFeedback() {}, setStatus() {},
-    statusRevision: 0, CFG: {}, apiOn: () => true,
+    statusRevision: 0, lastFeedbackItem: null, CFG: {}, apiOn: () => true,
     monetization: { decorateIdeas: (ideas) => ideas, annotateCard() {} },
     retailerLinks: () => [
       { merchantId: "amazon", name: "Amazon", href: "https://amazon.example", affiliate: true, network: "amazon", search: true },

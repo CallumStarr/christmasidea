@@ -1,6 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
 import { fetchWorker } from "./worker-fetch.js";
-import { pruneUsageBuckets, reserveProductSearches, scheduleBudgetPrune, seedProductDailyUsage } from "./budget-storage.js";
+import {
+  pruneUsageBuckets, releaseAdminAuthAttempt, reserveAdminAuthAttempt, reserveProductSearches, scheduleBudgetPrune,
+  seedProductDailyUsage,
+} from "./budget-storage.js";
 import { acknowledgeFeedbackReview, initialiseFeedbackReview, prepareFeedbackReview, pruneFeedbackReview } from "./engine/feedback-review.js";
 import { initialiseFeedbackReceipts, pruneFeedbackReceipts, recordVerifiedFeedback } from "./engine/feedback-storage.js";
 
@@ -74,15 +77,12 @@ export class BudgetCounter extends DurableObject {
   }
 
   // Failed admin-token attempts per visitor hash per UTC hour. No global ceiling, so others cannot lock the operator out.
-  async adminAuthAllowed(ipHash) {
-    const b = this.buckets();
-    return this.count(b.hour, `adminfail:${ipHash}`) < (Number(this.env.ADMIN_AUTH_HOURLY_FAILURE_LIMIT) || 10);
+  async reserveAdminAuth(ipHash) {
+    return reserveAdminAuthAttempt(this, this.env, ipHash);
   }
 
-  async recordAdminAuthFailure(ipHash) {
-    const b = this.buckets();
-    this.add(b.hour, `adminfail:${ipHash}`);
-    return true;
+  async releaseAdminAuth(ipHash, bucket) {
+    return releaseAdminAuthAttempt(this.sql, ipHash, bucket);
   }
 
   // Feedback counts live in "F2026-11-02" buckets for 90 days; per-visitor rate limiting uses the short minute bucket.

@@ -11,6 +11,7 @@ const baseline = read("../benchmarks/baselines/v3.3-pre-refactor/benchmark-resul
 const env = {
   ALLOWED_ORIGINS: "https://gifts.example.com",
   IP_SALT: "baseline-test-salt-0123456789abcdef",
+  RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   ANTHROPIC_API_KEY: "test-only",
   RECOMMENDATION_MODE: "baseline-v3.3",
 };
@@ -20,12 +21,12 @@ const request = (input) => new Request("https://gifts.example.com/api/ideas", {
   body: JSON.stringify(input),
 });
 
-test("release configuration selects baseline with eBay-only product discovery", () => {
+test("release configuration selects baseline without eBay content on mixed-retailer cards", () => {
   const config = fs.readFileSync(new URL("../wrangler.toml", import.meta.url), "utf8");
   assert.match(config, /RECOMMENDATION_MODE = "baseline-v3.3"/);
   assert.match(config, /^PRODUCT_DISCOVERY_ENABLED = "true"/m);
   assert.match(config, /^AMAZON_PRODUCT_DISCOVERY_ENABLED = "false"/m);
-  assert.match(config, /^EBAY_PRODUCT_DISCOVERY_ENABLED = "true"/m);
+  assert.match(config, /^EBAY_PRODUCT_DISCOVERY_ENABLED = "false"/m);
 });
 
 test("baseline release preserves 29 reviewed lists and the explicit case-12 consistency correction", async () => {

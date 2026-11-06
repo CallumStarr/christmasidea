@@ -331,7 +331,7 @@ export function createMonetizationUI({ config, notify, getShortlist, setShortlis
       context = queryContext(input, ideas);
       if (!includeInventory) return ideas.map((idea) => ({ ...idea, recipientTag: context.recipientTag }));
       const extras = matchingVerifiedGifts(verified, context, input, config, {
-        experience: $("#include-experiences").checked, subscription: $("#include-subscriptions").checked,
+        experience: false, subscription: false,
       }).filter((gift, index, all) => !ideas.some((idea) => idea.title.toLowerCase() === gift.title.toLowerCase())
         && all.findIndex((other) => other.title.toLowerCase() === gift.title.toLowerCase()) === index);
       const result = [...ideas, ...extras].map((idea) => ({ ...idea, recipientTag: context.recipientTag }));
@@ -345,7 +345,6 @@ export function createMonetizationUI({ config, notify, getShortlist, setShortlis
       const revision = ++initialisation;
       await inventoryReady;
       if (revision !== initialisation) return;
-      $("#verified-preferences").hidden = config.ENABLE_VERIFIED_GIFTS !== true;
       updateShelf();
       try {
         const preset = finderPreset(location.hash);

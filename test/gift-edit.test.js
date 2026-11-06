@@ -213,9 +213,9 @@ test("secondary-page shortlist counts use the same validated storage shape as th
     saved: JSON.stringify([{ title: "Notebook", query: "garden notebook" }, null, { title: "Invalid" }]),
   });
   assert.equal(elements.get("#nav-count").textContent, 1);
-  assert.match(elements.get("a#nav-shortlist").attrs["aria-label"], /^Open your shortlist, 1 saved idea.*Original saved data is preserved/);
+  assert.match(elements.get("a#nav-shortlist").attrs["aria-label"], /^Wishlists, 1 saved idea.*Original saved data is preserved/);
   const invalid = await shell({ now: "2026-11-04", saved: "invalid" });
   assert.equal(invalid.warnings.length, 1);
   assert.equal(invalid.elements.get("#nav-count").hidden, true);
-  assert.equal(invalid.elements.get("a#nav-shortlist").attrs["aria-label"], "Open your shortlist");
+  assert.equal(invalid.elements.get("a#nav-shortlist").attrs["aria-label"], "Wishlists");
 });

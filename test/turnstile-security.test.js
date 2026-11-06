@@ -7,6 +7,7 @@ const ENV = {
   ALLOWED_ORIGINS: ORIGIN,
   CANONICAL_HOST: "gifts.example.com",
   IP_SALT: "synthetic-test-salt-0123456789abcdef",
+  RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   TURNSTILE_REQUIRED: "true",
   TURNSTILE_SECRET: "synthetic-turnstile-secret",
   ANTHROPIC_API_KEY: "synthetic-unused-api-key",

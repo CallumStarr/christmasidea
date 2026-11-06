@@ -78,6 +78,7 @@ const repeatedKneelingAid = candidate(
 const env = {
   ALLOWED_ORIGINS: "https://gifts.example.com",
   IP_SALT: "concept-test-salt-0123456789abcdef",
+  RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   ANTHROPIC_API_KEY: "test-only",
   RECOMMENDATION_MODE: "baseline-v3.3",
 };

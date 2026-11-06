@@ -1,9 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { handleRequest, sanitiseIdeas, normaliseInput, buildUserMessage, ANTHROPIC_VERSION, GIFT_TOOL } from "../src/core.js";
+import { issueFeedbackReceipts } from "../src/engine/feedback-receipts.js";
 
 const ORIGIN = "https://gifts.example.com";
-const env = { ALLOWED_ORIGINS: ORIGIN, ANTHROPIC_API_KEY: "sk-test", IP_SALT: "unit-test-ip-salt-0123456789abcdef", MODEL: "claude-haiku-5-5" };
+const env = { ALLOWED_ORIGINS: ORIGIN, ANTHROPIC_API_KEY: "sk-test", IP_SALT: "unit-test-ip-salt-0123456789abcdef", RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef", MODEL: "claude-haiku-5-5" };
 
 function req(body, { origin = ORIGIN, method = "POST", path = "/api/ideas" } = {}) {
   return new Request(`https://api.example.com${path}`, {
@@ -338,6 +339,24 @@ test("www redirects to the main domain, keeping path and query", () => {
   assert.equal(canonicalRedirect(new Request("https://christmasidea.yourname.workers.dev/"), e), null);
 });
 
+test("plain HTTP on the canonical host is upgraded to HTTPS", () => {
+  const e = { CANONICAL_HOST: "christmasidea.co.uk" };
+  const edgeHttp = { "CF-Visitor": '{"scheme":"http"}' };
+  const page = canonicalRedirect(new Request("http://christmasidea.co.uk/gifts/?x=1", { headers: edgeHttp }), e);
+  assert.equal(page.status, 301);
+  assert.equal(page.headers.get("Location"), "https://christmasidea.co.uk/gifts/?x=1");
+  const api = canonicalRedirect(new Request("http://christmasidea.co.uk/api/recommend", { method: "POST", body: "{}", headers: edgeHttp }), e);
+  assert.equal(api.status, 308, "non-GET requests keep their method");
+  const forwarded = canonicalRedirect(new Request("http://christmasidea.co.uk/", { headers: { "X-Forwarded-Proto": "http" } }), e);
+  assert.equal(forwarded.status, 301);
+  // wrangler dev presents the route host over http without edge scheme headers; redirecting would loop locally.
+  assert.equal(canonicalRedirect(new Request("http://christmasidea.co.uk/"), e), null);
+  assert.equal(canonicalRedirect(new Request("https://christmasidea.co.uk/", { headers: { "CF-Visitor": '{"scheme":"https"}' } }), e), null);
+  assert.equal(canonicalRedirect(new Request("http://christmasidea.co.uk/", { headers: { "CF-Visitor": "not json" } }), e), null);
+  assert.equal(canonicalRedirect(new Request("http://www.christmasidea.co.uk/a"), e).headers.get("Location"), "https://christmasidea.co.uk/a");
+  assert.equal(canonicalRedirect(new Request("http://localhost:8787/"), e), null, "local development is unaffected");
+});
+
 test("API refuses requests when IP_SALT is missing or too short", async () => {
   const { IP_SALT: _salt, ...withoutSalt } = env;
   for (const testEnv of [withoutSalt, { ...env, IP_SALT: "short" }]) {
@@ -405,9 +424,10 @@ test("JSON requests are bounded by bytes actually streamed, not just Content-Len
 
 test("/api/feedback stores only enumerated counters and fails safely", async () => {
   const fb = (body, opts = {}) => req(body, { path: "/api/feedback", ...opts });
-  const good = { event: "click", item: { strategy: "adjacent-driver", source: "graph", discovery: true, position: 1, title: "secret" } };
+  const [signed] = await issueFeedbackReceipts([{ strategy: "adjacent-driver", source: "graph", discovery: true, title: "secret" }], env);
+  const good = { event: "click", item: { ...signed, position: 1 } };
   const recorded = [];
-  const feedback = { record: async (ip, keys) => { recorded.push({ ip, keys }); return { ok: true }; } };
+  const feedback = { record: async (ip, keys, receipts) => { recorded.push({ ip, keys, receipts }); return { ok: true }; } };
 
   assert.equal((await handleRequest(fb(good, { origin: "https://evil.example" }), env, { feedback })).status, 403);
   assert.equal((await handleRequest(fb({ event: "purchase" }), env, { feedback })).status, 400);

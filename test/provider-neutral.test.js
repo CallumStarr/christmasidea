@@ -99,7 +99,7 @@ test("registry keeps Amazon unconfigured without credentials and the CSP lists e
 
 test("Amazon product-provider, offer-validation and image logic stays inside the Amazon provider module", async () => {
   const forbidden = [/media-amazon\.com/, /ssl-images-amazon\.com/, /creatorsapi/, /api\.amazon\.co\.uk/, /\/dp\/|gp\\?\/product/];
-  const allowedElsewhere = new Set(["worker-fetch.js"]); // the CSP names the image hosts; a test above keeps it in sync
+  const allowedElsewhere = new Set(["security-headers.js"]); // the shared CSP names the image hosts
   const dir = new URL("../src/", import.meta.url);
   const offenders = [];
   for (const name of await readdir(dir)) {
@@ -115,11 +115,11 @@ test("Amazon product-provider, offer-validation and image logic stays inside the
   }
 });
 
-test("Amazon remains disabled and retains its fallback tag while eBay discovery is enabled", async () => {
+test("Amazon retains its fallback tag while API discovery remains disabled for launch", async () => {
   const toml = await readFile(new URL("../wrangler.toml", import.meta.url), "utf8");
   assert.match(toml, /^PRODUCT_DISCOVERY_ENABLED\s*=\s*"true"/m);
   assert.match(toml, /^AMAZON_PRODUCT_DISCOVERY_ENABLED\s*=\s*"false"/m);
-  assert.match(toml, /^EBAY_PRODUCT_DISCOVERY_ENABLED\s*=\s*"true"/m);
+  assert.match(toml, /^EBAY_PRODUCT_DISCOVERY_ENABLED\s*=\s*"false"/m);
   assert.match(toml, /AMAZON_PARTNER_TAG\s*=\s*"mcstarrstud0c-21"/);
   const html = await readFile(new URL("../site/index.html", import.meta.url), "utf8");
   assert.match(html, /mcstarrstud0c-21/);

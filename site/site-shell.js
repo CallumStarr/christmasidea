@@ -27,10 +27,10 @@ if (shortlistLink) {
     }
     const count = collection.lists.reduce((sum, list) => sum + list.items.length, 0);
     document.querySelector("#nav-count").textContent = count;
-    shortlistLink.setAttribute("aria-label", `Open your shortlist, ${count} saved ${count === 1 ? "idea" : "ideas"}${notice}`);
+    shortlistLink.setAttribute("aria-label", `Wishlists, ${count} saved ${count === 1 ? "idea" : "ideas"}${notice}`);
   } catch (error) {
     console.warn("Shortlist count could not be read.");
     document.querySelector("#nav-count").hidden = true;
-    shortlistLink.setAttribute("aria-label", "Open your shortlist");
+    shortlistLink.setAttribute("aria-label", "Wishlists");
   }
 }

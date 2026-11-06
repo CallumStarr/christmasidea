@@ -30,7 +30,16 @@ export async function selectPhotographedIdeas(ideas, replacements = [], {
   const used = new Set();
   const titles = new Set();
   let unavailable = !enabled, limited = false, imageFailed = false;
-  if (!enabled) return { selected, notice: "Product photos are unavailable. Please try again later.", degraded: true };
+  const complete = (notice) => {
+    for (const idea of ideas.slice(0, 8)) {
+      if (selected.length >= 8) break;
+      if (titles.has(idea.title.toLowerCase())) continue;
+      titles.add(idea.title.toLowerCase());
+      selected.push({ idea, offers: [] });
+    }
+    return { selected, degraded: unavailable || limited, notice };
+  };
+  if (!enabled) return complete("Product photos are unavailable. Ideas are shown without photos.");
   const inspect = async (candidates) => {
     if (!candidates.length) return;
     const found = new Array(candidates.length);
@@ -49,7 +58,7 @@ export async function selectPhotographedIdeas(ideas, replacements = [], {
       const offers = [];
       for (const product of found[index] || []) {
         const identity = `${product.provider}:${product.productId}`;
-        if (used.has(identity) || !validProduct(product, config)
+        if (product.provider === "ebay" || used.has(identity) || !validProduct(product, config)
             || !validProductImage(product.imageUrl, product.provider, config)) continue;
         const loaded = await loadImage(product.imageUrl, signal);
         signal?.throwIfAborted();
@@ -69,12 +78,9 @@ export async function selectPhotographedIdeas(ideas, replacements = [], {
   if (selected.length < 8 && !unavailable && !limited) {
     await inspect(replacements.slice(0, 4).filter((idea) => !titles.has(idea.title.toLowerCase())));
   }
-  const notice = unavailable ? "Product photos couldn't be checked. Try again shortly."
-    : limited ? "Photo lookups reached their limit. Only ideas with checked photos are shown."
-    : imageFailed ? "Some photos couldn't load. Only ideas with working photos are shown."
-    : !selected.length ? "No suitable ideas with working product photos were found. Try another interest or budget."
-    : selected.length < 8 ? "Showing fewer ideas because we couldn't find suitable product photos for the others." : "";
-  // degraded: the photo check itself could not run (lookups unavailable or over their limit), as opposed to
-  // having run and found nothing suitable. Callers can then show the ideas without photos instead of none.
-  return { selected, notice, degraded: unavailable || limited };
+  const notice = unavailable ? "Product photos couldn't be checked. Some ideas are shown without photos."
+    : limited ? "Photo lookups reached their limit. Some ideas are shown without photos."
+    : imageFailed ? "Some photos couldn't load. Those ideas are shown without photos."
+    : selected.length < Math.min(8, ideas.length) ? "Some ideas are shown without photos. Use the shop searches to explore them." : "";
+  return complete(notice);
 }

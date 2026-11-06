@@ -1,0 +1,27 @@
+{
+ "total": 106,
+ "ignore": [],
+ "identical": 87,
+ "different": [],
+ "non200": [
+  "/about.html 307 /about",
+  "/app-verify.html 307 /app-verify",
+  "/404.html 307 /404",
+  "/gifts/gifts-for-4-year-olds.html 307 /gifts/gifts-for-4-year-olds",
+  "/gifts/gifts-for-coffee-lovers-under-30.html 307 /gifts/gifts-for-coffee-lovers-under-30",
+  "/gifts/gifts-for-dad.html 307 /gifts/gifts-for-dad",
+  "/gifts/gifts-for-gardeners.html 307 /gifts/gifts-for-gardeners",
+  "/gifts/gifts-for-book-lovers.html 307 /gifts/gifts-for-book-lovers",
+  "/gifts/gifts-for-gardeners-under-30.html 307 /gifts/gifts-for-gardeners-under-30",
+  "/gifts/gifts-for-mum.html 307 /gifts/gifts-for-mum",
+  "/gifts/gifts-for-new-babies.html 307 /gifts/gifts-for-new-babies",
+  "/gifts/gifts-for-history-lovers.html 307 /gifts/gifts-for-history-lovers",
+  "/gifts/gifts-for-personalised-gifts-under-30.html 307 /gifts/gifts-for-personalised-gifts-under-30",
+  "/gifts/gifts-for-space-lovers.html 307 /gifts/gifts-for-space-lovers",
+  "/gifts/gifts-for-tea-and-coffee-lovers.html 307 /gifts/gifts-for-tea-and-coffee-lovers",
+  "/gifts/index.html 307 /gifts/",
+  "/gifts/secret-santa-gifts-under-10.html 307 /gifts/secret-santa-gifts-under-10",
+  "/index.html 307 /",
+  "/privacy.html 307 /privacy"
+ ]
+}

@@ -27,6 +27,31 @@ export function reserveProductSearches(counter, env, ipHash, n) {
   return allowed;
 }
 
+const ADMIN_AUTH_DEFAULT_LIMIT = 10;
+const ADMIN_AUTH_MAX_LIMIT = 100;
+const HOUR_BUCKET = /^H\d{4}-\d{2}-\d{2}T\d{2}$/;
+
+export function adminAuthHourlyLimit(env) {
+  const value = Number(env?.ADMIN_AUTH_HOURLY_FAILURE_LIMIT);
+  return Number.isInteger(value) && value >= 1 && value <= ADMIN_AUTH_MAX_LIMIT ? value : ADMIN_AUTH_DEFAULT_LIMIT;
+}
+
+// Check and reserve in one synchronous Durable Object call, so concurrent requests cannot all pass the check before any
+// failure is recorded. The reservation counts as a failure unless the caller releases it after a correct token.
+export function reserveAdminAuthAttempt(counter, env, ipHash) {
+  const b = counter.buckets();
+  const key = `adminfail:${ipHash}`;
+  if (counter.count(b.hour, key) >= adminAuthHourlyLimit(env)) return { ok: false };
+  counter.add(b.hour, key);
+  return { ok: true, bucket: b.hour };
+}
+
+export function releaseAdminAuthAttempt(sql, ipHash, bucket) {
+  if (typeof bucket !== "string" || !HOUR_BUCKET.test(bucket)) return false;
+  sql.exec("UPDATE usage SET n = n - 1 WHERE bucket = ? AND k = ? AND n > 0", bucket, `adminfail:${ipHash}`);
+  return true;
+}
+
 export function pruneUsageBuckets(sql, now = new Date()) {
   const iso = now.toISOString();
   const buckets = {

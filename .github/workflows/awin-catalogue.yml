@@ -1,8 +1,6 @@
 name: Refresh Awin product catalogue
 
 on:
-  schedule:
-    - cron: "0 */12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -39,4 +37,6 @@ jobs:
         env:
           AWIN_DATAFEEDS_API_KEY: ${{ secrets.AWIN_DATAFEEDS_API_KEY }}
           AWIN_PUBLISHER_ID: ${{ vars.AWIN_PUBLISHER_ID || '3146453' }}
+          # Optional comma-separated advertiser IDs; unset keeps all Awin-joined UK feeds.
+          AWIN_ALLOWED_ADVERTISERS: ${{ vars.AWIN_ALLOWED_ADVERTISERS }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

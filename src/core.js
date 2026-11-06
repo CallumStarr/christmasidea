@@ -8,13 +8,13 @@ import { cleanText } from "./text.js";
 import { fetchWithoutRedirect } from "./upstream-fetch.js";
 import { productDiscoveryAvailable, searchProductsForIdeas } from "./product-search.js";
 import { ENGINE_VERSION, engineFallback, promptHints, runEngine, understand } from "./engine/index.js";
-import { feedbackKeys } from "./engine/feedback.js";
 import * as baselinePrompt from "./prompts/gift-curator-v3.3.js";
 import { catalogueFallback } from "./catalogue.js";
 import { applyLearning, feedbackCsv } from "./engine/learning.js";
 import { assessKnowledge, knowledgeCsv } from "./engine/knowledge.js";
 import { KNOWLEDGE_POLICY } from "./engine/knowledge-policy.js";
 import { issueFeedbackReceipts, verifyFeedbackReceipts, verifyProductReceipts } from "./engine/feedback-receipts.js";
+import { FINDER_MONITOR_CASES } from "./finder-monitor-cases.js";
 
 export { AGES, BUDGETS, CATEGORIES, OCCASIONS, RELATIONS };
 export { CANDIDATE_COUNT, GIFT_TOOL, PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage };
@@ -133,6 +133,24 @@ async function sha256Hex(text) {
   const bytes = new TextEncoder().encode(text);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Compares fixed-length digests in constant time so response timing does not reveal matching token prefixes.
+async function adminTokenMatches(supplied, token) {
+  const encoder = new TextEncoder();
+  const [a, b] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(supplied)),
+    crypto.subtle.digest("SHA-256", encoder.encode("Bearer " + token)),
+  ]);
+  const left = new Uint8Array(a);
+  const right = new Uint8Array(b);
+  let diff = 0;
+  for (let i = 0; i < left.length; i++) diff |= left[i] ^ right[i];
+  return diff === 0;
+}
+
+function secondsToNextHour(now = Date.now()) {
+  return Math.max(1, Math.ceil((3600_000 - (now % 3600_000)) / 1000));
 }
 
 function turnstileHostnames(env) {
@@ -402,7 +420,9 @@ export async function handleRequest(request, env, deps) {
   }
   if (url.pathname === "/api/health") return json({ ok: true }, 200, origin);
   if (url.pathname === "/api/ready") {
-    const ready = typeof env.IP_SALT === "string" && env.IP_SALT.length >= 32 && turnstileConfigurationReady(env);
+    const ready = typeof env.IP_SALT === "string" && env.IP_SALT.length >= 32
+      && typeof env.RECEIPT_SIGNING_KEY === "string" && env.RECEIPT_SIGNING_KEY.length >= 32
+      && turnstileConfigurationReady(env);
     return json({ ok: ready }, ready ? 200 : 503, origin);
   }
   if (["/api/feedback/export", "/api/feedback/review", "/api/knowledge/export"].includes(url.pathname)) {
@@ -412,14 +432,28 @@ export async function handleRequest(request, env, deps) {
       console.error("Feedback export is not configured.");
       return json({ error: "Feedback export is not configured." }, 503, origin);
     }
-    const { hash: adminIpHash } = await visitorHash(request, env);
-    if (deps.adminAuth && !(await deps.adminAuth.allowed(adminIpHash))) {
-      return json({ error: "Too many attempts. Try again later." }, 429, origin);
+    if (!deps.adminAuth) {
+      console.error("Admin authentication throttle is not configured; refusing admin request.");
+      return json({ error: "The service is temporarily unavailable. Please try again later." }, 503, origin);
     }
-    const supplied = request.headers.get("Authorization") || "";
-    if (await sha256Hex(supplied) !== await sha256Hex(`Bearer ${env.FEEDBACK_ADMIN_TOKEN}`)) {
-      if (deps.adminAuth) await deps.adminAuth.fail(adminIpHash);
+    const { hash: adminIpHash } = await visitorHash(request, env);
+    let reservation;
+    try {
+      reservation = await deps.adminAuth.reserve(adminIpHash);
+    } catch {
+      console.error("Admin authentication throttle is unavailable; refusing admin request.");
+      return json({ error: "The service is temporarily unavailable. Please try again later." }, 503, origin);
+    }
+    if (!reservation?.ok) {
+      return json({ error: "Too many attempts. Try again later." }, 429, origin, { "Retry-After": String(secondsToNextHour()) });
+    }
+    if (!(await adminTokenMatches(request.headers.get("Authorization") || "", env.FEEDBACK_ADMIN_TOKEN))) {
       return json({ error: "Unauthorised." }, 401, origin);
+    }
+    try {
+      await deps.adminAuth.release(adminIpHash, reservation.bucket);
+    } catch {
+      console.warn("Admin authentication reservation could not be released.");
     }
     const r = await readJson(request, 2000);
     if (r.error) return json({ error: r.error }, r.status, origin);
@@ -453,6 +487,10 @@ export async function handleRequest(request, env, deps) {
     console.error("IP_SALT is missing or too short; refusing API request.");
     return json({ error: "The service is temporarily unavailable. Please try again later." }, 503, origin);
   }
+  if (typeof env.RECEIPT_SIGNING_KEY !== "string" || env.RECEIPT_SIGNING_KEY.length < 32) {
+    console.error("RECEIPT_SIGNING_KEY is missing or too short; refusing API request.");
+    return json({ error: "The service is temporarily unavailable. Please try again later." }, 503, origin);
+  }
   if (url.pathname === "/api/ideas" && env.TURNSTILE_REQUIRED === "true" && !turnstileConfigurationReady(env)) {
     console.error("Required Turnstile configuration is unavailable; refusing ideas request.");
     return json({ error: "The service is temporarily unavailable. Please try again later." }, 503, origin);
@@ -466,13 +504,11 @@ export async function handleRequest(request, env, deps) {
     if (r.error) return json({ error: r.error }, r.status, origin);
     const verified = await verifyFeedbackReceipts(r.body, env);
     if (!verified.ok) return json({ error: verified.error }, 400, origin);
-    const fb = verified.legacy ? feedbackKeys(verified.body) : { ok: true, keys: [] };
-    if (!fb.ok) return json({ error: fb.error }, 400, origin);
     if (!deps.feedback) {
       console.error("Feedback storage is unavailable.");
       return json({ error: "Feedback storage is unavailable." }, 503, origin);
     }
-    const done = await deps.feedback.record(ipHash, fb.keys, verified.records);
+    const done = await deps.feedback.record(ipHash, [], verified.records);
     if (done?.reason === "expired") return json({ error: "Feedback receipt has expired. Please request fresh ideas." }, 400, origin);
     return done?.ok ? json({ ok: true, recorded: true }, 202, origin) : json({ error: "Too many events." }, 429, origin);
   }
@@ -497,7 +533,19 @@ export async function handleRequest(request, env, deps) {
   const baseline = env.RECOMMENDATION_MODE === "baseline-v3.3";
   const promptVersion = baseline ? baselinePrompt.PROMPT_VERSION : PROMPT_VERSION;
   const engineVersion = baseline ? "baseline-v3.3" : ENGINE_VERSION;
-  const human = await verifyTurnstile(parsed.token, ip, env, deps.fetch);
+  let monitored = false;
+  const monitorToken = request.headers.get("X-Finder-Monitor");
+  if (monitorToken !== null) {
+    const authorised = typeof env.FINDER_MONITOR_TOKEN === "string" && env.FINDER_MONITOR_TOKEN.length >= 32
+      && await adminTokenMatches(`Bearer ${monitorToken}`, env.FINDER_MONITOR_TOKEN);
+    if (!authorised) return json({ error: "Unauthorised monitor request." }, 401, origin);
+    monitored = FINDER_MONITOR_CASES.some((value) => {
+      const expected = normaliseInput(value);
+      return expected.ok && JSON.stringify(expected.value) === JSON.stringify(input);
+    });
+    if (!monitored) return json({ error: "Monitor requests must use a fixed synthetic case." }, 400, origin);
+  }
+  const human = monitored || await verifyTurnstile(parsed.token, ip, env, deps.fetch);
   if (!human) return json({ error: "Please complete the check and try again.", retryTurnstile: true }, 403, origin);
 
   const decision = assessKnowledge(input, env);
@@ -607,14 +655,27 @@ export async function handleRequest(request, env, deps) {
 }
 
 /** Returns a 301 to the canonical host for www or other aliases, otherwise null. */
+// Scheme the visitor used, as reported by Cloudflare's edge. Local wrangler dev rewrites request URLs to the
+// route host over plain HTTP without these headers, so requiring them avoids a local redirect loop.
+function edgeScheme(request) {
+  try {
+    const visitor = JSON.parse(request.headers.get("CF-Visitor") || "null");
+    if (typeof visitor?.scheme === "string") return visitor.scheme.toLowerCase();
+  } catch {}
+  return (request.headers.get("X-Forwarded-Proto") || "").split(",")[0].trim().toLowerCase();
+}
+
 export function canonicalRedirect(request, env) {
   const canonical = env.CANONICAL_HOST;
   if (!canonical) return null;
   const url = new URL(request.url);
   const h = url.hostname;
-  if (h === canonical || h === "localhost" || h === "127.0.0.1" || h.endsWith(".workers.dev")) return null;
+  if (h === "localhost" || h === "127.0.0.1" || h.endsWith(".workers.dev")) return null;
+  if (h === canonical && !(url.protocol === "http:" && edgeScheme(request) === "http")) return null;
   url.hostname = canonical;
   url.protocol = "https:";
   url.port = "";
-  return Response.redirect(url.toString(), 301);
+  // HSTS is ignored over plain HTTP, so upgrade it here; 308 keeps the method and body of non-GET requests.
+  const safe = request.method === "GET" || request.method === "HEAD";
+  return Response.redirect(url.toString(), safe ? 301 : 308);
 }

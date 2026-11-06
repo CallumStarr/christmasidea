@@ -64,8 +64,8 @@ test("unexpected storage and asset failures return logged, sanitized, non-cachea
     BUDGET: {
       idFromName: () => "synthetic",
       get: () => ({
-        adminAuthAllowed: async () => true,
-        recordAdminAuthFailure: async () => {},
+        reserveAdminAuth: async () => ({ ok: true, bucket: "H2026-11-06T21" }),
+        releaseAdminAuth: async () => true,
         exportFeedback: async () => { throw new Error("synthetic-private-storage-marker"); },
       }),
     },

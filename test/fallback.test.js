@@ -74,6 +74,7 @@ test("missing Anthropic key returns recipient-aware catalogue ideas with an hone
   const response = await handleRequest(request, {
     ALLOWED_ORIGINS: "https://gifts.example.com",
     IP_SALT: "unit-test-ip-salt-0123456789abcdef",
+    RECEIPT_SIGNING_KEY: "unit-test-receipt-key-0123456789abcdef",
   }, {
     fetch: async () => { throw new Error("Claude must not be called without a key"); },
     budget: { consume: async () => { throw new Error("fallback must not consume AI budget"); } },

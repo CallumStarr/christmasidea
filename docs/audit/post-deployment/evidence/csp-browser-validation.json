@@ -1,0 +1,23 @@
+{
+    "capturedUtc":  "2026-11-06T22:09:32.5802618Z",
+    "runtime":  "wrangler 4.156.2 dev --local (workerd), Chromium integrated browser",
+    "servedCsp":  "default-src \u0027self\u0027; script-src \u0027self\u0027 \u0027sha256-FuX0w2IdqpyFBc1h99hRimv/5dTnzuh3T6pkubINMTM=\u0027 \u0027sha256-u/z3oq5A1ToZd9JGZNGkjwzMOL5CAeKr4k0Q7vKsC0s=\u0027 https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src \u0027self\u0027 \u0027unsafe-inline\u0027; img-src \u0027self\u0027 data: https://m.media-amazon.com https://images-eu.ssl-images-amazon.com https://i.ebayimg.com; font-src \u0027self\u0027; connect-src \u0027self\u0027 https://cloudflareinsights.com; frame-src https://challenges.cloudflare.com; object-src \u0027none\u0027; base-uri \u0027self\u0027; form-action \u0027self\u0027; frame-ancestors \u0027none\u0027",
+    "routes":  [
+                   "/",
+                   "/?app=1",
+                   "/gifts/",
+                   "/gifts/gifts-for-mum",
+                   "/app-verify",
+                   "/privacy",
+                   "/missing-page-xyz",
+                   "/?shortlist=1"
+               ],
+    "interactions":  [
+                         "sponsor dialog opened",
+                         "prompt chip populated finder input",
+                         "wishlist dialog opened"
+                     ],
+    "securitypolicyviolationEvents":  0,
+    "cspConsoleErrors":  0,
+    "notes":  "Turnstile 110200 warnings = site key not valid for 127.0.0.1 (domain allowlist), not CSP; Turnstile script and iframe loaded. Results rendering not exercised live (requires paid Claude call + Turnstile); covered by unit tests."
+}
