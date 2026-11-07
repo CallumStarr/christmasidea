@@ -113,14 +113,14 @@ test("an import with no condition evidence aborts before publication, cleanup or
   }
 });
 
-function catalogueDb(rows = [offer()]) {
+function catalogueDb(rows = [offer()], publishedAt = NOW - 1000) {
   const statements = [];
   return {
     statements,
     prepare(sql) {
       statements.push(sql);
       return {
-        first: async () => ({ active_generation: "g1", published_at: new Date(NOW - 1000).toISOString() }),
+        first: async () => ({ active_generation: "g1", published_at: new Date(publishedAt).toISOString() }),
         bind(...values) {
           statements.push(values);
           return { all: async () => ({ results: rows.map((row) => ({
@@ -191,7 +191,7 @@ test("Awin affiliate links, product identity, age and image hosts are validated"
 
 test("Awin full-text results are normalized and never cached", async () => {
   const db = catalogueDb();
-  const provider = createAwinProvider({ ...env, AWIN_CATALOG: db });
+  const provider = createAwinProvider({ ...env, AWIN_CATALOG: db }, { now: () => NOW });
   const found = await provider.searchProducts("Personalised photo book");
   assert.equal(found.length, 1);
   assert.equal(found[0].price.amount, 22);
@@ -206,7 +206,7 @@ test("Awin products from newly joined feed advertisers pass catalogue-backed val
     productId: "999:photo-book-1",
     affiliateUrl: deepLink.replaceAll("488", "999"),
   });
-  const provider = createAwinProvider({ ...env, AWIN_CATALOG: catalogueDb([newAdvertiserOffer]) });
+  const provider = createAwinProvider({ ...env, AWIN_CATALOG: catalogueDb([newAdvertiserOffer]) }, { now: () => NOW });
   const [found] = await provider.searchProducts("Personalised photo book");
   assert.equal(found?.productId, "999:photo-book-1");
   assert.ok(provider.validateProduct(found));
@@ -219,8 +219,9 @@ test("Awin products flow through the existing strict product matcher", async () 
     query: "personalised photo book",
     productSpec: { personalisationRequired: true, budgetMaxGbp: 30, maxPriceGbp: 30 },
   };
+  // The registry builds the provider with the real clock, so the feed must be fresh relative to it.
   const result = await searchProductsForIdeas([idea], {
-    ...env, AWIN_CATALOG: catalogueDb(),
+    ...env, AWIN_CATALOG: catalogueDb([offer()], Date.now() - 1000),
   }, {
     productBudget: { take: async (_ip, count) => count },
   }, "visitor");

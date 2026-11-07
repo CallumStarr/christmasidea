@@ -134,13 +134,13 @@ function ftsExpression(query) {
   return terms.length ? terms.map((term) => `"${term.replaceAll('"', '""')}"`).join(" OR ") : "";
 }
 
-async function catalogueState(db) {
+async function catalogueState(db, now) {
   const row = await db.prepare(
     "SELECT active_generation, published_at FROM awin_catalogue_state WHERE id = 1"
   ).first();
   if (!row || typeof row.active_generation !== "string" || !row.active_generation) return null;
   const publishedAt = Date.parse(row.published_at);
-  if (!Number.isFinite(publishedAt) || publishedAt > Date.now() || Date.now() - publishedAt > MAX_FEED_AGE_MS) return null;
+  if (!Number.isFinite(publishedAt) || publishedAt > now || now - publishedAt > MAX_FEED_AGE_MS) return null;
   return { generation: row.active_generation, publishedAt };
 }
 
@@ -152,7 +152,7 @@ export function awinConfigured(env = {}) {
     && allowedAwinAdvertisers(env).length > 0;
 }
 
-export function createAwinProvider(env = {}) {
+export function createAwinProvider(env = {}, { now = Date.now } = {}) {
   const policy = awinPolicy(env);
   const allowed = allowedAwinAdvertisers(env);
   const catalogueAdvertisers = new Set(allowed);
@@ -161,11 +161,11 @@ export function createAwinProvider(env = {}) {
     policy,
     cacheScope: `${env.AWIN_PUBLISHER_ID || ""}:${allowed.join(",")}`,
     isAvailable: () => awinConfigured(env),
-    validateProduct: (product) => validateAwinProduct(product, env, Date.now(), [...catalogueAdvertisers]),
+    validateProduct: (product) => validateAwinProduct(product, env, now(), [...catalogueAdvertisers]),
     async searchProducts(query) {
       const expression = ftsExpression(query);
       if (!expression) return [];
-      const state = await catalogueState(env.AWIN_CATALOG);
+      const state = await catalogueState(env.AWIN_CATALOG, now());
       if (!state) return [];
       const statement = env.AWIN_CATALOG.prepare(`
         SELECT p.product_id AS productId, p.advertiser_id AS advertiserId,
@@ -216,7 +216,7 @@ export function createAwinProvider(env = {}) {
           retrievedAt: new Date(publishedAt).toISOString(),
           expiresAt: new Date(publishedAt + MAX_FEED_AGE_MS).toISOString(),
         };
-        return validateAwinProduct(product, env, Date.now(), [...catalogueAdvertisers]);
+        return validateAwinProduct(product, env, now(), [...catalogueAdvertisers]);
       }).filter(Boolean);
     },
   };
