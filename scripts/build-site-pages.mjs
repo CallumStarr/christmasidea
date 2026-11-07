@@ -9,6 +9,10 @@ import { publicMonetizationConfig } from "./monetization-settings.mjs";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = join(ROOT, "site");
 const ORIGIN = "https://christmasidea.co.uk";
+// Bump when page content changes; drives guide bylines, JSON-LD and sitemap lastmod so rebuilds stay deterministic.
+const CONTENT_UPDATED = "2026-11-06";
+const CONTENT_UPDATED_LABEL = new Date(`${CONTENT_UPDATED}T00:00:00Z`)
+  .toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 function writeFileSync(path, content) {
   if (existsSync(path) && readFileSync(path, "utf8") === content) return;
@@ -399,7 +403,7 @@ function guidePage(g) {
     mainEntityOfPage: `${ORIGIN}${path}`,
     author: { "@type": "Person", name: "Callum Starr" },
     publisher: { "@type": "Organization", name: "NOAH Neurotech Ltd" },
-    dateModified: "2026-11-06",
+    dateModified: CONTENT_UPDATED,
   };
   const related = GUIDES.filter((x) => x.slug !== g.slug)
     .sort((a, b) => Number(EDITS[b.slug].group === EDITS[g.slug].group) - Number(EDITS[a.slug].group === EDITS[g.slug].group))
@@ -407,7 +411,7 @@ function guidePage(g) {
   const image = EDITS[g.slug].art;
   return head(title, g.desc, path, `<link rel="preload" as="image" href="/images/${image}-800.webp" imagesrcset="/images/${image}-400.webp 400w, /images/${image}-800.webp 800w, /images/${image}-1200.webp 1200w" imagesizes="(max-width: 600px) calc(100vw - 48px), (max-width: 760px) 92vw, (max-width: 1100px) 40vw, 512px" fetchpriority="high">\n<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
 `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/gifts/">Gift guides</a><span aria-hidden="true">/</span><span aria-current="page">${esc(EDITS[g.slug].title)}</span></nav>
-<div class="guide-intro"><div><h1>Ad &middot; ${esc(g.h1)}</h1><p class="source">By Callum Starr, NOAH Neurotech Ltd &middot; Updated <time datetime="2026-11-06">6 November 2026</time></p><p class="standfirst">${esc(g.intro)}</p><p>Ideas are selected from fixed gift-concept lists for the topic and budget, with practical buying checks. We have not bought or tested the products in these searches.</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
+<div class="guide-intro"><div><h1>Ad &middot; ${esc(g.h1)}</h1><p class="source">By Callum Starr, NOAH Neurotech Ltd &middot; Updated <time datetime="${CONTENT_UPDATED}">${CONTENT_UPDATED_LABEL}</time></p><p class="standfirst">${esc(g.intro)}</p><p>Ideas are selected from fixed gift-concept lists for the topic and budget, with practical buying checks. We have not bought or tested the products in these searches.</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
 <section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><h2 id="choosing-title">Narrow down<br>the options.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section id="gift-ideas" aria-labelledby="ideas-title">
 <div class="ideas-heading"><div><h2 id="ideas-title">Eight options to consider</h2></div></div>
@@ -484,12 +488,11 @@ for (const name of ["about", "privacy", "terms"]) {
   writeFileSync(path, page);
 }
 
-const today = new Date().toISOString().slice(0, 10);
 const urls = ["/", "/gifts/", ...GUIDES.map((g) => `/gifts/${g.slug}`), "/about", "/privacy", "/terms"];
 writeFileSync(
   join(SITE, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    urls.map((u) => `  <url><loc>${ORIGIN}${u}</loc><lastmod>${today}</lastmod></url>`).join("\n") +
+    urls.map((u) => `  <url><loc>${ORIGIN}${u}</loc><lastmod>${CONTENT_UPDATED}</lastmod></url>`).join("\n") +
     `\n</urlset>\n`
 );
 console.log(`Wrote ${GUIDES.length} guides, index, 404 and sitemap.xml`);
