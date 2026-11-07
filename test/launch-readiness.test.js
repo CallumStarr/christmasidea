@@ -73,14 +73,62 @@ test("monitor authentication allows only fixed cases, never arbitrary prompt byp
   }
 });
 
+test("monitored searches always reach Claude and never read or write the idea cache", async () => {
+  const aiEnv = { ...env, ANTHROPIC_API_KEY: "sk-test", MODEL: "claude-haiku-5-5", KNOWLEDGE_REUSE_ENABLED: "true" };
+  const claudeIdeas = Array.from({ length: 10 }, (_, index) => ({ title: `Garden kneeler ${index}`,
+    concept: `garden kneeler ${index}`, search_query: `garden kneeler ${index}`, why: "Useful for their gardening.",
+    category: "Home", estimated_max_price_gbp: 20 }));
+  let claudeCalls = 0;
+  const fetch = async () => {
+    claudeCalls++;
+    return Response.json({ content: [{ type: "tool_use", name: "gift_ideas", input: { ideas: claudeIdeas } }] });
+  };
+  const cachedPayload = JSON.stringify({ ideas: [{ title: "Cached idea", query: "cached idea", source: "model" }], source: "ai" });
+  const cacheReads = [];
+  const cacheWrites = [];
+  const cache = {
+    match: async (key) => { cacheReads.push(key.url); return new Response(cachedPayload); },
+    put: async (key) => { cacheWrites.push(key.url); },
+  };
+  let consumed = 0;
+  const budget = { consume: async () => { consumed++; return { ok: true }; },
+    reuse: async () => assert.fail("monitored searches must not use knowledge reuse") };
+  const deps = { fetch, cache, budget, waitUntil: () => {} };
+
+  for (const input of FINDER_MONITOR_CASES) {
+    const response = await handleRequest(request(input, env.FINDER_MONITOR_TOKEN), aiEnv, deps);
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.source, "ai");
+    assert.notEqual(data.cached, true);
+  }
+  assert.equal(claudeCalls, FINDER_MONITOR_CASES.length, "every monitor case calls Claude despite a cache entry");
+  assert.equal(consumed, FINDER_MONITOR_CASES.length, "monitor calls stay inside the daily AI budget");
+  assert.deepEqual(cacheReads, []);
+  assert.deepEqual(cacheWrites, []);
+
+  const visitor = await handleRequest(new Request(`${origin}/api/ideas`, { method: "POST",
+    headers: { Origin: origin, "Content-Type": "application/json" }, body: JSON.stringify(FINDER_MONITOR_CASES[0]) }),
+  { ...aiEnv, KNOWLEDGE_REUSE_ENABLED: "false" }, deps);
+  const visitorData = await visitor.json();
+  assert.equal(visitorData.cached, true, "ordinary visitors still use the idea cache");
+  assert.equal(cacheReads.length, 1);
+  assert.equal(claudeCalls, FINDER_MONITOR_CASES.length);
+});
+
 test("monitor validates API results and the same no-photo selection used by the UI", async () => {
   const ideas = Array.from({ length: 8 }, (_, index) => ({ title: `Gift ${index}`, query: `gift ${index}`, feedbackToken: "synthetic" }));
   const fetchImpl = async (url) => new URL(url).pathname === "/api/ready"
-    ? new Response("", { status: 200 }) : Response.json({ ideas, product_discovery_enabled: false });
+    ? new Response("", { status: 200 }) : Response.json({ ideas, source: "ai", product_discovery_enabled: false });
   await checkFinder({ origin, token: env.FINDER_MONITOR_TOKEN, fetchImpl });
+  const respondWith = (extra) => async (url) => new URL(url).pathname === "/api/ready"
+    ? new Response("", { status: 200 }) : Response.json({ ideas, source: "ai", product_discovery_enabled: false, ...extra });
+  await assert.rejects(checkFinder({ origin, token: env.FINDER_MONITOR_TOKEN, fetchImpl: respondWith({ cached: true }) }), /idea cache/);
+  await assert.rejects(checkFinder({ origin, token: env.FINDER_MONITOR_TOKEN, fetchImpl: respondWith({ source: "knowledge" }) }), /did not come from the AI path/);
+  await assert.rejects(checkFinder({ origin, token: env.FINDER_MONITOR_TOKEN, fetchImpl: respondWith({ source: undefined }) }), /did not come from the AI path/);
   await assert.rejects(checkFinder({ origin, token: env.FINDER_MONITOR_TOKEN, fetchImpl: async (url) => {
     if (new URL(url).pathname === "/api/ready") return new Response("", { status: 200 });
-    return Response.json({ ideas: [] });
+    return Response.json({ ideas: [], source: "ai" });
   } }), /eight ideas/);
   await assert.rejects(checkFinder({ origin, token: env.FINDER_MONITOR_TOKEN, fetchImpl: async (url) => {
     if (new URL(url).pathname !== "/api/ideas") return new Response("", { status: 200 });

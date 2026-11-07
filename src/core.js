@@ -548,7 +548,8 @@ export async function handleRequest(request, env, deps) {
   const human = monitored || await verifyTurnstile(parsed.token, ip, env, deps.fetch);
   if (!human) return json({ error: "Please complete the check and try again.", retryTurnstile: true }, 403, origin);
 
-  const decision = assessKnowledge(input, env);
+  // Monitor requests must exercise the live Claude path, so they skip knowledge reuse and the idea cache.
+  const decision = monitored ? { result: null, reason: "monitor" } : assessKnowledge(input, env);
   const knowledge = decision.result;
   if (env.KNOWLEDGE_REUSE_ENABLED === "true") console.log("Knowledge routing", JSON.stringify({
     reason: decision.reason, policy: KNOWLEDGE_POLICY.version,
@@ -581,7 +582,7 @@ export async function handleRequest(request, env, deps) {
   const cacheKeyHash = await sha256Hex(JSON.stringify([promptVersion, VALIDATOR_VERSION, engineVersion, env.MODEL || "", generationFingerprint(env), env.PRODUCT_PHOTO_FIRST === "true" ? "photo-first-v1" : "", input]));
   const cacheKey = new Request(`https://cache.gift-helper.internal/ideas/v7/${cacheKeyHash}`);
   let cached;
-  if (deps.cache) {
+  if (deps.cache && !monitored) {
     try {
       const hit = await deps.cache.match(cacheKey);
       if (hit) {
@@ -642,7 +643,7 @@ export async function handleRequest(request, env, deps) {
   };
   if (truncated) payload.truncated = true;
   // A cut-off response is shown if it still holds valid ideas, but is never cached.
-  if (deps.cache && result.ideas.length && !truncated) {
+  if (deps.cache && !monitored && result.ideas.length && !truncated) {
     const ttl = result.diagnostics.shortfall ? 3600 : 86400; // don't pin a thin result for a full day
     const p = deps.cache
       .put(cacheKey, new Response(JSON.stringify(payload), {
