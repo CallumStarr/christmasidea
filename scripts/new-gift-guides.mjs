@@ -1,0 +1,150 @@
+// Six gift guides drafted for Black Friday 2026 review. Pure data with no side effects, so tests can
+// import it without running the page build. Each idea is [title, why, search query, buying check,
+// estimated max price in GBP]; the estimate is an internal ceiling for budget checks and is never rendered.
+// `rules` is the normalised finder input used to check every idea against the same validator as AI ideas.
+
+const blackFridayTip = (limit, extra = "check the returns window in case the gift needs exchanging after Christmas") =>
+  `Black Friday listings can change quickly. Judge the delivered total against your £${limit} limit rather than the size of a claimed reduction, and ${extra}.`;
+
+export const NEW_GUIDE_UPDATED = "2026-11-07";
+
+export const NEW_GUIDES = [
+  {
+    slug: "gifts-for-teenagers", h1: "Gift ideas for teenagers",
+    desc: "Gift ideas for teenagers to look for within £30, with advice on connections, sizing, shared tastes and what to ask a parent first.",
+    intro: "Teenagers often know exactly what they like, so the most useful gift supports something they already do: music, drawing, reading, sport or time with friends. Ask a parent or check a wish list before you buy. These are gift types to look for within £30, not checked offers; include delivery in the total.",
+    budget: 30, recipient: "teen", updated: NEW_GUIDE_UPDATED,
+    rules: { mode: "guided", relation: "teen", age: "teen", occasion: "christmas", budgetMaxGbp: 30, interests: "a mix of everyday interests" },
+    edit: { art: "dad", title: "For the teenager", label: "Their own thing", description: "AI-created scene of an olive flask, brown leather headphones, charcoal notebook and binoculars", group: "family", tone: "sage" },
+    tips: [
+      "Ask a parent, sibling or the teenager directly what they use most at the moment. Interests can change quickly at this age, and last year's hobby may already be finished.",
+      "For anything that plugs in or connects to a phone, check the charging connection and the devices it needs to work with before ordering.",
+      blackFridayTip(30),
+    ],
+    ideas: [
+      ["Over-ear headphones", "For music, podcasts or calls at home without disturbing everyone else.", "over ear headphones", "Check how they will connect: a wired pair needs a matching socket or adapter, while a wireless pair needs charging. Comfort over a long listening session matters more than a long list of features.", 30],
+      ["Sketchbook and drawing pens", "For a teenager who doodles in the margins or is building up a portfolio.", "sketchbook drawing pens set", "Match the paper to how they draw: heavier paper copes with markers and ink, while thinner paper suits pencil. Ask whether they prefer fineliners, brush pens or pencils before buying a mixed set.", 25],
+      ["Adjustable desk lamp", "A better light for homework, reading or drawing in the evening.", "adjustable desk lamp", "Check the plug or charging connection and the space on their desk. An adjustable arm and a dimmer setting are more useful than a high brightness figure.", 30],
+      ["Party card game", "Something to bring out when friends come round or the family gathers after Christmas lunch.", "party card game teenagers", "Read sample cards to check the humour suits the people they will play with. Check the player count and playing time; some party games need more players than a family has.", 25],
+      ["Insulated water bottle", "For school, sport or a day out, in a colour they would choose themselves.", "insulated water bottle", "Check the capacity against their bag pocket or bike holder, and whether the lid comes apart for cleaning. A sip lid may not be leakproof when the bottle is carried on its side.", 25],
+      ["Paperback novel", "A new story from a series or writer they already enjoy.", "young adult novel paperback", "Ask what they have read recently, or check a wish list, so you do not duplicate a book. Read the blurb to judge the themes; young adult fiction covers a wide range.", 15],
+      ["Photo peg string lights", "A way to display photos, postcards and drawings above a desk or bed.", "photo peg string lights", "Check whether it runs on batteries or a USB connection and how long the string is. Ask before buying anything that needs fixing to a wall, as some households have rules about adhesive hooks.", 20],
+      ["Knitted beanie hat", "A warm hat for the walk to school or a wait at the bus stop.", "knitted beanie hat", "Look at the hats they already wear: cuffed, slouchy and close-fitting styles look quite different. Check the fibre and washing instructions, and pick a plain colour if you are unsure.", 15],
+    ],
+  },
+  {
+    slug: "gifts-for-grandparents", h1: "Gift ideas for grandparents",
+    desc: "Gift ideas for grandparents to look for within £30, with advice on print size, easy controls and avoiding duplicates.",
+    intro: "A gift for a grandparent works best when it fits the way they already spend their time: reading, keeping in touch, pottering in the garden or having the family round. Ask a parent or another relative what they use every day. These are gift types to look for within £30, not checked offers; include delivery in the total.",
+    budget: 30, recipient: "grandparent", updated: NEW_GUIDE_UPDATED,
+    rules: { mode: "guided", relation: "grandparent", age: "70-plus", occasion: "christmas", budgetMaxGbp: 30, interests: "a mix of everyday interests" },
+    edit: { art: "books", title: "For grandparents", label: "Time well spent", description: "AI-created scene of an open book, two clothbound books, tortoiseshell glasses and a stoneware cup of tea", group: "family", tone: "oat" },
+    tips: [
+      "Think about eyesight, grip and hearing before choosing anything with small print, fiddly fastenings or quiet controls. A simpler version is often the one that gets used.",
+      "Find out what they already have. Grandparents are often given the same mug, frame or slippers by several people.",
+      blackFridayTip(30),
+    ],
+    ideas: [
+      ["Wooden photo frame", "A frame for a recent family photograph they would like on the mantelpiece.", "wooden photo frame", "Check the print size the frame takes, not just the outside measurements, and whether it stands, hangs or both. Print the photograph before wrapping so it is ready to display.", 20],
+      ["Large-print puzzle book", "Crosswords, word searches or number puzzles for a quiet half hour.", "large print puzzle book", "Look at sample pages: print size and grid size matter as much as the type of puzzle. Choose the puzzle type they already enjoy rather than a mixed book.", 12],
+      ["Clip-on book light", "Extra light for reading in a favourite chair without changing the whole room.", "clip on book light", "Check whether it uses batteries or a charging cable, and that the buttons are easy to find and press. The clip should grip a thick hardback without marking the pages.", 20],
+      ["Washable fleece throw", "Something warm to keep over the knees in a favourite armchair.", "washable fleece throw", "Choose a size that covers the knees and feet, not just a decorative square. A throw that goes in the washing machine is easier to look after than one that needs special cleaning.", 25],
+      ["Window bird feeder", "A way to watch garden birds from indoors on a cold morning.", "window bird feeder", "Check how it attaches and whether someone can reach it to refill and clean it. Suction cups need a smooth, clean pane; ask before fixing anything to their windows.", 20],
+      ["Large-piece jigsaw puzzle", "A picture to work on over several afternoons, perhaps with the grandchildren.", "large piece jigsaw puzzle", "Match the piece count to puzzles they already finish, and check the finished size against their table. Larger pieces are easier to handle, and a clear reference picture helps.", 20],
+      ["Grandparent memory journal", "A guided book for writing down stories and memories to pass on to the family.", "grandparent memory journal", "Read sample pages: some books ask many short questions, while others leave space for longer stories. Choose one with room to write comfortably and paper that suits their usual pen.", 18],
+      ["Illuminated hand magnifier", "Help with reading small print on labels, maps or puzzle books.", "illuminated hand magnifier", "Check the lens size and whether it needs batteries. Stronger magnification usually means a smaller viewing area, so ask whether they already use one and what they find awkward about it.", 20],
+    ],
+  },
+  {
+    slug: "gifts-for-colleagues", h1: "Gift ideas for colleagues",
+    desc: "Gift ideas for colleagues to look for within £15, with advice on keeping it neutral, desk space and the delivered total.",
+    intro: "A gift for a colleague should be useful at work or easy to take home, without being too personal. Start with what you have noticed about their working day: the mug they always use, a crowded desk or a love of lists. These are gift types to look for within £15, not checked offers; include delivery in the total.",
+    budget: 15, recipient: "colleague", updated: NEW_GUIDE_UPDATED,
+    rules: { mode: "guided", relation: "colleague", age: "unknown", occasion: "christmas", budgetMaxGbp: 15, interests: "a mix of everyday interests" },
+    edit: { art: "coffee", title: "Colleague gifts within £15", label: "For the working day", description: "AI-created scene of a cafetiere, green ceramic teapot, stoneware cup and saucer, linen cloth and coffee beans", group: "budget", tone: "oat" },
+    tips: [
+      "Keep it neutral. Avoid jokes about their job, age or habits, and anything that might feel too personal when opened in front of other people.",
+      "Check allergies and dietary needs before buying anything edible. If you cannot ask, choose one of the non-food ideas below.",
+      blackFridayTip(15, "allow for delivery before the last working day before Christmas"),
+    ],
+    ideas: [
+      ["Stoneware mug", "A sturdy mug for the drinks they make at their desk.", "stoneware mug", "Compare capacity and handle shape with the mug they use now. Check the care label for dishwasher and microwave guidance rather than assuming it from the photo.", 15],
+      ["A5 hardback notebook", "Somewhere for meeting notes, to-do lists and ideas.", "a5 hardback notebook", "Choose lined, dotted or plain pages to suit how they write. A notebook that lies flat when open is easier to use at a desk.", 12],
+      ["Desk organiser", "A home for pens, sticky notes and the small things that spread across a desk.", "desk organiser pen pot", "Check the footprint against the space on their desk and how deep the compartments are. A colleague who hot-desks may prefer something that packs into a drawer or bag.", 15],
+      ["Cork coaster set", "Coasters to protect the desk from their daily mugs.", "cork coaster set", "Check the diameter against the base of their mug and whether the material can be wiped clean. A set of two or four is plenty for one desk.", 12],
+      ["Insulated lunch bag", "For someone who brings lunch from home most days.", "insulated lunch bag", "Check the internal dimensions against their usual lunch box and whether the lining wipes clean. A strap or handle that suits how they travel makes it easier to carry.", 15],
+      ["Compact folding umbrella", "A spare for an unexpected shower on the way home.", "compact folding umbrella", "Check the folded length against their bag and the open canopy size. A simple manual opening has fewer parts to go wrong than an automatic mechanism.", 15],
+      ["Adjustable phone stand", "Holds a phone upright on the desk for calls and notifications.", "adjustable desk phone stand", "Check that it suits the size of their phone and case, and that charging is still possible while it sits in the stand. A weighted base is steadier than a light folding one.", 12],
+      ["Desk calendar", "A calendar for planning the year ahead at their desk.", "desk calendar 2027", "Check the size and layout: a week-to-view format leaves more space for notes than a month-to-view. Choose a plain design if you are unsure of their taste.", 12],
+    ],
+  },
+  {
+    slug: "secret-santa-gifts-under-20", h1: "Secret Santa ideas for a £20 budget",
+    desc: "Eight Secret Santa ideas to look for within a £20 budget. These are not verified offers: check the full price, including delivery.",
+    intro: "A £20 limit leaves room for something a little more useful than a novelty. Start with one thing you know about them, such as their commute, a hobby or a crowded desk. These are gift types to look for, not checked offers at today's prices. Include delivery in your £20 limit, and choose a different idea if the suitable options cost too much.",
+    budget: 20, recipient: "secret-santa", updated: NEW_GUIDE_UPDATED,
+    rules: { mode: "guided", relation: "secret-santa", age: "unknown", occasion: "secret-santa", budgetMaxGbp: 20, interests: "a mix of everyday interests" },
+    edit: { art: "gesture", title: "Secret Santa on a £20 budget", label: "A £20 budget", description: "AI-created scene of a small kraft-paper present, potted houseplant, stoneware mug and green pocket notebook", group: "budget", tone: "clay" },
+    tips: [
+      "Use one clue you are confident about. Avoid jokes about someone's appearance, age or habits; a Secret Santa gift is usually opened in front of other people.",
+      "Spend on the gift rather than the wrapping. One good item is better than several small extras that take you over £20.",
+      blackFridayTip(20),
+    ],
+    ideas: [
+      ["Insulated travel mug", "For someone who takes a hot drink on the commute or school run.", "insulated travel mug", "Check the capacity and whether it fits a car cup holder or bag pocket. A lid that comes apart for cleaning is more useful than a sealed one that is hard to wash.", 20],
+      ["Jigsaw puzzle", "An evening project for someone who likes a quiet challenge.", "jigsaw puzzle adults", "Match the piece count to puzzles they already finish and check the finished size against a table. An image with plenty of detail is easier than a large area of one colour.", 20],
+      ["Indoor herb growing kit", "Herbs to grow on a kitchen windowsill through the winter.", "indoor herb growing kit", "Check what is in the box: pots, compost and seeds are not always all included. Herbs need a bright windowsill, so choose something else if their home has little light.", 20],
+      ["Rechargeable hand warmer", "Warm hands on a cold walk or a chilly station platform.", "rechargeable hand warmer", "Check the charging connection and whether a cable is included. Read the heat settings and use guidance, and buy from a seller you can identify.", 20],
+      ["Strategy card game", "A game for lunch breaks, family visits or the quiet days after Christmas.", "strategy card game", "Read the rules summary and check the player count and playing time. A game that needs four players may sit unused if they usually play with one other person.", 20],
+      ["Quick-meals cookbook", "Ideas for weeknight cooking, for someone who enjoys being in the kitchen.", "quick meals cookbook", "Flick through sample recipes: would they have the ingredients and the time? Check dietary preferences before choosing a book built around meat, fish or baking.", 20],
+      ["Touchscreen gloves", "Warm gloves that still let them use a phone outdoors.", "touchscreen gloves", "Sizing varies between makers, so choose a stretchy knit or check the size chart. The touchscreen tips may only be on some fingers; read the description before buying.", 15],
+      ["Refillable fountain pen", "A smoother pen for someone who still writes by hand every day.", "refillable fountain pen", "Check which cartridges or converter it takes and whether spare ink is easy to find. A medium nib is the usual starting point; very fine nibs can feel scratchy at first.", 20],
+    ],
+  },
+  {
+    slug: "gifts-for-partner", h1: "Gift ideas for a partner",
+    desc: "Gift ideas for a partner to look for within £50, with advice on using what you already know, sizing and personalised orders.",
+    intro: "You probably know your partner's habits better than anyone: how they spend a Sunday, what they reach for every morning and what has worn out. Use that knowledge rather than a gift labelled 'for him' or 'for her'. These are gift types to look for within £50, not checked offers; include delivery in the total.",
+    budget: 50, recipient: "partner", updated: NEW_GUIDE_UPDATED,
+    rules: { mode: "guided", relation: "partner", age: "unknown", occasion: "christmas", budgetMaxGbp: 50, interests: "a mix of everyday interests" },
+    edit: { art: "mum", title: "For your partner", label: "Just for them", description: "AI-created scene of a linen journal, amber candle, cup of tea and ribbon-tied present", group: "family", tone: "clay" },
+    tips: [
+      "Think about something they have mentioned wanting, borrowing or replacing this year. A specific clue is more useful than a generic romantic gift.",
+      "For anything sized or worn, check the size and style of a current favourite first. Keep the receipt, as fit is hard to judge from a photograph.",
+      blackFridayTip(50, "allow extra time for anything made to order"),
+    ],
+    ideas: [
+      ["Canvas weekend bag", "For short trips away together or visits to family.", "canvas weekend holdall bag", "Check the dimensions against luggage racks or the car boot, and look at the strap and zip. An extra inside pocket is useful, but more compartments add weight.", 50],
+      ["Board game for two", "A game to play together on winter evenings.", "two player board game", "Check that it plays well with two, not only that two is the minimum on the box. Choose a playing time that fits a weeknight and a theme you would both enjoy.", 40],
+      ["Wool scarf", "A warm scarf in a colour they would choose themselves.", "wool scarf", "Look at the scarves they already wear for length and colour. Check the fibre content and washing instructions; some wool needs hand-washing.", 50],
+      ["Custom map print", "A print of a place you share, such as a city, a favourite walk or a holiday spot.", "custom map print", "Check the print size and whether a frame is included. Confirm the place name and spelling on any proof, and allow time for made-to-order dispatch.", 40],
+      ["Slim card holder", "A slim replacement for a worn wallet, if they mostly pay by card.", "slim card holder wallet", "Count the cards they carry every day and compare the number of slots. Check the size against their current wallet and keep the receipt in case they prefer the old layout.", 40],
+      ["Picnic blanket", "For walks, parks and summer plans to look forward to.", "waterproof backed picnic blanket", "Check the unfolded size and whether it folds into a carry strap. A waterproof backing helps on damp grass but can make the blanket harder to wash.", 40],
+      ["Wireless earbuds", "For music or calls on the commute or a run.", "wireless earbuds", "Check that they work with their phone and how the case charges. Fit varies between ears, and returns of in-ear products can be restricted, so read the returns policy first.", 50],
+      ["Dressing gown", "A warm layer for slow mornings at home.", "dressing gown", "Check their size and preferred length, and whether they like a hood. Fleece, waffle and towelling fabrics wash and feel differently; read the care label.", 45],
+    ],
+  },
+  {
+    slug: "gifts-for-someone-who-has-everything", h1: "Gift ideas for someone who has everything",
+    desc: "Gift ideas within £30 for someone who has everything, from a new skill to try to a better version of something they already use.",
+    intro: "When someone already owns what they need, look for a new skill to try, a well-made version of something they use often, or something that brings the garden closer. Avoid adding clutter. These are gift types to look for within £30, not checked offers; include delivery in the total.",
+    budget: 30, recipient: "other", updated: NEW_GUIDE_UPDATED,
+    rules: { mode: "guided", relation: "other", age: "unknown", occasion: "christmas", budgetMaxGbp: 30, interests: "a mix of everyday interests" },
+    edit: { art: "history", title: "For someone who has everything", label: "Something different", description: "AI-created scene of a classical temple model, old map, magnifying glass and leatherbound books", group: "interests", tone: "oat" },
+    tips: [
+      "Look for the everyday item they use until it wears out, then choose a well-made version in a style they already like.",
+      "If you are unsure, choose something useful that can be put away after use rather than another ornament for a full shelf.",
+      blackFridayTip(30),
+    ],
+    ideas: [
+      ["Beginner calligraphy set", "A new skill to learn at the kitchen table over the winter.", "beginner calligraphy pen set", "Check what is included: practice sheets and a guide matter as much as the pens. Brush pens are easier for a beginner than dip pens and bottled ink.", 25],
+      ["Kitchen scissors", "A sturdy pair for herbs, packaging and string.", "kitchen scissors", "Check whether they come apart for cleaning and whether they suit a left or right hand. A comfortable handle is more useful than a long list of extra functions.", 20],
+      ["Wooden bird nesting box", "A home for garden birds that they can watch next spring.", "wooden bird nesting box", "Check the entrance hole size against the birds they hope to attract, and where it can be fixed out of strong sun. Ask first if they rent or have no garden.", 25],
+      ["Wooden puzzle box", "A small mechanical puzzle to solve, then use for keeping small treasures.", "wooden puzzle box", "Check the difficulty and whether a solution is included. Some boxes are mainly decorative; read the description to see how many moves it takes to open.", 25],
+      ["Illustrated non-fiction book", "A book about a subject they have recently started asking about.", "illustrated non fiction book", "Ask what they have been reading or watching lately, and check their shelves for duplicates. Read sample pages to judge whether it suits a beginner or an expert.", 25],
+      ["Plant propagation station", "A glass stand for growing new plants from cuttings on a windowsill.", "plant propagation station", "Check the size and number of glass tubes, and whether their windowsill is deep enough. Glass needs careful cleaning, and plants or cuttings are not included.", 25],
+      ["Engraved wooden chopping board", "A board with a name or date, for someone who cooks often.", "engraved wooden chopping board", "Check which side is engraved: cutting on the engraving can damage it, so many are best kept for serving. Confirm spelling on the proof and read the care instructions for wood.", 30],
+      ["Beginner knitting kit", "Everything needed for a first simple project, such as a scarf.", "beginner knitting kit", "Check that the yarn weight and needle size match the pattern, and whether a video or written guide is included. A small first project is more likely to be finished.", 25],
+    ],
+  },
+];

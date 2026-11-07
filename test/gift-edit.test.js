@@ -28,9 +28,9 @@ test("every page shares the brand shell and exposes a route back to the shortlis
   }
 });
 
-test("all 104 guide ideas include specific buying advice and descriptive affiliate actions", async () => {
+test("all 152 guide ideas include specific buying advice and descriptive affiliate actions", async () => {
   const guides = (await readdir(new URL("site/gifts/", root))).filter((name) => name !== "index.html");
-  assert.equal(guides.length, 13);
+  assert.equal(guides.length, 19);
   const artwork = new Set();
   for (const name of guides) {
     const html = await read(`gifts/${name}`);
