@@ -4,7 +4,7 @@ export function securityHeaders(scriptHashes) {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "X-Frame-Options": "DENY",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-    "Strict-Transport-Security": "max-age=31536000",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "Content-Security-Policy": [
       "default-src 'self'",
       `script-src 'self' ${scriptHashes.join(" ")} https://challenges.cloudflare.com https://static.cloudflareinsights.com`,

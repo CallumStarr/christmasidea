@@ -63,9 +63,9 @@ window.GIFT_CONFIG = {
       </a>
       <div class="nav-links"><a href="#form" aria-current="page">The gift finder</a><a href="/gifts/">The gift guides</a></div>
       <span class="countdown" id="countdown" hidden></span>
-      <button class="nav-shortlist" id="nav-shortlist" type="button" aria-label="Wishlists, 0 saved ideas">
+      <button class="nav-shortlist" id="nav-shortlist" type="button">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg>
-        <span>Wishlists</span><span class="saved-count" id="nav-count">0</span>
+        <span class="nav-shortlist-label">Wishlists</span> <span class="saved-count" id="nav-count">0</span><span class="sr-only" id="nav-count-label"> saved ideas</span>
       </button>
     </nav>
   </div>
@@ -216,7 +216,7 @@ window.GIFT_CONFIG = {
     <div class="deck-topbar" hidden>
       <button type="button" class="deck-nav-button" id="deck-edit" aria-label="Back: edit recipient details" title="Edit recipient details"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>Back</span></button>
       <span class="deck-wordmark">Santa's Helper <span aria-hidden="true">&#x2736;</span></span>
-      <button type="button" class="deck-nav-button" id="deck-wishlists" aria-label="Open your wishlists" title="Your wishlists"><svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg><span class="deck-saved-count" id="deck-saved-count">0</span></button>
+      <button type="button" class="deck-nav-button" id="deck-wishlists" title="Your wishlists"><svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"/></svg><span class="sr-only">Wishlists </span><span class="deck-saved-count" id="deck-saved-count">0</span><span class="sr-only" id="deck-saved-label"> saved ideas</span></button>
     </div>
     <div class="results-head">
       <div>
@@ -904,8 +904,9 @@ function renderBar(){
   const total = wishlists.lists.reduce((sum, list) => sum + list.items.length, 0);
   $("#nav-count").textContent = total;
   $("#deck-saved-count").textContent = total;
-  $("#deck-wishlists").setAttribute("aria-label", `Wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
-  $("#nav-shortlist").setAttribute("aria-label", `Wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
+  const savedLabel = ` saved ${total === 1 ? "idea" : "ideas"}`;
+  $("#deck-saved-label").textContent = savedLabel;
+  $("#nav-count-label").textContent = savedLabel;
 }
 new IntersectionObserver(([entry]) => {
   collectionInView = entry.isIntersecting;

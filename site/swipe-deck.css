@@ -130,7 +130,7 @@
   .swipe-mode .results{--deck-width:min(100%,440px);grid-template-rows:64px minmax(0,1fr) 100px 30px;padding-inline:16px}
   .deck-wordmark{font-size:24px}
   .deck-wordmark>span{font-size:22px}
-  .deck-nav-button>span:not(.deck-saved-count){display:none}
+  .deck-nav-button>span:not(.deck-saved-count):not(.sr-only){display:none}
   .swipe-cards{max-height:none}
   .swipe-cards .card{border-radius:24px}
   .swipe-cards .card-body{padding:54px 22px 24px;gap:10px}

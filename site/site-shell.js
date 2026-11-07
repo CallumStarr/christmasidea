@@ -17,20 +17,22 @@ if (countdown) {
 
 const shortlistLink = document.querySelector("a#nav-shortlist");
 if (shortlistLink) {
+  // The visible "Wishlists" text, count and a visually hidden suffix give the accessible name (WCAG 2.5.3).
+  const countLabel = document.querySelector("#nav-count-label");
   try {
     let collection, notice = "";
     try { collection = readWishlists(localStorage); }
     catch (error) {
       if (!error.recovered) throw error;
-      collection = error.recovered; notice = ` ${error.message}`;
+      collection = error.recovered; notice = `. ${error.message}`;
       shortlistLink.title = error.message;
     }
     const count = collection.lists.reduce((sum, list) => sum + list.items.length, 0);
     document.querySelector("#nav-count").textContent = count;
-    shortlistLink.setAttribute("aria-label", `Wishlists, ${count} saved ${count === 1 ? "idea" : "ideas"}${notice}`);
+    if (countLabel) countLabel.textContent = ` saved ${count === 1 ? "idea" : "ideas"}${notice}`;
   } catch (error) {
     console.warn("Shortlist count could not be read.");
     document.querySelector("#nav-count").hidden = true;
-    shortlistLink.setAttribute("aria-label", "Wishlists");
+    if (countLabel) countLabel.textContent = "";
   }
 }

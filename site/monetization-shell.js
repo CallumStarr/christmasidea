@@ -30,7 +30,8 @@ function syncGuideSaves() {
   if (count && nav) {
     const total = wishlists ? wishlists.lists.reduce((sum, list) => sum + list.items.length, 0) : saved.length;
     count.textContent = total;
-    nav.setAttribute("aria-label", `Wishlists, ${total} saved ${total === 1 ? "idea" : "ideas"}`);
+    const label = document.querySelector("#nav-count-label");
+    if (label) label.textContent = ` saved ${total === 1 ? "idea" : "ideas"}`;
   }
   for (const button of document.querySelectorAll("[data-guide-save]")) {
     const on = saved.some((item) => savedKey(item) === button.dataset.guideSave);

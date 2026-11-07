@@ -337,7 +337,7 @@ function header(path) {
     .replace('href="#form" aria-current="page"', 'href="/#form"')
     .replace('href="/gifts/">The gift guides</a></div>', `href="/gifts/"${path.startsWith("/gifts") ? ' aria-current="page"' : ""}>The gift guides</a></div>`)
     .replace(/<button class="nav-shortlist"[^>]*>([\s\S]*?)<\/button>/,
-      '<a class="nav-shortlist" id="nav-shortlist" href="/?shortlist=1" aria-label="Wishlists, 0 saved ideas">$1</a>');
+      '<a class="nav-shortlist" id="nav-shortlist" href="/?shortlist=1">$1</a>');
 }
 
 function art(g, className = "guide-illustration") {

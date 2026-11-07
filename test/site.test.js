@@ -107,7 +107,7 @@ test("Worker sets CSP and HSTS headers and locks framing", async () => {
   const response = await fetchWorker(new Request("https://gifts.example.com/"), {
     ASSETS: { fetch: async () => new Response("asset") },
   }, {});
-  assert.equal(response.headers.get("Strict-Transport-Security"), "max-age=31536000");
+  assert.equal(response.headers.get("Strict-Transport-Security"), "max-age=31536000; includeSubDomains");
   assert.equal(response.headers.get("X-Frame-Options"), "DENY");
   const csp = response.headers.get("Content-Security-Policy");
   assert.match(csp, /frame-ancestors 'none'/);
@@ -198,7 +198,7 @@ test("shortlist dock is contextual and never covers the finder", async () => {
   const html = await read("index.html");
   const source = html.match(/let collectionInView = false;[\s\S]*?\.observe\(\$\("#results"\)\);/)?.[0];
   assert.ok(source);
-  const elements = Object.fromEntries(["#listbar", "#openlist", "#nav-count", "#nav-shortlist", "#deck-saved-count", "#deck-wishlists", "#results"].map((id) => [id, {
+  const elements = Object.fromEntries(["#listbar", "#openlist", "#nav-count", "#nav-count-label", "#nav-shortlist", "#deck-saved-count", "#deck-saved-label", "#deck-wishlists", "#results"].map((id) => [id, {
     hidden: true,
     setAttribute(name, value) { this[name] = value; },
   }]));
@@ -216,7 +216,12 @@ test("shortlist dock is contextual and never covers the finder", async () => {
   notify([{ isIntersecting: false }]);
   assert.equal(elements["#listbar"].hidden, true);
   assert.equal(elements["#nav-count"].textContent, 1);
-  assert.equal(elements["#nav-shortlist"]["aria-label"], "Wishlists, 1 saved idea");
+  assert.equal(elements["#nav-count-label"].textContent, " saved idea");
+  assert.equal(elements["#deck-saved-count"].textContent, 1);
+  assert.equal(elements["#deck-saved-label"].textContent, " saved idea");
+  assert.equal(elements["#nav-shortlist"]["aria-label"], undefined, "visible content names the button (WCAG 2.5.3)");
+  assert.equal(elements["#deck-wishlists"]["aria-label"], undefined);
+  assert.doesNotMatch(html, /id="(nav-shortlist|deck-wishlists)"[^>]*aria-label/);
   notify([{ isIntersecting: true }]);
   assert.equal(elements["#listbar"].hidden, false);
   shortlist.pop();

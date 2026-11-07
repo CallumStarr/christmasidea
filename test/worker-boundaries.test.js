@@ -15,7 +15,7 @@ test("canonical redirects receive security headers without changing their destin
   const response = await fetchWorker(new Request("http://www.gifts.example.com/path?x=1"), env, ctx);
   assert.equal(response.status, 301);
   assert.equal(response.headers.get("Location"), `${origin}/path?x=1`);
-  assert.equal(response.headers.get("Strict-Transport-Security"), "max-age=31536000");
+  assert.equal(response.headers.get("Strict-Transport-Security"), "max-age=31536000; includeSubDomains");
   assert.equal(response.headers.get("X-Content-Type-Options"), "nosniff");
   assert.equal(response.headers.get("Referrer-Policy"), "strict-origin-when-cross-origin");
   assert.equal(response.headers.get("Permissions-Policy"), "camera=(), microphone=(), geolocation=()");

@@ -174,7 +174,7 @@ test("secondary-page shortlist links open at startup and preserve unrelated URL 
 });
 
 function shell({ now, saved = "[]" }) {
-  const elements = new Map(["#countdown", "#nav-count", "a#nav-shortlist"].map((id) => [id, {
+  const elements = new Map(["#countdown", "#nav-count", "#nav-count-label", "a#nav-shortlist"].map((id) => [id, {
     hidden: true, attrs: {}, children: [],
     setAttribute(name, value) { this.attrs[name] = value; },
     replaceChildren(...children) { this.children = children; },
@@ -213,9 +213,11 @@ test("secondary-page shortlist counts use the same validated storage shape as th
     saved: JSON.stringify([{ title: "Notebook", query: "garden notebook" }, null, { title: "Invalid" }]),
   });
   assert.equal(elements.get("#nav-count").textContent, 1);
-  assert.match(elements.get("a#nav-shortlist").attrs["aria-label"], /^Wishlists, 1 saved idea.*Original saved data is preserved/);
+  assert.match(elements.get("#nav-count-label").textContent, /^ saved idea\. .*Original saved data is preserved/);
+  assert.equal(elements.get("a#nav-shortlist").attrs["aria-label"], undefined, "visible content names the link (WCAG 2.5.3)");
   const invalid = await shell({ now: "2026-11-04", saved: "invalid" });
   assert.equal(invalid.warnings.length, 1);
   assert.equal(invalid.elements.get("#nav-count").hidden, true);
-  assert.equal(invalid.elements.get("a#nav-shortlist").attrs["aria-label"], "Wishlists");
+  assert.equal(invalid.elements.get("#nav-count-label").textContent, "");
+  assert.equal(invalid.elements.get("a#nav-shortlist").attrs["aria-label"], undefined);
 });
