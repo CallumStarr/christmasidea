@@ -6,8 +6,8 @@ import { curateIdeas } from "../src/validate.js";
 import { deriveRecipient } from "../src/recipient.js";
 import { normaliseInput } from "../src/core.js";
 
-// Limited to the six Black Friday 2026 guides: an existing guide (gifts-for-dad, "Whisky tasting glasses")
-// matches ALWAYS_BLOCKED, and existing guides were left unchanged.
+// Covers the six Black Friday 2026 guides. Existing guides were left unchanged; the dad guide's
+// "Whisky tasting glasses" passes the alcohol rule since 18c2b26.
 const SLUGS = ["gifts-for-teenagers", "gifts-for-grandparents", "gifts-for-colleagues", "secret-santa-gifts-under-20", "gifts-for-partner", "gifts-for-someone-who-has-everything"];
 const hits = (rules, text) => rules.filter(([, re]) => re.test(text)).map(([code]) => code);
 
