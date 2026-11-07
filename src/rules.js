@@ -21,7 +21,7 @@ export const PRODUCT_CONFLICTS = [
 export const ALWAYS_BLOCKED = [
   ["gift_card_or_voucher", i("\\b(gift ?cards?|e-?gift|vouchers?|gift certificates?)\\b")],
   ["service_or_subscription", i("\\b(subscriptions?|memberships?|(?:event|concert|theatre|museum|cinema|show|train) tickets?|experience days?|online courses?)\\b")],
-  ["alcohol", i("\\b(wine|beer|whisk(?:e)?y|gin|vodka|rum|prosecco|champagne|liqueur|cider|brandy|cocktails?)\\b(?!\\s*(?:glass(?:es)?|racks?|stoppers?|openers?|coolers?|holders?|decanters?|aerators?|books?|journals?|maps?|bags?|totes?|tasting (?:notes|journal)))")],
+  ["alcohol", i("\\b(wine|beer|whisk(?:e)?y|gin|vodka|rum|prosecco|champagne|liqueur|cider|brandy|cocktails?)\\b(?!\\s*(?:glass(?:es)?|racks?|stoppers?|openers?|coolers?|holders?|decanters?|aerators?|books?|journals?|maps?|bags?|totes?|tasting (?:notes|journal|glass(?:es)?)))")],
   ["tobacco_or_vape", i("\\b(tobacco|cigars?|cigarettes?|vapes?|vaping|e-?cigs?|e-?liquids?|shisha|hookah)\\b")],
   ["weapon", i("\\b(firearms?|air ?guns?|airsoft|bb guns?|tasers?|stun guns?|pepper spray|brass knuckles|crossbows?|nunchucks?|throwing (?:knives|stars))\\b")],
   ["gambling", i("\\b(gambling|casino|lottery|scratch ?cards?|betting)\\b")],

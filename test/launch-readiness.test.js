@@ -8,6 +8,7 @@ import { issueFeedbackReceipts, verifyFeedbackReceipts } from "../src/engine/fee
 import { checkFinder } from "../scripts/check-finder.mjs";
 import { securityHeaders } from "../src/security-headers.js";
 import { INLINE_SCRIPT_HASHES } from "../src/csp-hashes.js";
+import { ALWAYS_BLOCKED } from "../src/rules.js";
 
 const origin = "https://gifts.example.com";
 const env = { ALLOWED_ORIGINS: origin, IP_SALT: "synthetic-ip-salt-0123456789abcdef",
@@ -43,6 +44,18 @@ test("listing safety covers titles, descriptions and features before matching an
     productSpec: { recipientAgeBand: "adult" } }, {
     title: "Whisky glasses", condition: "NEW", availability: "IN_STOCK",
   }).accepted, true, "empty glassware is still allowed for adults");
+});
+
+test("alcohol rule allows tasting glasses but still blocks sets that include drink", () => {
+  const alcohol = ALWAYS_BLOCKED.find(([id]) => id === "alcohol")[1];
+  assert.equal(alcohol.test("Whisky tasting glasses"), false);
+  assert.equal(alcohol.test("Whisky tasting glasses gift set with 3 miniature whisky bottles"), true);
+  const match = (title, description) => scoreProductMatch({ title, query: title, concept: title,
+    productSpec: { recipientAgeBand: "adult" } }, { title, description, condition: "NEW", availability: "IN_STOCK" });
+  assert.equal(match("Whisky tasting glasses").accepted, true);
+  const kit = match("Whisky tasting glasses", "Whisky tasting glasses gift set with 3 miniature whisky bottles");
+  assert.equal(kit.accepted, false);
+  assert.ok(kit.reasons.some((reason) => /restricted_listing/.test(reason)));
 });
 
 test("eBay listing data cannot reach the Claude prompt through submitted enrichment fields", async () => {
