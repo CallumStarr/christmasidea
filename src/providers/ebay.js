@@ -53,7 +53,7 @@ export function ebayPolicy(campaignId) {
     persistResults: false,
     imageRights: "eBay API and Partner Network terms; operator-reported approval for attributed, non-clickable examples beside equal merchant links",
     maxOfferAgeMs: 3600_000,
-    disclosure: "We may earn a commission from qualifying eBay purchases.",
+    disclosure: "As an eBay Partner Network Affiliate, I earn from qualifying purchases.",
     display: { badge: "Matched eBay listing", cta: "View on eBay", adLabel: "Affiliate link" },
     isAffiliateUrl: (url, id) => isEbayProductUrl(url, id, campaignId),
   };

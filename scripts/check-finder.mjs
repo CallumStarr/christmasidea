@@ -23,6 +23,8 @@ export async function checkFinder({ origin, token, fetchImpl = fetch }) {
   assert.equal(home.status, 200, "Homepage uptime check failed.");
   for (const [index, input] of FINDER_MONITOR_CASES.entries()) {
     const data = await post("/api/ideas", input, true);
+    // Runs early in the UTC day, so a fallback means AI generation is broken, not that the daily cap is spent.
+    assert.notEqual(data.fallback, true, `Case ${index + 1} fell back to the catalogue; AI ideas are unavailable.`);
     assert.ok(Array.isArray(data.ideas) && data.ideas.length === 8, `Case ${index + 1} must return eight ideas.`);
     assert.ok(data.ideas.every((idea) => idea.title && idea.query && idea.feedbackToken), "Ideas require titles, queries and receipts.");
     const selected = await selectPhotographedIdeas(data.ideas, data.replacement_ideas || [], {
@@ -41,7 +43,7 @@ export async function checkFinder({ origin, token, fetchImpl = fetch }) {
     });
     assert.equal(selected.selected.length, 8, `Case ${index + 1} lost ideas during photo selection.`);
     assert.ok(selected.selected.every(({ idea, offers }) => idea.title && Array.isArray(offers)), "Invalid selected-card shape.");
-    console.log(`Finder case ${index + 1}: eight usable ideas (${data.fallback ? "catalogue fallback" : data.source || "AI"}).`);
+    console.log(`Finder case ${index + 1}: eight usable ideas (${data.source || "AI"}).`);
   }
 }
 

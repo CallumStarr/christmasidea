@@ -31,8 +31,12 @@ until the remaining external launch gates are resolved.
   and push protection were enabled and confirmed through GitHub.
 - Daily Actions finder check exercises three fixed synthetic cases through the
   real ideas API and shared photo/no-photo selector, plus homepage and readiness.
-  Failures open/comment on an issue assigned to CallumStarr. This is API/UI-
-  selection monitoring, not a real Turnstile or physical-device test.
+  Failures open/comment on an issue assigned to CallumStarr. The check bypasses
+  Turnstile only for those three fixed inputs, via a constant-time-compared
+  `X-Finder-Monitor` token (wrong token 401, any other input 400). Since 7
+  November it also fails when a case falls back to the catalogue, so a broken
+  Anthropic key or model is caught. It does not exercise real Turnstile,
+  browser rendering, native apps or devices, and alerts only via GitHub.
 - Unapproved app builds strip Amazon affiliate tags from runtime configuration
   and bundled guides. Set `AMAZON_MOBILE_APPROVED=true` only after Amazon approves
   every mobile app being released; keep website approval separate.
@@ -49,12 +53,14 @@ until the remaining external launch gates are resolved.
    `https://christmasidea.co.uk/sitemap.xml`, then request indexing for `/`,
    `/gifts/` and each guide. Generated sitemap now includes Terms.
 3. **ICO reference:** the user confirms company registration on 6 November, but
-   the number was not supplied and could not be verified in the public search.
-   The ICO says new entries can take two working days. Add the actual reference
-   to Privacy; never invent one.
-4. **Scheduled monitoring (active):** the workflow is on `main` and was run
-   manually after push. Make sure GitHub notifications for failed workflows
-   and new issues reach your phone; failures open an issue assigned to you.
+   the number was not supplied. A public register search for "NOAH NEUROTECH"
+   on 7 November returned no entries; the ICO says new entries can take two
+   working days. Add the reference from the confirmation email to Privacy;
+   never invent one.
+4. **Scheduled monitoring (active):** the first scheduled run (7 November,
+   07:21 UTC) passed with eight AI ideas per case. Make sure GitHub
+   notifications for failed workflows and new issues reach your phone;
+   failures open an issue assigned to you.
 5. **Account ownership and approvals:** move/confirm Amazon, EPN/developer,
    Awin, Cloudflare, Anthropic, domain and app-store accounts under the company.
    Confirm campaign clicks in EPN and Amazon the next day; do not create
@@ -125,3 +131,35 @@ See PROJECT_STATUS.md for the release record. Local load evidence:
 real SQLite Durable Object was exercised separately at 10/50/100 concurrent
 requests with exact global/per-visitor limits. This is not a production
 capacity or CPU-quota certification.
+
+### Independent verification (7 November 2026)
+
+Checked against the repository, Cloudflare and the live site rather than the
+release summary.
+
+- Repository at `d708f01` (contains `eaf4d3e`); full suite passed before the
+  follow-up fixes below. Cloudflare active version, feature flags
+  (all provider discovery off, `DAILY_AI_LIMIT=500`, Turnstile required),
+  secret bindings and the `run_worker_first` allowlist match `wrangler.toml`.
+- Live: homepage, `/api/ready`, static assets, sitemap (18 URLs) and robots
+  return 200; `www` 301s to the canonical host; script CSP uses hashes only;
+  pages send `X-Frame-Options: DENY` except `/app-verify` (app origins only).
+  Unsigned `/api/products` and `/api/feedback` return 400; `/api/ideas`
+  without Turnstile 403; a wrong monitor token 401.
+- All 18 sitemap pages show company name, number, England and Wales,
+  registered office, support email, definite Ad wording and both programme
+  statements. All 13 guides have `Ad ·` titles; all 208 guide shop links are
+  `sponsored` and carry `tag=mcstarrstud0c-21` or `campid=5339240592`.
+- Companies House: NOAH NEUROTECH LTD, 17215758, active, registered office
+  1 Tryelyn, Bodmin, England, PL31 1GD, incorporated 12 May 2026, SIC 26600
+  and 72190 only (add a web/information activity at the next confirmation
+  statement). England and Wales is consistent with the record; the
+  incorporation PDF itself was not machine-read.
+- Real browser describe search passed Turnstile and returned eight AI ideas
+  with the AI notice, no-photo fallback notice, Ad wording and tagged links.
+  Automated Escape did not close even a control native dialog, so the
+  Escape result is inconclusive; a physical keyboard test is still required.
+- Follow-up fixes: About no longer says eBay links are ordinary searches
+  (campaign tracking is live); latent provider disclosures now use definite
+  wording and the exact Amazon/eBay statements, guarded by a test; the
+  monitor fails on catalogue fallback. 614 tests pass.

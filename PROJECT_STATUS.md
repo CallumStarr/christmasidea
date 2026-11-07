@@ -35,6 +35,12 @@ compatibility correction.
   SQLite Durable Object concurrency tests passed at 10/50/100 requests. This
   does not certify production CPU capacity or a paid billing plan.
 
+**7 November verification:** the release was re-checked independently against
+Cloudflare, the live site and Companies House (details in the checklist). The
+first scheduled monitor run passed. Follow-ups: About's stale eBay wording,
+latent provider disclosure strings, and the monitor now failing on catalogue
+fallback; 614 tests pass. The ICO register search did not yet list the company.
+
 See [the launch checklist](docs/launch-readiness.md) for remaining operator
 tasks: Workers Paid, search-engine registration/indexing, ICO reference,
 account transfers/approvals, Anthropic key rotation/spend limit, edge rate

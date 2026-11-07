@@ -82,6 +82,10 @@ test("monitor validates API results and the same no-photo selection used by the 
     if (new URL(url).pathname === "/api/ready") return new Response("", { status: 200 });
     return Response.json({ ideas: [] });
   } }), /eight ideas/);
+  await assert.rejects(checkFinder({ origin, token: env.FINDER_MONITOR_TOKEN, fetchImpl: async (url) => {
+    if (new URL(url).pathname !== "/api/ideas") return new Response("", { status: 200 });
+    return Response.json({ ideas, fallback: true, product_discovery_enabled: false }, { status: 503 });
+  } }), /fell back to the catalogue/);
 });
 
 test("receipt signing is independent of IP hashing, and more events are signed and deduplicated", async () => {
@@ -119,6 +123,15 @@ test("all public pages disclose company and affiliate status; guides label ads b
   for (const pattern of [/lawful bases/i, /Right to object/, /Right to complain/, /Anthropic Ireland Ltd/, /UK Addendum/, /18 and over/, /Cloudflare Web Analytics is enabled/]) {
     assert.match(privacy, pattern);
   }
+});
+
+test("provider disclosures use definite wording and the exact programme statements", () => {
+  for (const name of readdirSync(new URL("../src/providers", import.meta.url)).filter((file) => file.endsWith(".js"))) {
+    assert.doesNotMatch(read(`src/providers/${name}`), /may earn|might earn|Associate we earn/i, name);
+  }
+  assert.match(read("src/providers/amazon.js"), /"As an Amazon Associate I earn from qualifying purchases\."/);
+  assert.match(read("src/providers/ebay.js"), /"As an eBay Partner Network Affiliate, I earn from qualifying purchases\."/);
+  assert.doesNotMatch(read("site/about.html"), /ordinary searches until the campaign is confirmed/);
 });
 
 test("static security headers match the Worker policy without running it for JS, CSS or images", () => {

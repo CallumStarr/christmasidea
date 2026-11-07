@@ -34,7 +34,7 @@ export function awinPolicy(env = {}, advertiserIds = allowedAwinAdvertisers(env)
     imageRights: "Publisher product feed; image hosts must be explicitly approved",
     maxOfferAgeMs: MAX_FEED_AGE_MS,
     persistResults: false,
-    disclosure: "We may earn a commission from qualifying purchases through Awin.",
+    disclosure: "Ad. We earn a commission if you buy through these links, at no extra cost to you.",
     display: { badge: "Matched retailer product", cta: "View product", adLabel: "Affiliate link" },
     isAffiliateUrl: (url, productId) => isAwinProductUrl(url, productId, publisherId, allowed),
   };

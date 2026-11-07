@@ -34,7 +34,7 @@ export function amazonPolicy(partnerTag) {
     imageRetention: "link-only-24h",
     imageRights: "Amazon Creators API terms: hot-link only, never store",
     maxOfferAgeMs: 3600_000,
-    disclosure: "As an Amazon Associate we earn from qualifying purchases.",
+    disclosure: "As an Amazon Associate I earn from qualifying purchases.",
     display: { badge: "Verified Amazon product", cta: "View on Amazon", adLabel: "Affiliate link" },
     isAffiliateUrl: (url, id) => isAmazonProductUrl(url, id, partnerTag),
   };
