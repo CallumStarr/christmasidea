@@ -89,7 +89,7 @@ test("the guide directory has its own approved responsive banner without changin
   assert.match(html, /href="\/images\/guides-canvas-2048.webp" media="\(min-width:1001px\)" fetchpriority="high"/);
   assert.doesNotMatch(html, /<img class="directory-banner-photo"/);
   assert.equal((html.match(/<h1>/g) || []).length, 1);
-  assert.match(html, /13 guides to browse/);
+  assert.match(html, /19 guides to browse/);
   for (const name of (await readdir(new URL("gifts/", site))).filter((name) => name !== "index.html")) {
     assert.doesNotMatch(await read(`gifts/${name}`), /directory-banner-photo/, name);
   }

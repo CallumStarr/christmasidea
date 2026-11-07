@@ -5,14 +5,16 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { retailerLinks } from "../site/affiliateRouter.js";
 import { publicMonetizationConfig } from "./monetization-settings.mjs";
+import { NEW_GUIDES } from "./new-gift-guides.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = join(ROOT, "site");
 const ORIGIN = "https://christmasidea.co.uk";
 // Bump when page content changes; drives guide bylines, JSON-LD and sitemap lastmod so rebuilds stay deterministic.
 const CONTENT_UPDATED = "2026-11-06";
-const CONTENT_UPDATED_LABEL = new Date(`${CONTENT_UPDATED}T00:00:00Z`)
+const dateLabel = (date) => new Date(`${date}T00:00:00Z`)
   .toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const CONTENT_UPDATED_LABEL = dateLabel(CONTENT_UPDATED);
 
 function writeFileSync(path, content) {
   if (existsSync(path) && readFileSync(path, "utf8") === content) return;
@@ -332,6 +334,11 @@ const EDITS = {
   "gifts-for-book-lovers": { art: "books", title: "For the book lover", label: "One more chapter", description: "AI-created scene of an open book, clothbound books, reading glasses and stoneware cup", group: "interests", tone: "oat" },
 };
 
+for (const { edit, rules, ...guide } of NEW_GUIDES) {
+  GUIDES.push(guide);
+  EDITS[guide.slug] = edit;
+}
+
 function header(path) {
   return HEADER
     .replace('href="#form" aria-current="page"', 'href="/#form"')
@@ -403,7 +410,7 @@ function guidePage(g) {
     mainEntityOfPage: `${ORIGIN}${path}`,
     author: { "@type": "Person", name: "Callum Starr" },
     publisher: { "@type": "Organization", name: "NOAH Neurotech Ltd" },
-    dateModified: CONTENT_UPDATED,
+    dateModified: g.updated || CONTENT_UPDATED,
   };
   const related = GUIDES.filter((x) => x.slug !== g.slug)
     .sort((a, b) => Number(EDITS[b.slug].group === EDITS[g.slug].group) - Number(EDITS[a.slug].group === EDITS[g.slug].group))
@@ -411,7 +418,7 @@ function guidePage(g) {
   const image = EDITS[g.slug].art;
   return head(title, g.desc, path, `<link rel="preload" as="image" href="/images/${image}-800.webp" imagesrcset="/images/${image}-400.webp 400w, /images/${image}-800.webp 800w, /images/${image}-1200.webp 1200w" imagesizes="(max-width: 600px) calc(100vw - 48px), (max-width: 760px) 92vw, (max-width: 1100px) 40vw, 512px" fetchpriority="high">\n<script type="application/ld+json">${JSON.stringify(ld)}</script>\n`) +
 `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/gifts/">Gift guides</a><span aria-hidden="true">/</span><span aria-current="page">${esc(EDITS[g.slug].title)}</span></nav>
-<div class="guide-intro"><div><h1>Ad &middot; ${esc(g.h1)}</h1><p class="source">By Callum Starr, NOAH Neurotech Ltd &middot; Updated <time datetime="${CONTENT_UPDATED}">${CONTENT_UPDATED_LABEL}</time></p><p class="standfirst">${esc(g.intro)}</p><p>Ideas are selected from fixed gift-concept lists for the topic and budget, with practical buying checks. We have not bought or tested the products in these searches.</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
+<div class="guide-intro"><div><h1>Ad &middot; ${esc(g.h1)}</h1><p class="source">By Callum Starr, NOAH Neurotech Ltd &middot; Updated <time datetime="${g.updated || CONTENT_UPDATED}">${g.updated ? dateLabel(g.updated) : CONTENT_UPDATED_LABEL}</time></p><p class="standfirst">${esc(g.intro)}</p><p>Ideas are selected from fixed gift-concept lists for the topic and budget, with practical buying checks. We have not bought or tested the products in these searches.</p><nav class="guide-jumps" aria-label="On this page"><a href="#gift-ideas">Browse the ideas <span aria-hidden="true">&darr;</span></a><a href="#choosing">Before you choose</a></nav></div>${art(g)}</div>
 <section class="choosing" id="choosing" aria-labelledby="choosing-title"><div><h2 id="choosing-title">Narrow down<br>the options.</h2></div><ul>${g.tips.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>
 <section id="gift-ideas" aria-labelledby="ideas-title">
 <div class="ideas-heading"><div><h2 id="ideas-title">Eight options to consider</h2></div></div>
@@ -441,9 +448,9 @@ function indexPage() {
     '<link rel="preload" as="image" href="/images/guides-canvas-1000.webp" media="(max-width:1000px)" fetchpriority="high" imagesrcset="/images/guides-canvas-1000.webp 1x, /images/guides-canvas-2048.webp 2x">\n<link rel="preload" as="image" href="/images/guides-canvas-2048.webp" media="(min-width:1001px)" fetchpriority="high">\n').replace('class="wrap guide-page"', 'class="guide-page directory-page"') +
 `<div class="directory-intro wrap"><div class="directory-banner-copy"><h1>Gift guides</h1><p class="directory-count">${GUIDES.length} guides to browse</p></div></div>
 <div class="wrap">
-<nav class="directory-jumps" aria-label="Browse guides by"><a href="#interests">Their interests <span aria-hidden="true">&darr;</span></a><a href="#family">Family gifts <span aria-hidden="true">&darr;</span></a><a href="#budget">A £10 budget <span aria-hidden="true">&darr;</span></a></nav>
+<nav class="directory-jumps" aria-label="Browse guides by"><a href="#interests">Their interests <span aria-hidden="true">&darr;</span></a><a href="#family">Family gifts <span aria-hidden="true">&darr;</span></a><a href="#budget">Smaller budgets <span aria-hidden="true">&darr;</span></a></nav>
 <p class="disclosure">The guide images are AI-created illustrations, not photos of products we've tested.</p>
-${[["interests", "Start with what they enjoy"], ["family", "Gifts for the family"], ["budget", "Secret Santa on a £10 budget"]].map(([group, title]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
+${[["interests", "Start with what they enjoy"], ["family", "Gifts for the family"], ["budget", "Secret Santa and smaller budgets"]].map(([group, title]) => `<section class="directory-section" id="${group}" aria-labelledby="${group}-title"><div class="directory-section-heading"><h2 id="${group}-title">${title}</h2></div><ul class="guide-directory">${GUIDES.filter((g) => EDITS[g.slug].group === group).map(guideLink).join("")}</ul></section>`).join("\n")}
 <aside class="finder-cta"><div><h2>Try the gift finder.</h2><p>Describe what they enjoy, add your budget and mention anything they already own or would rather not receive.</p></div><a href="/#form">Find gift ideas <span aria-hidden="true">&rarr;</span></a></aside>
 </div>
 </main>
@@ -488,11 +495,12 @@ for (const name of ["about", "privacy", "terms"]) {
   writeFileSync(path, page);
 }
 
-const urls = ["/", "/gifts/", ...GUIDES.map((g) => `/gifts/${g.slug}`), "/about", "/privacy", "/terms"];
+const latestGuideUpdate = [CONTENT_UPDATED, ...GUIDES.map((g) => g.updated).filter(Boolean)].sort().pop();
+const urls = [["/"], ["/gifts/", latestGuideUpdate], ...GUIDES.map((g) => [`/gifts/${g.slug}`, g.updated]), ["/about"], ["/privacy"], ["/terms"]];
 writeFileSync(
   join(SITE, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    urls.map((u) => `  <url><loc>${ORIGIN}${u}</loc><lastmod>${CONTENT_UPDATED}</lastmod></url>`).join("\n") +
+    urls.map(([u, updated]) => `  <url><loc>${ORIGIN}${u}</loc><lastmod>${updated || CONTENT_UPDATED}</lastmod></url>`).join("\n") +
     `\n</urlset>\n`
 );
 console.log(`Wrote ${GUIDES.length} guides, index, 404 and sitemap.xml`);
