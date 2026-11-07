@@ -35,8 +35,25 @@ const IRREGULAR = {
   brother: "sibling", sister: "sibling", sibling: "sibling",
 };
 
+// stem and contentStems are pure and hot in the validator, so results are memoised per isolate.
+// Caps bound memory for arbitrary visitor and AI text; cached arrays are copied before returning.
+const MEMO_LIMIT = 20000;
+const STEM_MEMO = new Map();
+const CONTENT_STEMS_MEMO = [new Map(), new Map()];
+function remember(memo, key, value) {
+  if (memo.size >= MEMO_LIMIT) memo.clear();
+  memo.set(key, value);
+  return value;
+}
+
 export function stem(word) {
-  let w = String(word).toLowerCase();
+  const key = String(word);
+  const memo = STEM_MEMO.get(key);
+  return memo !== undefined ? memo : remember(STEM_MEMO, key, computeStem(key));
+}
+
+function computeStem(word) {
+  let w = word.toLowerCase();
   if (IRREGULAR[w]) return IRREGULAR[w];
   if (w.length > 4 && w.endsWith("ies")) return `${w.slice(0, -3)}y`;
   if (w.length > 5 && w.endsWith("ing")) w = w.slice(0, -3);
@@ -57,9 +74,12 @@ export function words(text) {
 
 /** Stemmed meaningful words (no stop words or vague words). */
 export function contentStems(text, { keepVague = false } = {}) {
-  return words(text)
+  const key = String(text || "");
+  const memo = CONTENT_STEMS_MEMO[keepVague ? 1 : 0];
+  const cached = memo.get(key) || remember(memo, key, words(key)
     .filter((w) => !STOP.has(w) && (keepVague || !VAGUE.has(w)) && (w.length > 2 || /\d/.test(w)))
-    .map(stem);
+    .map(stem));
+  return cached.slice();
 }
 
 export function stemSet(text, opts) {

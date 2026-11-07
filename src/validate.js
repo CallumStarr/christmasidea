@@ -151,9 +151,18 @@ export function cleanQuery(rawQuery, corpusStems = new Set()) {
 
 /* ---------- per-idea checks ---------- */
 
+// Rule lists are fixed module constants without g/y flags, so a label's first match never changes.
+const FIRST_MATCH_MEMO = new WeakMap();
 function firstMatch(rules, text) {
-  for (const [code, re] of rules) if (re.test(text)) return code;
-  return null;
+  let memo = FIRST_MATCH_MEMO.get(rules);
+  if (!memo) FIRST_MATCH_MEMO.set(rules, memo = new Map());
+  const cached = memo.get(text);
+  if (cached !== undefined) return cached;
+  let code = null;
+  for (const [ruleCode, re] of rules) if (re.test(text)) { code = ruleCode; break; }
+  if (memo.size >= 5000) memo.clear();
+  memo.set(text, code);
+  return code;
 }
 
 function stripClaimSentences(why, patterns) {
@@ -290,19 +299,35 @@ export function productType(c) {
 }
 
 const CONCEPT_ADD_ON = new Set(["cover", "case", "bag", "pouch", "holder", "strap", "replacement", "refill", "book", "guide"].map(stem));
+const CONCEPT_EXCLUSIONS = [
+  ["kneeling_aid", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:(?:garden|gardening|foam|padded|folding|foldable)\s+)*(?:kneelers?|kneeling\s+(?:pads?|mats?|cushions?|benches|seats?)|knee\s+pads?)\b/g],
+  ["apron", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:(?:garden|tool|work)\s+)?aprons?\b/g],
+  ["moka", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:moka(?:\s+(?:coffee\s+)?(?:pots?|makers?|brewers?))?|stovetop\s+(?:coffee\s+)?espresso\s+(?:makers?|pots?|brewers?))\b/g],
+  ["enamel_coffee_pot", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?enamel\s+(?:(?:camp|camping|coffee)\s+)*(?:coffee\s+)?(?:pots?|percolators?)\b/g],
+];
+// productConcepts is a pure function of its text and is called pairwise during duplicate checks,
+// so results are memoised per isolate. The cap bounds memory for arbitrary AI text.
+const CONCEPT_MEMO = new Map();
+const CONCEPT_MEMO_LIMIT = 5000;
 
 function productConcepts(text) {
+  const key = String(text || "");
+  const memo = CONCEPT_MEMO.get(key);
+  if (memo) return memo;
+  const result = Object.freeze(computeProductConcepts(text));
+  if (CONCEPT_MEMO.size >= CONCEPT_MEMO_LIMIT) CONCEPT_MEMO.clear();
+  CONCEPT_MEMO.set(key, result);
+  return result;
+}
+
+function computeProductConcepts(text) {
   let normal = words(text).join(" ");
   const negated = new Set();
-  const exclusions = [
-    ["kneeling_aid", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:(?:garden|gardening|foam|padded|folding|foldable)\s+)*(?:kneelers?|kneeling\s+(?:pads?|mats?|cushions?|benches|seats?)|knee\s+pads?)\b/g],
-    ["apron", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:(?:garden|tool|work)\s+)?aprons?\b/g],
-    ["moka", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?(?:moka(?:\s+(?:coffee\s+)?(?:pots?|makers?|brewers?))?|stovetop\s+(?:coffee\s+)?espresso\s+(?:makers?|pots?|brewers?))\b/g],
-    ["enamel_coffee_pot", /\b(?:not|no|without|rather than|instead of)\s+(?:(?:a|an|the)\s+)?enamel\s+(?:(?:camp|camping|coffee)\s+)*(?:coffee\s+)?(?:pots?|percolators?)\b/g],
-  ];
-  for (const [id, pattern] of exclusions) {
+  for (const [id, pattern] of CONCEPT_EXCLUSIONS) {
+    pattern.lastIndex = 0;
     if (pattern.test(normal)) {
       negated.add(id);
+      pattern.lastIndex = 0;
       normal = normal.replace(pattern, " ");
     }
     pattern.lastIndex = 0;
@@ -459,13 +484,27 @@ export function curateIdeas(raw, input, opts = {}) {
     valid.push(idea);
   }
 
-  // Remove duplicates, keeping the earlier (higher-ranked) idea.
+  // Remove duplicates, keeping the earlier (higher-ranked) idea. Concept sets are computed once per idea
+  // rather than per pair; the comparison is the same as sameProductConcept(u fields, idea fields).
+  const conceptsOf = new Map();
+  const conceptIds = (idea) => {
+    let entry = conceptsOf.get(idea);
+    if (!entry) {
+      const ids = [idea.title, idea.concept, idea.query].flatMap(productConcepts);
+      const known = new Set(ids);
+      known.delete("apron");
+      entry = { ids, known };
+      conceptsOf.set(idea, entry);
+    }
+    return entry;
+  };
   const unique = [];
   for (const idea of valid) {
+    const { ids } = conceptIds(idea);
     const clash = unique.find((u) =>
       u.title.toLowerCase() === idea.title.toLowerCase()
       || u.query === idea.query
-      || sameProductConcept([u.title, u.concept, u.query], [idea.title, idea.concept, idea.query])
+      || (ids.length > 0 && ids.some((id) => conceptIds(u).known.has(id)))
       || jaccard(u.queryStems, idea.queryStems) >= THRESHOLDS.duplicateQuery
       || jaccard(u.titleStems, idea.titleStems) >= THRESHOLDS.duplicateConcept);
     if (clash) {
