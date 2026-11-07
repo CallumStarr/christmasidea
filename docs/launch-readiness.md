@@ -43,10 +43,14 @@ until the remaining external launch gates are resolved.
 
 ## Remaining launch gates and operator actions
 
+Step-by-step click paths for items 1, 2 and 4-8 are in
+[operator-actions.md](operator-actions.md).
+
 1. **Cloudflare Workers Paid:** dashboard needs an interactive login; the
    available OAuth token cannot read billing subscriptions. Upgrade/confirm the
    paid plan in the dashboard. Local tests do not establish production CPU
-   allowance. The AI cap stays at 500/day until a monthly spend limit and
+   allowance; warm catalogue fallback is now under 10 ms but a cold isolate is
+   not. The AI cap stays at 500/day until a monthly spend limit and
    expected traffic are agreed; do not silently expand the spending envelope.
 2. **Search engines:** Google Search Console and Bing Webmaster Tools could not
    be opened in this environment. Verify domain ownership and submit
@@ -69,9 +73,10 @@ until the remaining external launch gates are resolved.
    the old key and set a monthly spend limit. Worker secrets cannot reveal or
    rotate the provider's source credential. Review any Actions Cloudflare token
    for D1-only scope; no Cloudflare token is currently listed in Actions secrets.
-7. Add a zone `/api/` edge rate-limit rule and an independent uptime service
-   with phone alerts. These need dashboard/provider access. Only add
-   `includeSubDomains` to HSTS after confirming HTTPS for every subdomain.
+7. Add a zone `/api/` edge rate-limit rule (suggested: 40 requests per
+   10 seconds per IP, Block) and an independent uptime service with phone
+   alerts. These need dashboard/provider access. HSTS `includeSubDomains` is
+   now done (see the 7 November record below).
 8. Confirm support email delivery/monitoring and one-month rights handling.
    Have an adviser review the notice, audience assessment and Terms; have the
    accountant confirm overseas commissions, tax/VAT and expenses. Add a suitable
@@ -86,7 +91,9 @@ until the remaining external launch gates are resolved.
   contrast. Automated checks do not prove WCAG conformance.
 - Publish useful original guides for teenagers, grandparents, colleagues,
   Secret Santa at GBP 20, partners and hard-to-buy-for recipients after editorial
-  review. Do not auto-publish unreviewed content or invent product comparisons.
+  review. Drafts are in the pull request "Draft: six new gift guides for
+  review" (not merged, not deployed). Do not auto-publish unreviewed content
+  or invent product comparisons.
   The existing 13 guides now have clearer attribution and buying checks.
 - Use permitted communities and a launch post; don't request affiliate purchases.
 - No eBay photo relevance review is required while eBay content is disabled.
@@ -163,3 +170,54 @@ release summary.
   (campaign tracking is live); latent provider disclosures now use definite
   wording and the exact Amazon/eBay statements, guarded by a test; the
   monitor fails on catalogue fallback. 614 tests pass.
+
+### Monitor, accessibility, CPU and HSTS release (7 November 2026)
+
+Deployed version `80c0e211-4b8a-4609-a778-6765b35543e5` from `66a211a`;
+live before deploy `4528dd31` (rollback target). Details are in
+PROJECT_STATUS.md.
+
+- **Pre-deploy:** 616 tests passed; `npm run build:pages` left no diff;
+  `npm run app:sync` was clean; `npx wrangler deploy --dry-run` passed with
+  Amazon, eBay and Awin discovery still false.
+- **Finder monitor:** monitored requests skip the idea cache and knowledge
+  reuse, and `check-finder.mjs` fails on cached or non-AI results (tests in
+  `test/launch-readiness.test.js`). Workflow runs 42361735711 and 42361885536,
+  started back to back after deploy, both passed with three AI cases.
+  `check-finder.mjs` was not run from the laptop because the monitor token
+  exists only as a GitHub secret.
+- **Accessibility:** axe-core 4.14, run from a temporary folder outside the
+  repository with tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa and
+  best-practice. `/`, `/about`, `/privacy`, `/terms`, `/gifts/`,
+  `/gifts/gifts-for-dad` and `/404`, at 1280 px and 375 px, had 0 violations
+  locally and live. There was no horizontal scroll at 375 px. The
+  Wishlists buttons are named from their visible text (for example "Wishlists
+  0 saved ideas").
+- **CPU:** `node scripts/benchmark-fallback.mjs` (50 v3.4 cases, warm,
+  laptop): before, median 43 ms, p90 73 ms, max 98 ms; after, median about
+  4.5 ms, p90 about 6.2 ms, max 9-13 ms. The first call in a fresh isolate is
+  about 85-90 ms. `test/catalogue-snapshot.test.js` proves the output is
+  identical.
+- **HSTS includeSubDomains (no preload):**
+  - The Wrangler token could not list DNS records (403).
+  - The user supplied the zone list: NS, three MX, apex SPF TXT, DKIM
+    `cf2024-1._domainkey` TXT and `_dmarc` TXT. There are no A, AAAA or CNAME
+    records; the apex and `www` are Worker custom domains.
+  - Checked: the apex returns 200 and `www` 301, both with valid certificates.
+    A random subdomain does not resolve. The DKIM and DMARC names hold only
+    TXT records, so they serve no web traffic.
+  - The user approved the change. Live pages and static files now send
+    `max-age=31536000; includeSubDomains`.
+  - Any new web hostname added to the zone must serve HTTPS before use.
+- **Live checks:** `/`, `/about`, `/privacy`, `/terms`, `/gifts/` and
+  `/gifts/gifts-for-dad` returned 200 with company details and no "may earn".
+  Unsigned products and feedback requests returned 400, ideas without
+  Turnstile 403, and a wrong monitor token 401. `www` redirected 301 to the
+  main domain, `/api/ready` returned 200, and security headers were present on
+  pages, CSS, JS, images and the favicon.
+- **Not done here:** the ICO reference (not supplied), and the human-only
+  items: NVDA, VoiceOver and TalkBack testing; Escape-key and 200%/400% zoom
+  checks on a real keyboard and browser; full-palette contrast; real-user
+  testing with 10-15 shoppers; the repository visibility decision; and the
+  separate app release. Installed apps need a native rebuild to pick up the
+  label change.

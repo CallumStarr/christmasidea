@@ -2,6 +2,58 @@
 
 Brand: **Santa's Helper**. Domain: **ChristmasIdea.co.uk** (retained). Worker name, routes and the Associates tag `mcstarrstud0c-21` are unchanged. This is the canonical status record.
 
+## Monitor, accessibility, CPU and HSTS release (7 November 2026)
+
+Deployed as Worker version `80c0e211-4b8a-4609-a778-6765b35543e5` from
+`66a211a`. The version live before this deploy was
+`4528dd31` (rollback target); `a2bd0f62` is the earlier fallback.
+
+What changed:
+
+- **Finder monitor hits the real AI path.** Monitored requests
+  (`X-Finder-Monitor`) skip knowledge reuse and the idea cache read and write,
+  so a broken Anthropic key cannot pass on a cached answer. They still count
+  against `DAILY_AI_LIMIT` (3 calls a day). `scripts/check-finder.mjs` now also
+  fails on `cached === true` or `source !== "ai"`.
+- **WCAG 2.5.3 Label in Name.** The Wishlists nav button and the deck
+  wishlists button no longer have an `aria-label`. Their names come from the
+  visible text plus a visually hidden "saved ideas"/"saved idea", on every page
+  and at every width.
+- **Catalogue-fallback CPU.** Results are memoised (concept sets, stems, rule
+  matches), with precompiled exclusions. Over the 50 v3.4 cases (warm, laptop),
+  `scripts/benchmark-fallback.mjs` went from median 43 ms, p90 73 ms, max
+  98 ms to median about 4.5 ms, p90 about 6.2 ms, max 9-13 ms. The first call
+  in a fresh isolate is still about 85-90 ms, so Workers Paid remains the real
+  fix. A snapshot test proves the output is unchanged for all 50 cases.
+- **HSTS** is now `max-age=31536000; includeSubDomains` (no preload). The
+  zone DNS list supplied by the user has no A/AAAA/CNAME hostnames other than
+  the apex and `www` Worker custom domains; both serve valid HTTPS.
+
+How it was verified:
+
+- 616 tests pass; `build:pages` leaves no diff; `app:sync` is clean; the
+  `wrangler deploy --dry-run` passed with all provider discovery flags still
+  false.
+- axe-core 4.14 (wcag2a/aa, wcag21a/aa, wcag22aa, best-practice) ran locally
+  and on the live site against `/`, `/about`, `/privacy`, `/terms`, `/gifts/`,
+  `/gifts/gifts-for-dad` and `/404` at 1280 and 375 px. All 14 combinations
+  had 0 violations, and there was no horizontal scroll at 375 px. Before the
+  deploy, the live homepage had 1 `label-content-name-mismatch`.
+- Live: the pages above return 200 with company name and number and no
+  "may earn". Unsigned `/api/products` and `/api/feedback` return 400,
+  `/api/ideas` without Turnstile returns 403, and a wrong monitor token returns
+  401. `www` redirects 301, and security headers appear on pages and static
+  files.
+- The finder-monitor workflow ran twice in a row (runs 42361735711 and
+  42361885536). Both passed with all three cases from AI, which proves the
+  second run was not served from cache.
+
+Still open: ICO reference, Workers Paid and the other operator actions in
+[docs/operator-actions.md](docs/operator-actions.md), human accessibility
+testing, real-user testing, the repository visibility decision and the
+separate app release. Six draft Black Friday guides are on their own branch and
+pull request for review, not on `main` and not deployed.
+
 ## Launch-readiness release (6 November 2026)
 
 Website/backend fixes are deployed as Worker version
@@ -41,7 +93,8 @@ first scheduled monitor run passed. Follow-ups: About's stale eBay wording,
 latent provider disclosure strings, and the monitor now failing on catalogue
 fallback; 614 tests pass. The ICO register search did not yet list the company.
 
-See [the launch checklist](docs/launch-readiness.md) for remaining operator
+See [the launch checklist](docs/launch-readiness.md) and
+[operator actions](docs/operator-actions.md) for remaining operator
 tasks: Workers Paid, search-engine registration/indexing, ICO reference,
 account transfers/approvals, Anthropic key rotation/spend limit, edge rate
 limiting, phone-alert uptime monitoring, human accessibility/quality testing
